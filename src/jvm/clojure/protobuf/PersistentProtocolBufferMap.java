@@ -8,8 +8,6 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-/* Based on rhickey's clojure.lang.PersistentStructMap - Jan 17, 2010 */
-
 package clojure.protobuf;
 
 import clojure.lang.*;
@@ -102,7 +100,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     this.builder = builder;
   }
   
-  protected PersistentProtocolBufferMap makeNew(IPersistentMap meta, Def def, DynamicMessage message, DynamicMessage.Builder builder) {
+  static protected PersistentProtocolBufferMap makeNew(IPersistentMap meta, Def def, DynamicMessage message, DynamicMessage.Builder builder) {
     return new PersistentProtocolBufferMap(meta, def, message, builder);
   }
   
@@ -158,12 +156,12 @@ public class PersistentProtocolBufferMap extends APersistentMap {
         Descriptors.EnumValueDescriptor e = (Descriptors.EnumValueDescriptor) value;
         return enumToKeyword(e);
       case MESSAGE:
-        
-        break;
+        Def def  = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+        DynamicMessage message = (DynamicMessage) value;
+        return PersistentProtocolBufferMap.makeNew(null, def, message, null);
       default:
         return value;
       }
-      return null;
     }
   }
   
@@ -182,13 +180,14 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       Keyword key = (Keyword) value;
       return e.findValueByName(key.getName().toUpperCase());
     case MESSAGE:
-      Descriptors.Descriptor d = field.getMessageType();
+      PersistentProtocolBufferMap protobuf;
       if (value instanceof PersistentProtocolBufferMap) {
-        PersistentProtocolBufferMap m = (PersistentProtocolBufferMap) value;
-        if (m.getMessageType() == d) return m.message();          
+        protobuf = (PersistentProtocolBufferMap) value;
+      } else {
+        Def def  = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+        protobuf = PersistentProtocolBufferMap.construct(def, (IPersistentMap) value);
       }
-      Def def = PersistentProtocolBufferMap.Def.create(d);
-      return PersistentProtocolBufferMap.construct(def, (IPersistentMap) value);
+      return protobuf.message();
     default:
       return value;
     }
@@ -288,7 +287,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
   
   public ISeq seq() {
-    return new Seq(null, message());
+    return Seq.create(message());
   }
   
   public IPersistentCollection empty() {
@@ -302,11 +301,13 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     final Descriptors.FieldDescriptor[] fields;
     final int i;
     
-    public Seq(IPersistentMap meta, DynamicMessage message) {    
-      super(meta);
-      this.map    = message.getAllFields();
-      this.fields = (Descriptors.FieldDescriptor[])map.keySet().toArray(new Descriptors.FieldDescriptor[map.size()]);
-      this.i      = 0;
+    static public Seq create(DynamicMessage message) {
+      Map<Descriptors.FieldDescriptor, Object> map = message.getAllFields();
+      if (map.size() == 0) return null;
+
+      Descriptors.FieldDescriptor[] fields = new Descriptors.FieldDescriptor[map.size()];
+      fields = (Descriptors.FieldDescriptor[]) map.keySet().toArray(fields);
+      return new Seq(null, map, fields, 0);
     }
     
     protected Seq(IPersistentMap meta, Map<Descriptors.FieldDescriptor, Object> map, Descriptors.FieldDescriptor[] fields, int i){
@@ -322,6 +323,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
     
     public Object first() {
+      if (i == fields.length) return null;
       Descriptors.FieldDescriptor field = fields[i];
       Keyword key = Keyword.intern(Symbol.intern(field.getName()));
       Object  val = PersistentProtocolBufferMap.fromProtoValue(field, map.get(field));
