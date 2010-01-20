@@ -1,10 +1,16 @@
 (ns protobuf)
 
-(defmacro defprotobuf [sym & args]
-  (let [class (symbol (apply str (interpose "$" (map name args))))]
-    `(def ~sym (. ~class  getDescriptor))))
+(set! *warn-on-reflection* true)
 
-(defn protobuf [desc & args]
-  (if (= (count args) 1)
-    (clojure.protobuf.PersistentProtocolBufferMap/create desc (first args))
-    (clojure.protobuf.PersistentProtocolBufferMap/construct desc (apply hash-map args))))
+(defmacro defprotobuf [sym & args]
+  (let [class (apply str (interpose "$" (map name args)))]
+    `(def ~sym (clojure.protobuf.PersistentProtocolBufferMap$Def/create ~class))))
+
+(defn protobuf 
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
+     (clojure.protobuf.PersistentProtocolBufferMap/create type data))
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
+     (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply hash-map k v kvs))))
+
+(defn dump-protobuf [#^clojure.protobuf.PersistentProtocolBufferMap p]
+  (.toByteArray p))
