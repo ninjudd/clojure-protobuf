@@ -13,7 +13,8 @@ package clojure.protobuf;
 import clojure.lang.*;
 import java.util.*;
 import java.io.InputStream;
-import java.io.IOException; 
+import java.io.PrintWriter;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.InvocationTargetException;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -55,9 +56,11 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
 
     public Descriptors.FieldDescriptor fieldDescriptor(Keyword key) {
+      if (key == null) return null;
       Descriptors.FieldDescriptor field = keyword_to_field.get(key);
       if (field == null) {
-        field = type.findFieldByName(key.getName());
+        String name = key.getName().replaceAll("-","_");
+        field = type.findFieldByName(name);
         if (field != null) keyword_to_field.putIfAbsent(key, field);
       }
       return field;
@@ -76,32 +79,37 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  final Def                    def;
-  final DynamicMessage         message;
-  final DynamicMessage.Builder builder;
+  final Def            def;
+  final DynamicMessage message;
 
   DynamicMessage built_message;
 
   static public PersistentProtocolBufferMap create(Def def, byte[] bytes) throws InvalidProtocolBufferException {
     DynamicMessage message = def.parseFrom(bytes);
-    return new PersistentProtocolBufferMap(null, def, message, null);
+    return new PersistentProtocolBufferMap(null, def, message);
   }
     
   static public PersistentProtocolBufferMap construct(Def def, IPersistentMap keyvals) {
-    DynamicMessage.Builder builder = def.newBuilder();
-    PersistentProtocolBufferMap protobuf = new PersistentProtocolBufferMap(null, def, null, builder);
+    PersistentProtocolBufferMap protobuf = new PersistentProtocolBufferMap(null, def);
     return (PersistentProtocolBufferMap) protobuf.cons(keyvals);
   }
   
-  protected PersistentProtocolBufferMap(IPersistentMap meta, Def def, DynamicMessage message, DynamicMessage.Builder builder) {
+  protected PersistentProtocolBufferMap(IPersistentMap meta, Def def) {
+    super(meta);
+    this.def     = def;
+    this.message = null;
+  }
+
+  protected PersistentProtocolBufferMap(IPersistentMap meta, Def def, DynamicMessage message) {
     super(meta);
     this.def     = def;
     this.message = message;
-    this.builder = builder;
   }
-  
-  static protected PersistentProtocolBufferMap makeNew(IPersistentMap meta, Def def, DynamicMessage message, DynamicMessage.Builder builder) {
-    return new PersistentProtocolBufferMap(meta, def, message, builder);
+
+  protected PersistentProtocolBufferMap(IPersistentMap meta, Def def, DynamicMessage.Builder builder) {
+    super(meta);
+    this.def     = def;
+    this.message = builder.build();
   }
   
   public byte[] toByteArray() {
@@ -114,29 +122,30 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   protected DynamicMessage message() {
     if (message == null) {
-      if (built_message == null) built_message = builder.build();
-      return built_message;
+      return def.newBuilder().build(); // This will only work if an empty message is valid.
     } else {
       return message;
     }
   }
   
   protected DynamicMessage.Builder builder() {
-    if (builder == null) {
-      return message.toBuilder();
+    if (message == null) {
+      return def.newBuilder();
     } else {
-      return builder.clone();
+      return message.toBuilder();
     }
   }
 
   static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword = new ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword>();
 
-  static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor e) {
-    Keyword k = enum_to_keyword.get(e);
-    if (k == null) {
-      k = Keyword.intern(Symbol.intern(e.getName().toLowerCase()));
+  static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
+    Keyword keyword = enum_to_keyword.get(enum_value);
+    if (keyword == null) {
+      String name = enum_value.getName().toLowerCase().replaceAll("_","-");
+      keyword = Keyword.intern(Symbol.intern(name));
+      enum_to_keyword.putIfAbsent(enum_value, keyword);
     }
-    return k;
+    return keyword;
   }
 
   static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
@@ -158,7 +167,11 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       case MESSAGE:
         Def def  = PersistentProtocolBufferMap.Def.create(field.getMessageType());
         DynamicMessage message = (DynamicMessage) value;
-        return PersistentProtocolBufferMap.makeNew(null, def, message, null);
+
+        // Total hack because getField() doesn't return an empty array for repeated messages.
+        if (field.isRepeated() && !message.isInitialized()) return fromProtoValue(field, new ArrayList());
+
+        return new PersistentProtocolBufferMap(null, def, message);
       default:
         return value;
       }
@@ -176,9 +189,15 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       Long l = (Long) value;
       return new Integer(l.intValue());      
     case ENUM:
-      Descriptors.EnumDescriptor e = field.getEnumType();
       Keyword key = (Keyword) value;
-      return e.findValueByName(key.getName().toUpperCase());
+      String name = key.getName().toUpperCase().replaceAll("-","_");
+      Descriptors.EnumDescriptor      enum_type  = field.getEnumType();
+      Descriptors.EnumValueDescriptor enum_value = enum_type.findValueByName(name);
+			if (enum_value == null) {
+        PrintWriter err = (PrintWriter) RT.ERR.deref();
+        err.format("invalid enum value %s for enum type %s\n", name, enum_type.getFullName());
+      }
+      return enum_value;
     case MESSAGE:
       PersistentProtocolBufferMap protobuf;
       if (value instanceof PersistentProtocolBufferMap) {
@@ -210,7 +229,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   
   public Obj withMeta(IPersistentMap meta) {
     if (meta == meta()) return this;
-    return makeNew(meta, def, message, builder);
+    return new PersistentProtocolBufferMap(meta(), def, message);
   }
   
   public boolean containsKey(Object key) {
@@ -234,13 +253,13 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return (val == null) ? notFound : val;
   }
   
-  public IPersistentMap assoc(Object key, Object val) {
+  public IPersistentMap assoc(Object key, Object val) {    
     DynamicMessage.Builder builder = builder();
     Descriptors.FieldDescriptor field = def.fieldDescriptor((Keyword) key);
     
     if (field == null) return this;
     setField(builder, field, val);
-    return makeNew(meta(), def, null, builder);
+    return new PersistentProtocolBufferMap(meta(), def, builder);
   }
   
   public IPersistentMap assocEx(Object key, Object val) throws Exception {
@@ -265,7 +284,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       Keyword key = (Keyword) e.getKey();
       setField(builder, def.fieldDescriptor(key), e.getValue());
     }
-    return makeNew(meta(), def, null, builder);
+    return new PersistentProtocolBufferMap(meta(), def, builder);
   }
   
   public IPersistentMap without(Object key) throws Exception {
@@ -275,7 +294,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     
     DynamicMessage.Builder builder = builder();
     builder.clearField(field);
-    return makeNew(meta(), def, null, builder);
+    return new PersistentProtocolBufferMap(meta(), def, builder);
   }
   
   public Iterator iterator() {
@@ -293,7 +312,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   public IPersistentCollection empty() {
     DynamicMessage.Builder builder = builder();
     builder.clear();
-    return makeNew(meta(), def, null, builder);
+    return new PersistentProtocolBufferMap(meta(), def, builder);
   }
   
   static class Seq extends ASeq {
@@ -325,7 +344,8 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     public Object first() {
       if (i == fields.length) return null;
       Descriptors.FieldDescriptor field = fields[i];
-      Keyword key = Keyword.intern(Symbol.intern(field.getName()));
+      String name = field.getName().replaceAll("_","-");
+      Keyword key = Keyword.intern(Symbol.intern(name));
       Object  val = PersistentProtocolBufferMap.fromProtoValue(field, map.get(field));
       return new MapEntry(key, val);
     }
