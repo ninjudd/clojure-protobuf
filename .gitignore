@@ -1,2 +1,3 @@
-*.class
+lib
+classes
 *.jar

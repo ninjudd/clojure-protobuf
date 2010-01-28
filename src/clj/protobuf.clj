@@ -10,10 +10,9 @@
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type]
      (clojure.protobuf.PersistentProtocolBufferMap/construct type {}))
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
-     (clojure.protobuf.PersistentProtocolBufferMap/create type data))
+     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data)))
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
      (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply hash-map k v kvs))))
 
-
-(defn dump-protobuf [#^clojure.protobuf.PersistentProtocolBufferMap p]
+(defn protobuf-bytes [#^clojure.protobuf.PersistentProtocolBufferMap p]
   (.toByteArray p))
