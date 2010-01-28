@@ -38,7 +38,8 @@ struct-map, except you cannot insert fields that aren't specified in the `.proto
 ## Motivation
 
 So why would you want to do this? Because it is WAY faster to serialize and deserialize
-protocol buffers than standard clojure objects.
+protocol buffers than standard clojure objects. Protocol buffers are also a great way to
+communicate with other languages over the network.
 
 ## Build
 
