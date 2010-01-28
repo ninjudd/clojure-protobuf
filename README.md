@@ -1,9 +1,5 @@
 Clojure-protobuf provides a clojure interface to Google's protocol buffers (http://code.google.com/p/protobuf).
 
-## Build
-
-  ant
-
 ## Usage
 
 Write a `.proto` file:
@@ -43,3 +39,7 @@ struct-map, except you cannot insert fields that aren't specified in the `.proto
 
 So why would you want to do this? Because it is WAY faster to serialize and deserialize
 protocol buffers than standard clojure objects.
+
+## Build
+
+  ant package
