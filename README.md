@@ -43,11 +43,11 @@ To download clojure.jar and google's protobuf source automatically and install p
     ant package
     ant install
 
-You can specify options to configure (like the install prefix):
+You can also specify options to configure (like the install prefix):
     ant package -Dconfigure='--prefix=/opt/local'
     ant install
 
-You can also specify a specific location for clojure.jar or the protobuf source:
+Or you can specify a specific location for clojure.jar or the protobuf source:
     ant package -Dclojure.jar=$HOME/lib/java/clojure-1.1.0.jar -Dprotobuf=$HOME/Downloads/protobuf-2.3.0
 
 This code has been tested with clojure version 1.1.0 and protobuf version 2.3.0.
