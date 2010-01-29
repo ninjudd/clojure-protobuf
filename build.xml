@@ -19,29 +19,18 @@
     <delete dir="classes"/>
   </target>
 
-  <available file="lib/${dep.protobuf}" property="protobuf.present"/>
-  <target name="protobuf.fetch" depends="init" unless="protobuf.present">
+  <available file="lib/${dep.protobuf}/Makefile" property="hasprotobuf"/>
+  <target name="fetch_protobuf" depends="init" unless="hasprotobuf">
     <get src="${repository.protobuf}/${dep.protobuf}.tar.gz"
          dest="lib/${dep.protobuf}.tar.gz" usetimestamp="true"/>
     <gunzip src="lib/${dep.protobuf}.tar.gz"/>
     <untar src="lib/${dep.protobuf}.tar" dest="lib"/>
     <delete file="lib/${dep.protobuf}.tar"/>
     <chmod file="lib/${dep.protobuf}/configure" perm="+x"/>
-  </target>
-
-  <available file="lib/${dep.protobuf}/Makefile" property="protobuf.makefile.present"/>
-  <target name="protobuf.configure" depends="protobuf.fetch" unless="protobuf.makefile.present">
     <exec dir="lib/${dep.protobuf}" executable="./configure"/>
   </target>
 
-  <path id="classpath">
-    <fileset dir="${user.home}/lib/java" includes="*.jar"/>
-    <pathelement location="${clojure_jar}"/>
-    <pathelement location="src/clj"/>
-    <pathelement location="classes"/>
-  </path>
-
-  <target name="protobuf.make" depends="protobuf.configure">
+  <target name="make_protobuf" depends="fetch_protobuf">
     <exec dir="lib/${dep.protobuf}" executable="make"/>
     <exec dir="lib/${dep.protobuf}/java" executable="../src/protoc">
       <arg value="--java_out=src/main/java"/>
@@ -51,7 +40,21 @@
     <javac srcdir="lib/${dep.protobuf}/java/src/main/java" destdir="classes"/>
   </target>
 
-  <target name="compile" depends="protobuf.make">
+  <available property="hasclojure" file="${clojure.jar}"/>
+  <target name="check_clojure" unless="hasclojure">
+    <fail>
+      You have not defined a path to clojure.jar so I can't compile files.
+      To enable compiling, run "ant -Dclojure.jar=&lt;...path to clojure.jar..&gt;"
+    </fail>
+  </target>
+
+  <path id="classpath">
+    <pathelement location="${clojure.jar}"/>
+    <pathelement location="src/clj"/>
+    <pathelement location="classes"/>
+  </path>
+
+  <target name="compile" depends="check_clojure,make_protobuf">
     <javac srcdir="src/jvm" destdir="classes" classpathref="classpath"/>
     <java classname="clojure.lang.Compile" classpathref="classpath">
       <sysproperty key="clojure.compile.path" value="classes"/>
