@@ -37,6 +37,17 @@ Now you can use the protocol buffer in clojure:
 A protocol buffer map is immutable just like other clojure objects. It is similar to a
 struct-map, except you cannot insert fields that aren't specified in the `.proto` file.
 
-## Build
+## Installation
 
-    ant package -Dclojure.jar=<path>
+To download clojure.jar and google's protobuf source automatically and install protoc:
+    ant package
+    ant install
+
+You can specify options to configure (like the install prefix):
+    ant package -Dconfigure='--prefix=/opt/local'
+    ant install
+
+You can also specify a specific location for clojure.jar or the protobuf source:
+    ant package -Dclojure.jar=$HOME/lib/java/clojure-1.1.0.jar -Dprotobuf=$HOME/Downloads/protobuf-2.3.0
+
+This code has been tested with clojure version 1.1.0 and protobuf version 2.3.0.

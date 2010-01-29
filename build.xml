@@ -2,50 +2,75 @@
 
   <property name="repository.protobuf" value="http://protobuf.googlecode.com/files"/>
   <property name="dep.protobuf" value="protobuf-2.3.0"/>
- 
+  <property name="protobuf" value="lib/${dep.protobuf}"/>  
+
+  <property name="repository.clojure" value="http://clojure.googlecode.com/files"/>
+  <property name="dep.clojure" value="clojure-1.1.0"/>
+  <property name="clojure.jar" value="lib/clojure.jar"/>
+
   <target name="init">
     <mkdir dir="lib"/>
     <mkdir dir="classes"/>
-  </target>
-
-  <target name="distclean" depends="clean">
-    <delete dir="lib"/>
   </target>
 
   <target name="clean">
     <delete>
       <fileset dir="." includes="*.jar"/>
     </delete>
+    <delete dir="lib"/>
     <delete dir="classes"/>
   </target>
 
-  <available file="lib/${dep.protobuf}/Makefile" property="hasprotobuf"/>
+  <available file="${protobuf}" property="hasprotobuf"/>
   <target name="fetch_protobuf" depends="init" unless="hasprotobuf">
     <get src="${repository.protobuf}/${dep.protobuf}.tar.gz"
          dest="lib/${dep.protobuf}.tar.gz" usetimestamp="true"/>
     <gunzip src="lib/${dep.protobuf}.tar.gz"/>
     <untar src="lib/${dep.protobuf}.tar" dest="lib"/>
     <delete file="lib/${dep.protobuf}.tar"/>
-    <chmod file="lib/${dep.protobuf}/configure" perm="+x"/>
-    <exec dir="lib/${dep.protobuf}" executable="./configure"/>
   </target>
 
-  <target name="make_protobuf" depends="fetch_protobuf">
-    <exec dir="lib/${dep.protobuf}" executable="make"/>
-    <exec dir="lib/${dep.protobuf}/java" executable="../src/protoc">
+  <target name="exec_configure" if="configure">
+    <chmod file="${protobuf}/configure" perm="+x"/>
+    <exec dir="${protobuf}" executable="./configure">
+      <arg line="${configure}"/>
+    </exec>
+  </target>
+
+  <target name="config_protobuf" depends="fetch_protobuf">
+    <condition property="configure" value="">
+      <not><available file="${protobuf}/Makefile"/></not>
+    </condition>
+    <antcall target="exec_configure"/>
+  </target>
+
+  <available file="${protobuf}/src/protoc" property="hasprotoc"/>
+  <target name="make_protobuf" depends="config_protobuf" unless="hasprotoc">
+    <exec dir="${protobuf}" executable="make"/>
+  </target>
+
+  <target name="install" depends="config_protobuf">
+    <chmod file="${protobuf}/install-sh" perm="+x"/>
+    <exec dir="${protobuf}" executable="make">
+      <arg value="install"/>
+    </exec>
+  </target>
+
+  <target name="compile_protobuf" depends="make_protobuf">
+    <exec dir="${protobuf}/java" executable="../src/protoc">
       <arg value="--java_out=src/main/java"/>
       <arg value="-I../src"/>
       <arg value="../src/google/protobuf/descriptor.proto"/>
     </exec>
-    <javac srcdir="lib/${dep.protobuf}/java/src/main/java" destdir="classes"/>
+    <javac srcdir="${protobuf}/java/src/main/java" destdir="classes"/>
   </target>
 
-  <available property="hasclojure" file="${clojure.jar}"/>
-  <target name="check_clojure" unless="hasclojure">
-    <fail>
-      You have not defined a path to clojure.jar so I can't compile files.
-      To enable compiling, run "ant -Dclojure.jar=&lt;...path to clojure.jar..&gt;"
-    </fail>
+  <available file="${clojure.jar}" property="hasclojure"/>
+  <target name="fetch_clojure" depends="init" unless="hasclojure">
+    <get src="${repository.clojure}/${dep.clojure}.zip"
+         dest="lib/${dep.clojure}.zip" usetimestamp="true"/>
+    <unzip src="lib/${dep.clojure}.zip" dest="lib"/>
+    <copy file="lib/${dep.clojure}/clojure.jar" todir="lib"/>
   </target>
 
   <path id="classpath">
@@ -54,9 +79,9 @@
     <pathelement location="classes"/>
   </path>
 
-  <target name="compile" depends="check_clojure,make_protobuf">
+  <target name="compile" depends="compile_protobuf,fetch_clojure">
     <javac srcdir="src/jvm" destdir="classes" classpathref="classpath"/>
-    <java classname="clojure.lang.Compile" classpathref="classpath">
+    <java classname="clojure.lang.Compile" classpathref="classpath" failonerror="true">
       <sysproperty key="clojure.compile.path" value="classes"/>
       <arg value="protobuf"/>
     </java>
