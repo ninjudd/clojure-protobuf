@@ -8,13 +8,15 @@
   <property name="dep.protobuf" value="protobuf-2.3.0"/>
   <property name="protobuf" value="lib/${dep.protobuf}"/>  
 
-  <condition property="configure" value="">
-    <not><available file="${protobuf}/Makefile"/></not>
-  </condition>
+  <property name="install_prefix" value="/usr/local"/>
 
   <target name="init">
     <mkdir dir="lib"/>
     <mkdir dir="classes"/>
+  </target>
+
+  <target name="distclean">
+    <delete file="${protobuf}/Makefile"/>
   </target>
 
   <target name="clean">
@@ -34,22 +36,27 @@
     <delete file="lib/${dep.protobuf}.tar"/>
   </target>
 
-  <target name="config_protobuf" depends="fetch_protobuf" if="configure">
+  <available file="${protobuf}/Makefile" property="configured_protobuf"/>
+  <target name="config_protobuf" depends="fetch_protobuf" unless="configured_protobuf">
     <chmod file="${protobuf}/configure" perm="+x"/>
     <exec dir="${protobuf}" executable="./configure">
-      <arg line="${configure}"/>
+      <arg value="--prefix=${basedir}/lib/install"/>
     </exec>
   </target>
 
   <available file="${protobuf}/src/protoc" property="has_protoc"/>
   <target name="make_protobuf" depends="config_protobuf" unless="has_protoc">
+    <chmod file="${protobuf}/install-sh" perm="+x"/>
     <exec dir="${protobuf}" executable="make" failonerror="true"/>
+    <exec dir="${protobuf}" executable="make" failonerror="true">
+      <arg value="install"/>
+    </exec>
   </target>
 
   <target name="install" depends="make_protobuf">
-    <chmod file="${protobuf}/install-sh" perm="+x"/>
-    <exec dir="${protobuf}" executable="make" failonerror="true">
-      <arg value="install"/>
+    <echo message="Installing to ${install_prefix}/"/>
+    <exec executable="cp">
+      <arg line="-Rf ${basedir}/lib/install/ ${install_prefix}"/>
     </exec>
   </target>
 
