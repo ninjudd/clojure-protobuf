@@ -6,6 +6,12 @@
   (let [class (apply str (interpose "$" (map name args)))]
     `(def ~sym (clojure.protobuf.PersistentProtocolBufferMap$Def/create ~class))))
 
+(defn protobuf? [obj]
+  (instance? clojure.protobuf.PersistentProtocolBufferMap obj))
+
+(defn protodef? [obj]
+  (instance? clojure.protobuf.PersistentProtocolBufferMap$Def obj))
+
 (defn protobuf
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type]
      (clojure.protobuf.PersistentProtocolBufferMap/construct type {}))
