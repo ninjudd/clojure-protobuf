@@ -1,4 +1,4 @@
-Clojure-protobuf provides a clojure interface to Google's protocol buffers (http://code.google.com/p/protobuf).
+Clojure-protobuf provides a clojure interface to Google's [protocol buffers](http://code.google.com/p/protobuf).
 Protocol buffers can be used to communicate with other languages over the network, and
 they are WAY faster to serialize and deserialize than standard Clojure objects.
 
