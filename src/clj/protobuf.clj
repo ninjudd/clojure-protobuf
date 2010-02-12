@@ -2,9 +2,12 @@
 
 (set! *warn-on-reflection* true)
 
+(defn protodef [class]
+  (clojure.protobuf.PersistentProtocolBufferMap$Def/create class))
+
 (defmacro defprotobuf [sym & args]
   (let [class (apply str (interpose "$" (map name args)))]
-    `(def ~sym (clojure.protobuf.PersistentProtocolBufferMap$Def/create ~class))))
+    `(def ~sym (protodef ~class))))
 
 (defn protobuf? [obj]
   (instance? clojure.protobuf.PersistentProtocolBufferMap obj))
