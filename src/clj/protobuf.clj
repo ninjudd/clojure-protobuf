@@ -1,7 +1,5 @@
 (ns protobuf)
 
-(set! *warn-on-reflection* true)
-
 (defn protodef [class]
   (clojure.protobuf.PersistentProtocolBufferMap$Def/create class))
 
