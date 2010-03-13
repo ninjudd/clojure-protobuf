@@ -1,7 +1,5 @@
 (ns protobuf)
 
-;(set! *warn-on-reflection* true)
-
 (defn protobuf? [obj]
   (instance? clojure.protobuf.PersistentProtocolBufferMap obj))
 
@@ -20,10 +18,16 @@
 (defn protobuf
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type]
      (clojure.protobuf.PersistentProtocolBufferMap/construct type {}))
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type m]
+     (clojure.protobuf.PersistentProtocolBufferMap/construct type m))
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
+     (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
+
+(defn protobuf-load
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
      (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data)))
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
-     (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply hash-map k v kvs))))
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data #^Integer length]
+     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data length))))
 
-(defn protobuf-bytes [#^clojure.protobuf.PersistentProtocolBufferMap p]
+(defn protobuf-dump [#^clojure.protobuf.PersistentProtocolBufferMap p]
   (.toByteArray p))

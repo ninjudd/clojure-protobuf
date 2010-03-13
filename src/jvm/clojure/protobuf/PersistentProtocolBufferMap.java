@@ -20,8 +20,9 @@ import java.lang.reflect.InvocationTargetException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.CodedInputStream;
 
-public class PersistentProtocolBufferMap extends APersistentMap {
+public class PersistentProtocolBufferMap extends APersistentMap { //implements IPersistentSet{
   public static class Def {
     final Descriptors.Descriptor type;
     ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;
@@ -32,7 +33,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       return create(c);
     }
 
-   public static Def create(Class<?> c) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static Def create(Class<?> c) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
       Descriptors.Descriptor type = (Descriptors.Descriptor) c.getMethod("getDescriptor").invoke(null);
       return create(type);
     }
@@ -55,19 +56,29 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       return DynamicMessage.parseFrom(type, bytes);
     }
 
+    public DynamicMessage parseFrom(CodedInputStream input) throws IOException {
+      return DynamicMessage.parseFrom(type, input);
+    }
+
     public DynamicMessage.Builder newBuilder() {
       return DynamicMessage.newBuilder(type);
     }
 
-    public Descriptors.FieldDescriptor fieldDescriptor(Keyword key) {
+    public Descriptors.FieldDescriptor fieldDescriptor(Object key) {
       if (key == null) return null;
-      Descriptors.FieldDescriptor field = keyword_to_field.get(key);
-      if (field == null) {
-        String name = key.getName().replaceAll("-","_");
-        field = type.findFieldByName(name);
-        if (field != null) keyword_to_field.putIfAbsent(key, field);
+
+      if (key instanceof Keyword) {
+        Keyword keyword = (Keyword) key;
+        Descriptors.FieldDescriptor field = keyword_to_field.get(keyword);
+        if (field == null) {
+          field = fieldDescriptor(keyword.getName());
+          if (field != null) keyword_to_field.putIfAbsent(keyword, field);
+        }
+        return field;
+      } else {
+        String name = ((String) key).replaceAll("-","_");
+        return type.findFieldByName(name);
       }
-      return field;
     }
 
     public String getName() {
@@ -90,6 +101,12 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   static public PersistentProtocolBufferMap create(Def def, byte[] bytes) throws InvalidProtocolBufferException {
     DynamicMessage message = def.parseFrom(bytes);
+    return new PersistentProtocolBufferMap(null, def, message);
+  }
+
+  static public PersistentProtocolBufferMap create(Def def, byte[] bytes, Integer length) throws IOException {
+    CodedInputStream input = CodedInputStream.newInstance(bytes, 0, length.intValue());
+    DynamicMessage message = def.parseFrom(input);
     return new PersistentProtocolBufferMap(null, def, message);
   }
 
@@ -155,10 +172,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
     if (value instanceof List) {
       List values = (List) value;
-
-      List<Object> items = new ArrayList<Object>(values.size());
       Iterator iterator = values.iterator();
 
+      List<Object> items = new ArrayList<Object>(values.size());
       while (iterator.hasNext()) {
         items.add(fromProtoValue(field, iterator.next()));
       }
@@ -193,8 +209,8 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       Long l = (Long) value;
       return new Integer(l.intValue());
     case ENUM:
-      Keyword key = (Keyword) value;
-      String name = key.getName().toUpperCase().replaceAll("-","_");
+      String name = (value instanceof Keyword) ? ((Keyword) value).getName() : (String) value;
+      name = name.toUpperCase().replaceAll("-","_");
       Descriptors.EnumDescriptor      enum_type  = field.getEnumType();
       Descriptors.EnumValueDescriptor enum_value = enum_type.findValueByName(name);
 			if (enum_value == null) {
@@ -216,13 +232,21 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  protected void setField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object val) {
+  protected void addField(DynamicMessage.Builder builder, Keyword key, Object val) {
+    addField(builder, def.fieldDescriptor(key), val);
+  }
+
+  protected void addField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object val) {
     if (field == null) return;
 
     if (field.isRepeated()) {
-      builder.clearField(field);
-      for (ISeq s = RT.seq(val); s != null; s = s.next()) {
-        Object value = toProtoValue(field, s.first());
+      if (val instanceof Sequential) {
+        for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+          Object value = toProtoValue(field, s.first());
+          builder.addRepeatedField(field, value);
+        }
+      } else {
+        Object value = toProtoValue(field, val);
         builder.addRepeatedField(field, value);
       }
     } else {
@@ -236,9 +260,42 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return new PersistentProtocolBufferMap(meta(), def, message);
   }
 
+  public boolean contains(Object key){
+    if (key instanceof IPersistentMap) {
+      for (ISeq s = RT.seq(key); s != null; s = s.next()) {
+        Map.Entry e = (Map.Entry) s.first();
+        Object v = e.getValue();
+        Object value = valAt(e.getKey());
+
+        if (value instanceof APersistentVector) {
+          APersistentVector vec = (APersistentVector) value;
+          if (!vec.contains(v)) return false;
+        } else if (value instanceof IPersistentSet) {
+          IPersistentSet set = (IPersistentSet) value;
+          if (!set.contains(v)) return false;
+        } else {
+          if (value != v) return false;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public boolean containsKey(Object key) {
-    Descriptors.FieldDescriptor field = def.fieldDescriptor((Keyword) key);
-    return message().hasField(field);
+    if (key instanceof IPersistentMap) {
+      return contains(key);
+    } else {
+      Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+      if (field == null) {
+        return false;
+      } else if (field.isRepeated()) {
+        return message().getRepeatedFieldCount(field) > 0;
+      } else {
+        return message().hasField(field);
+      }
+    }
   }
 
   public IMapEntry entryAt(Object key) {
@@ -247,7 +304,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   public Object valAt(Object key) {
-    Descriptors.FieldDescriptor field = def.fieldDescriptor((Keyword) key);
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return null;
     return fromProtoValue(field, message().getField(field));
   }
@@ -259,10 +316,12 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   public IPersistentMap assoc(Object key, Object val) {
     DynamicMessage.Builder builder = builder();
-    Descriptors.FieldDescriptor field = def.fieldDescriptor((Keyword) key);
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
     if (field == null) return this;
-    setField(builder, field, val);
+    if (field.isRepeated()) builder.clearField(field);
+    addField(builder, field, val);
+
     return new PersistentProtocolBufferMap(meta(), def, builder);
   }
 
@@ -272,27 +331,26 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   public IPersistentCollection cons(Object o) {
+    DynamicMessage.Builder builder = builder();
+
     if (o instanceof Map.Entry) {
       Map.Entry e = (Map.Entry) o;
-      return assoc(e.getKey(), e.getValue());
+      addField(builder, (Keyword) e.getKey(), e.getValue());
     }	else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector) o;
       if (v.count() != 2) throw new IllegalArgumentException("Vector arg to map conj must be a pair");
-      return assoc(v.nth(0), v.nth(1));
-    }
-
-    DynamicMessage.Builder builder = builder();
-
-    for(ISeq s = RT.seq(o); s != null; s = s.next()) {
-      Map.Entry e = (Map.Entry) s.first();
-      Keyword key = (Keyword) e.getKey();
-      setField(builder, def.fieldDescriptor(key), e.getValue());
+      addField(builder, (Keyword) v.nth(0), v.nth(1));
+    } else {
+      for (ISeq s = RT.seq(o); s != null; s = s.next()) {
+        Map.Entry e = (Map.Entry) s.first();
+        addField(builder, (Keyword) e.getKey(), e.getValue());
+      }
     }
     return new PersistentProtocolBufferMap(meta(), def, builder);
   }
 
   public IPersistentMap without(Object key) throws Exception {
-    Descriptors.FieldDescriptor field = def.fieldDescriptor((Keyword) key);
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return this;
     if (field.isRequired()) throw new Exception("Can't remove required field");
 
