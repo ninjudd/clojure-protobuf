@@ -1,0 +1,22 @@
+package test.protobuf;
+
+option java_outer_classname = "Proto";
+
+message Foo {
+  required uint32 num  = 1;
+  optional string info = 2;
+  repeated string tags = 3;
+  repeated Response responses = 4;
+
+  enum Response {
+    YES   = 0;
+    NO    = 1;
+    MAYBE = 1;
+  }
+}
+
+message Bar {
+  repeated string tags = 1;
+  optional string type = 2;
+  optional string data = 3;
+}
