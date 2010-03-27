@@ -1,0 +1,10 @@
+import "google/protobuf/descriptor.proto";
+
+option java_package = "clojure.protobuf";
+option java_outer_classname = "Collections";
+
+extend google.protobuf.FieldOptions {
+  optional bool   set    = 52001;
+  optional bool   map    = 52002;
+  optional string map_by = 52003;
+}

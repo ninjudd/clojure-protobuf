@@ -6,7 +6,7 @@
 
   <property name="repository.protobuf" value="http://protobuf.googlecode.com/files"/>
   <property name="dep.protobuf" value="protobuf-2.3.0"/>
-  <property name="protobuf" value="lib/${dep.protobuf}"/>  
+  <property name="protobuf" value="lib/${dep.protobuf}"/>
 
   <property name="install_prefix" value="/usr/local"/>
 
@@ -61,12 +61,19 @@
   </target>
 
   <target name="compile_protobuf" depends="make_protobuf">
-    <exec dir="${protobuf}/java" executable="../src/protoc">
-      <arg value="--java_out=src/main/java"/>
-      <arg value="-I../src"/>
-      <arg value="../src/google/protobuf/descriptor.proto"/>
+    <exec executable="mkdir" failonerror="true">
+      <arg value="-p"/>
+      <arg line="proto/google/protobuf proto/src"/>
     </exec>
-    <javac srcdir="${protobuf}/java/src/main/java" destdir="classes"/>
+    <exec executable="cp" failonerror="true">
+      <arg line="${protobuf}/src/google/protobuf/descriptor.proto proto/google/protobuf"/>
+    </exec>
+    <exec dir="proto" executable="../${protobuf}/src/protoc">
+      <arg value="--java_out=src"/>
+      <arg value="google/protobuf/descriptor.proto"/>
+      <arg value="collections.proto"/>
+    </exec>
+    <javac srcdir="proto/src" destdir="classes"/>
   </target>
 
   <available file="${clojure.jar}" property="has_clojure"/>

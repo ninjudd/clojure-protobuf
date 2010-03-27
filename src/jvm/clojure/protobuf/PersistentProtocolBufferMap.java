@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.CodedInputStream;
 
 public class PersistentProtocolBufferMap extends APersistentMap { //implements IPersistentSet{
@@ -157,8 +158,8 @@ public class PersistentProtocolBufferMap extends APersistentMap { //implements I
     }
   }
 
-  static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword = new ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword>();
-
+  static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword =
+     new ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword>();
   static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
     Keyword keyword = enum_to_keyword.get(enum_value);
     if (keyword == null) {
@@ -169,23 +170,67 @@ public class PersistentProtocolBufferMap extends APersistentMap { //implements I
     return keyword;
   }
 
+
+  static Keyword k_null = Keyword.intern(Symbol.intern(""));
+  static ConcurrentHashMap<Descriptors.FieldDescriptor, Keyword> map_field_by =
+     new ConcurrentHashMap<Descriptors.FieldDescriptor, Keyword>();
+  static protected Keyword mapFieldBy(Descriptors.FieldDescriptor field) {
+    Keyword keyword = map_field_by.get(field);
+    if (keyword == null) {
+      String name = field.getOptions().getExtension(Collections.mapBy);
+
+      name = name.toLowerCase().replaceAll("_","-");
+      keyword = Keyword.intern(Symbol.intern(name));
+      map_field_by.putIfAbsent(field, keyword);
+    }
+    return keyword == k_null ? null : keyword;
+  }
+
+  static Keyword k_key = Keyword.intern(Symbol.intern("key"));
+  static Keyword k_val = Keyword.intern(Symbol.intern("val"));
   static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
     if (value instanceof List) {
       List values = (List) value;
       Iterator iterator = values.iterator();
+      List<Object> items;
 
-      List<Object> items = new ArrayList<Object>(values.size());
-      while (iterator.hasNext()) {
-        items.add(fromProtoValue(field, iterator.next()));
+      Keyword map_field_by = mapFieldBy(field);
+      DescriptorProtos.FieldOptions options = field.getOptions();
+      if (map_field_by != null) {
+        items = new ArrayList<Object>(values.size() * 2);
+
+        while (iterator.hasNext()) {
+          PersistentProtocolBufferMap protobuf = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
+          items.add(protobuf.valAt(map_field_by));
+          items.add(protobuf);
+        }
+        return PersistentHashMap.create(items);
+      } else if (options.getExtension(Collections.map)) {
+        items = new ArrayList<Object>(values.size() * 2);
+        Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+        Descriptors.FieldDescriptor key = def.fieldDescriptor(k_key);
+        Descriptors.FieldDescriptor val = def.fieldDescriptor(k_val);
+
+        while (iterator.hasNext()) {
+          DynamicMessage message = (DynamicMessage) iterator.next();
+          items.add(fromProtoValue(key, message.getField(key)));
+          items.add(fromProtoValue(val, message.getField(val)));
+        }
+        return PersistentHashMap.create(items);
+      } else {
+        items = new ArrayList<Object>(values.size());
+        while (iterator.hasNext()) {
+          items.add(fromProtoValue(field, iterator.next()));
+        }
+        return options.getExtension(Collections.set) ? PersistentHashSet.create(items) : PersistentVector.create(items);
       }
-      return PersistentVector.create(items);
     } else {
       switch (field.getJavaType()) {
       case ENUM:
         Descriptors.EnumValueDescriptor e = (Descriptors.EnumValueDescriptor) value;
         return enumToKeyword(e);
       case MESSAGE:
-        Def def  = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+        Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
         DynamicMessage message = (DynamicMessage) value;
 
         // Total hack because getField() doesn't return an empty array for repeated messages.

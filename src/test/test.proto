@@ -1,4 +1,5 @@
 package test.protobuf;
+import "collections.proto";
 
 option java_outer_classname = "Proto";
 
@@ -6,7 +7,8 @@ message Foo {
   required uint32 num  = 1;
   optional string info = 2;
   repeated string tags = 3;
-  repeated Response responses = 4;
+  repeated string tag_set = 4 [(set) = true];
+  repeated Response responses = 5;
 
   enum Response {
     YES   = 0;
