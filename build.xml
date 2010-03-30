@@ -53,27 +53,6 @@
     </exec>
   </target>
 
-  <target name="install" depends="make_protobuf">
-    <echo message="Installing to ${install_prefix}/"/>
-    <exec executable="mkdir" failonerror="true">
-      <arg value="-p"/>
-      <arg line="lib/install/var/java lib/install/include/clojure/protobuf"/>
-    </exec>
-    <exec executable="cp" failonerror="true">
-      <arg line="src/protoclj lib/install/bin"/>
-    </exec>
-    <chmod file="${install_prefix}/bin/protoclj" perm="+x"/>
-    <exec executable="cp" failonerror="true">
-      <arg line="src/collections.proto lib/install/include/clojure/protobuf"/>
-    </exec>
-    <exec executable="cp" failonerror="true">
-      <arg line="clojure-protobuf.jar lib/install/var/java"/>
-    </exec>
-    <exec executable="cp" failonerror="true">
-      <arg line="-Rf ${basedir}/lib/install/ ${install_prefix}"/>
-    </exec>
-  </target>
-
   <available file="${protobuf}/src/clojure/protobuf/Collections.java" property="proto_compiled"/>
   <target name="compile_protobuf" depends="make_protobuf" unless="proto_compiled">
     <exec executable="mkdir" failonerror="true">
@@ -119,6 +98,28 @@
 
   <target name="package" depends="compile">
     <jar destfile="clojure-protobuf.jar" basedir="classes"/>
+
+    <exec executable="mkdir" failonerror="true">
+      <arg value="-p"/>
+      <arg line="lib/install/var/java lib/install/include/clojure/protobuf"/>
+    </exec>
+    <exec executable="cp" failonerror="true">
+      <arg line="src/protoclj lib/install/bin"/>
+    </exec>
+    <chmod file="${install_prefix}/bin/protoclj" perm="+x"/>
+    <exec executable="cp" failonerror="true">
+      <arg line="src/collections.proto lib/install/include/clojure/protobuf"/>
+    </exec>
+    <exec executable="cp" failonerror="true">
+      <arg line="clojure-protobuf.jar lib/install/var/java"/>
+    </exec>
+  </target>
+
+  <target name="install" depends="package">
+    <echo message="Installing to ${install_prefix}/"/>
+    <exec executable="cp" failonerror="true">
+      <arg line="-Rf ${basedir}/lib/install/ ${install_prefix}"/>
+    </exec>
   </target>
 
   <target name="compile_test_proto" depends="compile">
