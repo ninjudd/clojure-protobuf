@@ -3,47 +3,59 @@
   (:use clojure.test))
 
 (defprotobuf Foo test.protobuf.Proto Foo)
-(defprotobuf Bar test.protobuf.Proto Bar)
 
-(deftest protobuf-methods
+(deftest protobuf-simple
   (testing "conj"
-    (let [p (protobuf Foo :num 5 :tags ["little" "yellow"])]
-      (let [p (conj p {:info "bar"})]
-        (is (= 5     (:num p)))
-        (is (= "bar" (:info p)))
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+      (let [p (conj p {:label "bar"})]
+        (is (= 5     (:id p)))
+        (is (= "bar" (:label p)))
         (is (= ["little" "yellow"] (:tags p))))
       (let [p (conj p {:tags ["different"]})]
         (is (= ["little" "yellow" "different"] (:tags p))))
-      (let [p (conj p {:tags ["different"] :info "very"})]
+      (let [p (conj p {:tags ["different"] :label "very"})]
         (is (= ["little" "yellow" "different"] (:tags p)))
-        (is (= "very" (:info p))))
+        (is (= "very" (:label p))))
       ))
   (testing "assoc"
-    (let [p (protobuf Foo :num 5 :tags ["little" "yellow"])]
-      (let [p (assoc p :info "baz" :tags ["nuprin"])]
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+      (let [p (assoc p :label "baz" :tags ["nuprin"])]
         (is (= ["nuprin"] (:tags p)))
-        (is (= "baz"      (:info p))))
+        (is (= "baz"      (:label p))))
       (let [p (assoc p "responses" [:yes :no :maybe :no "yes"])]
         (is (= [:yes :no :maybe :no :yes] (:responses p))))
       (let [p (assoc p :tags "aspirin")]
         (is (= ["aspirin"] (:tags p))))
       ))
   (testing "dissoc"
-    (let [p (protobuf Foo :num 5 :tags ["fast" "shiny"])]
-      (let [p (dissoc p :info :tags)]
+    (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"])]
+      (let [p (dissoc p :label :tags)]
         (is (= [] (:tags p)))
-        (is (= "" (:info p))))
+        (is (= "" (:label p))))
       ))
-  (testing "contains?"
-    (let [p (protobuf Foo :num 5 :tags ["little" "yellow"])]
-      (is (contains? p :num))
-      (is (contains? p :tags))
-      (is (contains? p {:num 5}))
-      (is (contains? p {:tags "yellow"}))
-      (is (not (contains? p {:info "nuprin"})))
-      (is (not (contains? p :sdsfsdfd)))
-      (is (not (contains? p {:num 6})))
-      (is (not (contains? p {:tags "big"})))
-      ))
-
   )
+
+(deftest protobuf-extended
+  (testing "create"
+    (let [p (protobuf Foo :id 5 :tag-set ["little" "yellow"] :attr-map {"size" "little", "color" "yellow", "style" "different"})]
+      (is (= #{"little" "yellow"} (:tag-set p)))
+      (is (associative? (:attr-map p)))
+      (is (= "different" (get-in p [:attr-map "style"])))
+      (is (= "little"    (get-in p [:attr-map "size" ])))
+      (is (= "yellow"    (get-in p [:attr-map "color"])))
+      )
+    (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five"}, 6 {:label "six"}})]
+      (let [five ((p :foo-by-id) 5)
+            six  ((p :foo-by-id) 6)]
+        (is (= 5      (five :id)))
+        (is (= "five" (five :label)))
+        (is (= 6      (six  :id)))
+        (is (= "six"  (six  :label))))
+      ))
+  (testing "conj"
+    (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five", :tag-set ["odd"]}, 6 {:label "six" :tags ["even"]}})]
+      (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["even"]}}})]
+        (is (= #{"prime" "odd"} (get-in p [:foo-by-id 5 :tag-set])))
+        (is (= ["even" "even"]  (get-in p [:foo-by-id 6 :tags]))))
+      )))
+

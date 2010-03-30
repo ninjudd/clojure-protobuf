@@ -91,7 +91,7 @@
   </path>
 
   <target name="compile" depends="compile_protobuf,fetch_clojure">
-    <javac srcdir="src/jvm" destdir="classes" classpathref="classpath"/>
+    <javac srcdir="src/jvm" destdir="classes" classpathref="classpath" debug="true"/>
     <java classname="clojure.lang.Compile" classpathref="classpath" failonerror="true">
       <sysproperty key="clojure.compile.path" value="classes"/>
       <arg value="protobuf"/>

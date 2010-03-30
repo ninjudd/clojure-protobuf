@@ -4,10 +4,10 @@ import "collections.proto";
 option java_outer_classname = "Proto";
 
 message Foo {
-  required uint32 num  = 1;
-  optional string info = 2;
-  repeated string tags = 3;
-  repeated string tag_set = 4 [(set) = true];
+  required uint32   id        = 1;
+  optional string   label     = 2;
+  repeated string   tags      = 3;
+  optional Foo      parent    = 4;
   repeated Response responses = 5;
 
   enum Response {
@@ -15,10 +15,19 @@ message Foo {
     NO    = 1;
     MAYBE = 1;
   }
+
+  repeated string tag_set   = 10 [(set)    = true];
+  repeated Pair   attr_map  = 11 [(map)    = true];
+  repeated Foo    foo_by_id = 12 [(map_by) = "id"];
+  repeated Group  groups    = 13 [(map)    = true];
 }
 
-message Bar {
-  repeated string tags = 1;
-  optional string type = 2;
-  optional string data = 3;
+message Pair {
+  required string key = 1;
+  required string val = 2;
+}
+
+message Group {
+  required string key = 1;
+  repeated Foo    val = 2;
 }

@@ -7,10 +7,10 @@ they are WAY faster to serialize and deserialize than standard Clojure objects.
 Write a `.proto` file:
 
     message Person {
-      required int32 id = 1;
-      required string name = 2;
+      required int32  id    = 1;
+      required string name  = 2;
       optional string email = 3;
-      repeated string nicknames = 4;
+      repeated string likes = 4;
     }
 
 Compile the file to Java:
@@ -28,6 +28,9 @@ Now you can use the protocol buffer in clojure:
     (assoc p :name "Bill"))
     => {:id 4, :name "Bill", :email "bob@example.com"}
 
+    (assoc p :likes ["climbing" "running" "jumping"])
+    => {:id 4, name "Bob", :email "bob@example.com", :likes ["climbing" "running" "jumping"]}
+
     (def b (protobuf-bytes p))
     => #<byte[] [B@7cbe41ec>
 
@@ -36,6 +39,37 @@ Now you can use the protocol buffer in clojure:
 
 A protocol buffer map is immutable just like other clojure objects. It is similar to a
 struct-map, except you cannot insert fields that aren't specified in the `.proto` file.
+
+## Collection extensions
+
+Clojure-protobuf supports extensions to protocol buffers which provide sets and maps using
+repeated fields. To use these, you must import the extension file and include it when compiling. For example:
+
+    import "collections.proto";
+    message Photo {
+      required int32  id     = 1;
+      required string path   = 2;
+      repeated string labels = 3 [(set)    = true];
+      repeated Attr   attrs  = 4 [(map)    = true];
+      repeated Tag    tags   = 5 [(map_by) = "person_id"];
+
+      message Attr {
+        required string key = 1;
+        optional string val = 2;
+      }
+
+      message Tag {
+        required int32 person_id = 1;
+        optional int32 x_coord   = 2;
+        optional int32 y_coord   = 3;
+        optional int32 width     = 4;
+        optional int32 height    = 5;
+      }
+    }
+
+Compile the file to Java:
+
+     protoc --java_out=. -I<clojure-protobuf-path>/proto/ -I. example.proto
 
 ## Installation
 

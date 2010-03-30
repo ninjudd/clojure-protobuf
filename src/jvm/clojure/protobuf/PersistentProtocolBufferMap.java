@@ -23,7 +23,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.CodedInputStream;
 
-public class PersistentProtocolBufferMap extends APersistentMap { //implements IPersistentSet{
+public class PersistentProtocolBufferMap extends APersistentMap {
   public static class Def {
     final Descriptors.Descriptor type;
     ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;
@@ -192,37 +192,46 @@ public class PersistentProtocolBufferMap extends APersistentMap { //implements I
     if (value instanceof List) {
       List values = (List) value;
       Iterator iterator = values.iterator();
-      List<Object> items;
 
       Keyword map_field_by = mapFieldBy(field);
       DescriptorProtos.FieldOptions options = field.getOptions();
       if (map_field_by != null) {
-        items = new ArrayList<Object>(values.size() * 2);
-
+        ITransientMap map = PersistentHashMap.EMPTY.asTransient();
         while (iterator.hasNext()) {
-          PersistentProtocolBufferMap protobuf = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
-          items.add(protobuf.valAt(map_field_by));
-          items.add(protobuf);
+          PersistentProtocolBufferMap val = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
+          Object key = val.valAt(map_field_by);
+          PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(key);
+          if (existing != null) {
+            map.assoc(key, existing.cons(val));
+          } else {
+            map.assoc(key, val);
+          }
         }
-        return PersistentHashMap.create(items);
+        return map.persistent();
       } else if (options.getExtension(Collections.map)) {
-        items = new ArrayList<Object>(values.size() * 2);
         Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
-        Descriptors.FieldDescriptor key = def.fieldDescriptor(k_key);
-        Descriptors.FieldDescriptor val = def.fieldDescriptor(k_val);
+        Descriptors.FieldDescriptor key_field = def.fieldDescriptor(k_key);
+        Descriptors.FieldDescriptor val_field = def.fieldDescriptor(k_val);
 
+        ITransientMap map = PersistentHashMap.EMPTY.asTransient();
         while (iterator.hasNext()) {
           DynamicMessage message = (DynamicMessage) iterator.next();
-          items.add(fromProtoValue(key, message.getField(key)));
-          items.add(fromProtoValue(val, message.getField(val)));
+          Object key = fromProtoValue(key_field, message.getField(key_field));
+          Object val = fromProtoValue(val_field, message.getField(val_field));
+          Object existing = map.valAt(key);
+          if (existing != null && existing instanceof IPersistentCollection) {
+            map.assoc(key, ((IPersistentCollection) existing).cons(val));
+          } else {
+            map.assoc(key, val);
+          }
         }
-        return PersistentHashMap.create(items);
+        return map.persistent();
       } else {
-        items = new ArrayList<Object>(values.size());
+        List<Object> list = new ArrayList<Object>(values.size());
         while (iterator.hasNext()) {
-          items.add(fromProtoValue(field, iterator.next()));
+          list.add(fromProtoValue(field, iterator.next()));
         }
-        return options.getExtension(Collections.set) ? PersistentHashSet.create(items) : PersistentVector.create(items);
+        return options.getExtension(Collections.set) ? PersistentHashSet.create(list) : PersistentVector.create(list);
       }
     } else {
       switch (field.getJavaType()) {
@@ -285,17 +294,37 @@ public class PersistentProtocolBufferMap extends APersistentMap { //implements I
     if (field == null) return;
 
     if (field.isRepeated()) {
-      if (val instanceof Sequential) {
+      if (val instanceof Sequential || val instanceof IPersistentSet) {
         for (ISeq s = RT.seq(val); s != null; s = s.next()) {
           Object value = toProtoValue(field, s.first());
           builder.addRepeatedField(field, value);
         }
       } else {
-        Object value = toProtoValue(field, val);
-        builder.addRepeatedField(field, value);
+        Keyword map_field_by = mapFieldBy(field);
+        if (map_field_by != null) {
+          for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+            Map.Entry e = (Map.Entry) s.first();
+            IPersistentMap map = (IPersistentMap) e.getValue();
+            Object value = toProtoValue(field, map.assoc(map_field_by, e.getKey()));
+            builder.addRepeatedField(field, value);
+          }
+        } else if (field.getOptions().getExtension(Collections.map)) {
+          for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+            Map.Entry e = (Map.Entry) s.first();
+            Object[] map = {k_key, e.getKey(), k_val, e.getValue()};
+            Object value = toProtoValue(field, new PersistentArrayMap(map));
+            builder.addRepeatedField(field, value);
+          }
+        } else {
+          Object value = toProtoValue(field, val);
+          builder.addRepeatedField(field, value);
+        }
       }
     } else {
       Object value = toProtoValue(field, val);
+      if (value instanceof DynamicMessage) {
+        value = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) value);
+      }
       builder.setField(field, value);
     }
   }
@@ -305,41 +334,14 @@ public class PersistentProtocolBufferMap extends APersistentMap { //implements I
     return new PersistentProtocolBufferMap(meta(), def, message);
   }
 
-  public boolean contains(Object key){
-    if (key instanceof IPersistentMap) {
-      for (ISeq s = RT.seq(key); s != null; s = s.next()) {
-        Map.Entry e = (Map.Entry) s.first();
-        Object v = e.getValue();
-        Object value = valAt(e.getKey());
-
-        if (value instanceof APersistentVector) {
-          APersistentVector vec = (APersistentVector) value;
-          if (!vec.contains(v)) return false;
-        } else if (value instanceof IPersistentSet) {
-          IPersistentSet set = (IPersistentSet) value;
-          if (!set.contains(v)) return false;
-        } else {
-          if (value != v) return false;
-        }
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   public boolean containsKey(Object key) {
-    if (key instanceof IPersistentMap) {
-      return contains(key);
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+    if (field == null) {
+      return false;
+    } else if (field.isRepeated()) {
+      return message().getRepeatedFieldCount(field) > 0;
     } else {
-      Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
-      if (field == null) {
-        return false;
-      } else if (field.isRepeated()) {
-        return message().getRepeatedFieldCount(field) > 0;
-      } else {
-        return message().hasField(field);
-      }
+      return message().hasField(field);
     }
   }
 
