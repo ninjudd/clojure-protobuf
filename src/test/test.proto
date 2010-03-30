@@ -1,5 +1,5 @@
 package test.protobuf;
-import "collections.proto";
+import "clojure/protobuf/collections.proto";
 
 option java_outer_classname = "Proto";
 

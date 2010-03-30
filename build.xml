@@ -55,25 +55,43 @@
 
   <target name="install" depends="make_protobuf">
     <echo message="Installing to ${install_prefix}/"/>
+    <exec executable="mkdir" failonerror="true">
+      <arg value="-p"/>
+      <arg line="lib/install/var/java lib/install/include/clojure/protobuf"/>
+    </exec>
+    <exec executable="cp" failonerror="true">
+      <arg line="src/protoclj lib/install/bin"/>
+    </exec>
+    <chmod file="${install_prefix}/bin/protoclj" perm="+x"/>
+    <exec executable="cp" failonerror="true">
+      <arg line="src/collections.proto lib/install/include/clojure/protobuf"/>
+    </exec>
+    <exec executable="cp" failonerror="true">
+      <arg line="clojure-protobuf.jar lib/install/var/java"/>
+    </exec>
     <exec executable="cp" failonerror="true">
       <arg line="-Rf ${basedir}/lib/install/ ${install_prefix}"/>
     </exec>
   </target>
 
-  <target name="compile_protobuf" depends="make_protobuf">
+  <available file="${protobuf}/src/clojure/protobuf/Collections.java" property="proto_compiled"/>
+  <target name="compile_protobuf" depends="make_protobuf" unless="proto_compiled">
     <exec executable="mkdir" failonerror="true">
       <arg value="-p"/>
-      <arg line="proto/google/protobuf proto/src"/>
+      <arg line="${protobuf}/src/clojure/protobuf"/>
     </exec>
     <exec executable="cp" failonerror="true">
-      <arg line="${protobuf}/src/google/protobuf/descriptor.proto proto/google/protobuf"/>
+      <arg line="src/collections.proto ${protobuf}/src/clojure/protobuf"/>
     </exec>
-    <exec dir="proto" executable="../${protobuf}/src/protoc">
-      <arg value="--java_out=src"/>
+    <exec dir="${protobuf}/src" executable="protoc">
+      <arg value="--java_out=."/>
       <arg value="google/protobuf/descriptor.proto"/>
-      <arg value="collections.proto"/>
+      <arg value="clojure/protobuf/collections.proto"/>
     </exec>
-    <javac srcdir="proto/src" destdir="classes"/>
+    <javac srcdir="${protobuf}/src" destdir="classes">
+      <include name="com/google/protobuf/DescriptorProtos.java"/>
+      <include name="clojure/protobuf/Collections.java"/>
+    </javac>
   </target>
 
   <available file="${clojure.jar}" property="has_clojure"/>
@@ -87,6 +105,7 @@
   <path id="classpath">
     <pathelement location="${clojure.jar}"/>
     <pathelement location="src/clj"/>
+    <pathelement location="src"/>
     <pathelement location="classes"/>
   </path>
 
@@ -102,4 +121,21 @@
     <jar destfile="clojure-protobuf.jar" basedir="classes"/>
   </target>
 
+  <target name="compile_test_proto" depends="compile">
+    <exec dir="src" executable="protoc">
+      <arg value="--java_out=."/>
+      <arg value="-I."/>
+      <arg value="-I../${protobuf}/src"/>
+      <arg value="test/test.proto"/>
+    </exec>
+    <javac srcdir="src" classpathref="classpath">
+      <include name="test/protobuf/Proto.java"/>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile_test_proto">
+    <java classname="clojure.main" classpathref="classpath" failonerror="true" fork="true">
+      <arg value="src/test.clj"/>
+    </java>
+  </target>
 </project>
