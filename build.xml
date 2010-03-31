@@ -53,24 +53,31 @@
     </exec>
   </target>
 
-  <available file="${protobuf}/src/clojure/protobuf/Collections.java" property="proto_compiled"/>
+  <path id="classpath">
+    <pathelement location="${clojure.jar}"/>
+    <pathelement location="src/clj"/>
+    <pathelement location="src"/>
+    <pathelement location="classes"/>
+  </path>
+
+  <available file="classes/com/google/protobuf/DescriptorProtos.class" property="proto_compiled"/>
   <target name="compile_protobuf" depends="make_protobuf" unless="proto_compiled">
-    <exec executable="mkdir" failonerror="true">
-      <arg value="-p"/>
-      <arg line="${protobuf}/src/clojure/protobuf"/>
+    <exec dir="${protobuf}/java" executable="protoc">
+      <arg value="--java_out=src/main/java"/>
+      <arg value="-I../src"/>
+      <arg value="../src/google/protobuf/descriptor.proto"/>
     </exec>
-    <exec executable="cp" failonerror="true">
-      <arg line="src/collections.proto ${protobuf}/src/clojure/protobuf"/>
+    <javac srcdir="${protobuf}/java/src/main" destdir="classes"/>
+  </target>
+
+  <available file="src/jvm/clojure/protobuf/Collections.java" property="collections_proto_compiled"/>
+  <target name="compile_collections_proto" depends="compile_protobuf" unless="collections_proto_compiled">
+    <exec dir="src" executable="protoc">
+      <arg value="--java_out=jvm"/>
+      <arg value="-I."/>
+      <arg value="-I../${protobuf}/src"/>
+      <arg value="collections.proto"/>
     </exec>
-    <exec dir="${protobuf}/src" executable="protoc">
-      <arg value="--java_out=."/>
-      <arg value="google/protobuf/descriptor.proto"/>
-      <arg value="clojure/protobuf/collections.proto"/>
-    </exec>
-    <javac srcdir="${protobuf}/src" destdir="classes">
-      <include name="com/google/protobuf/DescriptorProtos.java"/>
-      <include name="clojure/protobuf/Collections.java"/>
-    </javac>
   </target>
 
   <available file="${clojure.jar}" property="has_clojure"/>
@@ -81,14 +88,7 @@
     <copy file="lib/${dep.clojure}/clojure.jar" todir="lib"/>
   </target>
 
-  <path id="classpath">
-    <pathelement location="${clojure.jar}"/>
-    <pathelement location="src/clj"/>
-    <pathelement location="src"/>
-    <pathelement location="classes"/>
-  </path>
-
-  <target name="compile" depends="compile_protobuf,fetch_clojure">
+  <target name="compile" depends="compile_protobuf,compile_collections_proto,fetch_clojure">
     <javac srcdir="src/jvm" destdir="classes" classpathref="classpath" debug="true"/>
     <java classname="clojure.lang.Compile" classpathref="classpath" failonerror="true">
       <sysproperty key="clojure.compile.path" value="classes"/>
