@@ -72,11 +72,11 @@
 
   <available file="src/jvm/clojure/protobuf/Collections.java" property="collections_proto_compiled"/>
   <target name="compile_collections_proto" depends="compile_protobuf" unless="collections_proto_compiled">
-    <exec dir="src" executable="../${protobuf}/src/protoc">
-      <arg value="--java_out=jvm"/>
+    <exec dir="src/jvm" executable="../../${protobuf}/src/protoc">
+      <arg value="--java_out=."/>
       <arg value="-I."/>
-      <arg value="-I../${protobuf}/src"/>
-      <arg value="collections.proto"/>
+      <arg value="-I../../${protobuf}/src"/>
+      <arg value="clojure/protobuf/collections.proto"/>
     </exec>
   </target>
 
@@ -108,7 +108,7 @@
     </exec>
     <chmod file="${install_prefix}/bin/protoclj" perm="+x"/>
     <exec executable="cp" failonerror="true">
-      <arg line="src/collections.proto lib/install/include/clojure/protobuf"/>
+      <arg line="src/jvm/clojure/protobuf/collections.proto lib/install/include/clojure/protobuf"/>
     </exec>
     <exec executable="cp" failonerror="true">
       <arg line="clojure-protobuf.jar lib/install/var/java"/>
