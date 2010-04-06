@@ -68,7 +68,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     public Descriptors.FieldDescriptor fieldDescriptor(Object key) {
       if (key == null) return null;
 
-      if (key instanceof Keyword) {
+      if (key instanceof Descriptors.FieldDescriptor) {
+        return (Descriptors.FieldDescriptor) key;
+      } else if (key instanceof Keyword) {
         Keyword keyword = (Keyword) key;
         Descriptors.FieldDescriptor field = keyword_to_field.get(keyword);
         if (field == null) {
@@ -286,12 +288,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  protected void addField(DynamicMessage.Builder builder, Keyword key, Object val) {
-    addField(builder, def.fieldDescriptor(key), val);
-  }
-
-  protected void addField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object val) {
-    if (field == null) return;
+  protected void addField(DynamicMessage.Builder builder, Object key, Object val) {
+    if (key == null) return;
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
     if (field.isRepeated()) {
       if (val instanceof Sequential || val instanceof IPersistentSet) {
@@ -382,15 +381,15 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
     if (o instanceof Map.Entry) {
       Map.Entry e = (Map.Entry) o;
-      addField(builder, (Keyword) e.getKey(), e.getValue());
+      addField(builder, e.getKey(), e.getValue());
     }	else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector) o;
       if (v.count() != 2) throw new IllegalArgumentException("Vector arg to map conj must be a pair");
-      addField(builder, (Keyword) v.nth(0), v.nth(1));
+      addField(builder, v.nth(0), v.nth(1));
     } else {
       for (ISeq s = RT.seq(o); s != null; s = s.next()) {
         Map.Entry e = (Map.Entry) s.first();
-        addField(builder, (Keyword) e.getKey(), e.getValue());
+        addField(builder, e.getKey(), e.getValue());
       }
     }
     return new PersistentProtocolBufferMap(meta(), def, builder);

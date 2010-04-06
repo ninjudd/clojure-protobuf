@@ -126,7 +126,8 @@
     <exec dir="src" executable="../${protobuf}/src/protoc">
       <arg value="--java_out=."/>
       <arg value="-I."/>
-      <arg value="-I../${protobuf}/src"/>
+      <arg value="-Ijvm/"/>
+      <arg value="-I../${protobuf}/src/"/>
       <arg value="test/test.proto"/>
     </exec>
     <javac srcdir="src" classpathref="classpath">

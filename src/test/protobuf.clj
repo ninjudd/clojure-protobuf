@@ -33,6 +33,16 @@
         (is (= [] (:tags p)))
         (is (= "" (:label p))))
       ))
+  (testing "string keys"
+    (let [p (protobuf Foo "id" 5 "label" "rad")]
+      (is (= 5 (p :id)))
+      (is (= 5 (p "id")))
+      (is (= "rad" (p :label)))
+      (is (= "rad" (p "label")))
+      (let [p (conj p {"tags" ["check" "it" "out"]})]
+        (is (= ["check" "it" "out"] (p :tags)))
+        (is (= ["check" "it" "out"] (p "tags"))))
+      ))
   )
 
 (deftest protobuf-extended
