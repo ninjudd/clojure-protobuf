@@ -43,7 +43,21 @@
         (is (= ["check" "it" "out"] (p :tags)))
         (is (= ["check" "it" "out"] (p "tags"))))
       ))
-  )
+  (testing "protofields"
+    (let [fields '(:id :label :tags :parent :responses :tag_set :attr_map :foo_by_id :groups)]
+      (is (= fields (protofields Foo)))
+      (is (= fields (protofields test.protobuf.Proto$Foo)))))
+  (testing "protodefault"
+    (is (= 0   (protodefault Foo :id)))
+    (is (= ""  (protodefault Foo :label)))
+    (is (= []  (protodefault Foo :tags)))
+    (is (= nil (protodefault Foo :parent)))
+    (is (= []  (protodefault Foo :responses)))
+    (is (= #{} (protodefault Foo :tag_set)))
+    (is (= {}  (protodefault Foo :foo_by_id)))
+    (is (= {}  (protodefault Foo :groups)))
+    (is (= {}  (protodefault test.protobuf.Proto$Foo :groups)))
+  ))
 
 (deftest protobuf-extended
   (testing "create"

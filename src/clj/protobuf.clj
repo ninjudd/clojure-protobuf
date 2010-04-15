@@ -23,6 +23,16 @@
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
      (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
+(defn protodefault [type key]
+  (let [type #^clojure.protobuf.PersistentProtocolBufferMap$Def (protodef type)]
+    (.defaultValue type key)))
+
+(defn protofields [type]
+  (let [type #^clojure.protobuf.PersistentProtocolBufferMap$Def (protodef type)
+        type #^com.google.protobuf.Descriptors$Descriptor (.getMessageType type)]
+    (map (fn [#^com.google.protobuf.Descriptors$FieldDescriptor field] (keyword (.getName field)))
+         (.getFields type))))
+
 (defn protobuf-load
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
      (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data)))
