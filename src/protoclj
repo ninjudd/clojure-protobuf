@@ -8,7 +8,7 @@ fi
 DIR=`dirname $FILE`
 TMP_DIR="/tmp/protoclj-`date +%s`"
 SRC_DIR=${2:-'.'}
-CLASS_DIR=${2:-$SRC_DIR}
+CLASS_DIR=${3:-$SRC_DIR}
 
 mkdir -p $TMP_DIR $SRC_DIR $CLASS_DIR
 protoc $1 -I$DIR/../include -I. --java_out=$TMP_DIR
