@@ -4,7 +4,7 @@ import "clojure/protobuf/collections.proto";
 option java_outer_classname = "Proto";
 
 message Foo {
-  required uint32   id        = 1;
+  optional uint32   id        = 1 [default = 43];
   optional string   label     = 2;
   repeated string   tags      = 3;
   optional Foo      parent    = 4;

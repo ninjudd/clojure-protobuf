@@ -4,6 +4,9 @@
 
 (defprotobuf Foo test.protobuf.Proto Foo)
 
+(defn catbytes [& args]
+  (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
+
 (deftest protobuf-simple
   (testing "conj"
     (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
@@ -43,12 +46,25 @@
         (is (= ["check" "it" "out"] (p :tags)))
         (is (= ["check" "it" "out"] (p "tags"))))
       ))
+  (testing "append"
+    (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"])
+          q (protobuf Foo :id 43 :tags ["savory"])
+          r (protobuf Foo :label "bad")
+          s (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump q)))
+          t (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump r)))]
+      (is (= 43 (s :id))) ; make sure an explicit default overwrites on append
+      (is (= 5  (t :id))) ; make sure a missing default doesn't overwrite on append
+      (is (= "rad" (s :label)))
+      (is (= "bad" (t :label)))
+      (is (= ["sweet"] (t :tags)))
+      (is (= ["sweet" "savory"] (s :tags)))
+    ))
   (testing "protofields"
     (let [fields '(:id :label :tags :parent :responses :tag_set :attr_map :foo_by_id :groups)]
       (is (= fields (protofields Foo)))
       (is (= fields (protofields test.protobuf.Proto$Foo)))))
   (testing "protodefault"
-    (is (= 0   (protodefault Foo :id)))
+    (is (= 43  (protodefault Foo :id)))
     (is (= ""  (protodefault Foo :label)))
     (is (= []  (protodefault Foo :tags)))
     (is (= nil (protodefault Foo :parent)))
