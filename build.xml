@@ -10,6 +10,11 @@
 
   <property name="install_prefix" value="/usr/local"/>
 
+  <condition property="copy_flags" value="-Rf">
+    <and><os family="unix"/><os family="mac"/></and>
+  </condition>
+  <property name="copy_flags" value="-RTf"/>
+
   <target name="init">
     <mkdir dir="lib"/>
     <mkdir dir="classes"/>
@@ -118,7 +123,7 @@
   <target name="install" depends="package">
     <echo message="Installing to ${install_prefix}/"/>
     <exec executable="cp" failonerror="true">
-      <arg line="-Rf ${basedir}/lib/install/ ${install_prefix}"/>
+      <arg line="${copy_flags} ${basedir}/lib/install/ ${install_prefix}"/>
     </exec>
   </target>
 
