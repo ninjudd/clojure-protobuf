@@ -12,5 +12,6 @@ CLASS_DIR=${3:-$SRC_DIR}
 
 mkdir -p $TMP_DIR $SRC_DIR $CLASS_DIR
 protoc $1 -I$DIR/../include -I. --java_out=$TMP_DIR
-cp -Rf $TMP_DIR/ $SRC_DIR
+cp -Rf $TMP_DIR/* $SRC_DIR
 javac -d $CLASS_DIR -cp $DIR/../var/java/clojure-protobuf.jar `find $TMP_DIR -name *.java`
+rm -rf $TMP_DIR
