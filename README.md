@@ -15,7 +15,7 @@ Write a `.proto` file:
 
 Compile the file to Java:
 
-    protoc --java_out=. example.proto
+    protoclj example.proto
 
 Now you can use the protocol buffer in clojure:
 
@@ -69,7 +69,7 @@ repeated fields. To use these, you must import the extension file and include it
 
 Compile the file to Java:
 
-     protoc --java_out=. -I<clojure-protobuf-path>/proto/ -I. example.proto
+     protoclj example.proto
 
 Then you can access the maps in clojure:
 
@@ -87,15 +87,26 @@ Then you can access the maps in clojure:
     (protobuf-load Photo b)
     => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
 
+## protoclj
+
+When you install clojure-protobuf, a helper script called protoclj is installed that makes
+building .proto files with clojure extensions easier. You can use it like this:
+
+  protoclj package/foo.proto [src] [classes]
+
+Note that if you are using a package in your .proto file, then the file must be in a
+directory structure that corresponds to that package and you must call protoclj from the
+package root.
+
 ## Installation
 
 To download clojure.jar and google's protobuf source automatically and install protoc:
     ant package
-    ant install
+    sudo ant install
 
 You can also specify options to configure (like the install prefix):
     ant package -Dconfigure='--prefix=/opt/local'
-    ant install
+    sudo ant install
 
 Or you can specify a specific location for clojure.jar or the protobuf source:
     ant package -Dclojure.jar=$HOME/lib/java/clojure-1.1.0.jar -Dprotobuf=$HOME/Downloads/protobuf-2.3.0

@@ -1,10 +1,16 @@
 #!/bin/sh
 
+if [ "$1" = "" ]; then
+  echo "usage: protoclj [protofile] [src_dir] [class_dir]"
+  exit
+fi
+
 if [ -L $0 ]; then
   FILE=`readlink $0`
 else
   FILE=$0
 fi
+
 DIR=`dirname $FILE`
 TMP_DIR="/tmp/protoclj-`date +%s`"
 SRC_DIR=${2:-'.'}
