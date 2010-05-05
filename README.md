@@ -20,9 +20,9 @@ Compile the file to Java:
 Now you can use the protocol buffer in clojure:
 
     (use 'protobuf)
-    (defprotobuf person Example Person)
+    (defprotobuf Person Example$Person)
 
-    (def p (protobuf person :id 4 :name "Bob" :email "bob@example.com"))
+    (def p (protobuf Person :id 4 :name "Bob" :email "bob@example.com"))
     => {:id 4, :name "Bob", :email "bob@example.com"}
 
     (assoc p :name "Bill"))
@@ -31,10 +31,10 @@ Now you can use the protocol buffer in clojure:
     (assoc p :likes ["climbing" "running" "jumping"])
     => {:id 4, name "Bob", :email "bob@example.com", :likes ["climbing" "running" "jumping"]}
 
-    (def b (protobuf-bytes p))
+    (def b (protobuf-dump p))
     => #<byte[] [B@7cbe41ec>
 
-    (protobuf person b)
+    (protobuf-load Person b)
     => {:id 4, :name "Bob", :email "bob@example.com"}
 
 A protocol buffer map is immutable just like other clojure objects. It is similar to a
@@ -70,6 +70,22 @@ repeated fields. To use these, you must import the extension file and include it
 Compile the file to Java:
 
      protoc --java_out=. -I<clojure-protobuf-path>/proto/ -I. example.proto
+
+Then you can access the maps in clojure:
+
+    (use 'protobuf)
+    (defprotobuf Photo Example$Photo)
+
+    (def p (protobuf Photo :id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}
+                           :attrs {"dimensions" "1632x1224", "alpha" "no", "color space" "RGB"}
+                           :tags  {4 {:person_id 4, :x_coord 607, :y_coord 813, :width 25, :height 27}}))
+    => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
+
+    (def b (protobuf-dump p))
+    => #<byte[] [B@7cbe41ec>
+
+    (protobuf-load Photo b)
+    => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
 
 ## Installation
 
