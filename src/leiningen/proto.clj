@@ -4,7 +4,7 @@
         [classlojure :only [extract-resource]]
         lancet))
 
-(def proto-src "protos/src")
+(def src-dir "classes") ; so lein clean will remove them
 
 (defn proto-files [dir]
   (for [file  (rest (file-seq (java.io.File. dir)))
@@ -16,7 +16,7 @@
      (extract-resource "protos/clojure/protobuf/collections.proto")) 1))
 
 (defn protoc
-  ([file] (protoc file proto-src))
+  ([file] (protoc file src-dir))
   ([file out]
      (println "compiling" file "to" out)
      (mkdir {:dir out})
@@ -28,13 +28,13 @@
   (install)
   (when (= "clojure-protobuf" (project :name))
     (fetch-source)
-    (let [src (str protobuf-dir "/java/src/main/java")]
-      (protoc (str protobuf-dir "/src/google/protobuf/descriptor.proto") src)               
-      (javac {:srcdir  (make-path src)
+    (let [src-dir (str protobuf-dir "/java/src/main/java")]
+;      (protoc (str protobuf-dir "/src/google/protobuf/descriptor.proto") src-dir)
+      (javac {:srcdir  (make-path src-dir)
               :destdir (:compile-path project)})))
   (doseq [file (proto-files "protos")]
     (protoc file))
-  (javac {:srcdir    (make-path proto-src)
+  (javac {:srcdir    (make-path src-dir)
           :destdir   (:compile-path project)
           :classpath (apply make-path (get-classpath project))}))
 

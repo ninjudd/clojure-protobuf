@@ -36,7 +36,7 @@
         (chmod   {:file (str protobuf-dir "/install-sh") :perm "+x"})
         (shell "./configure")
         (shell "make"))
-      (println "installing google protobuf compiler to /usr/local/lib...")
+      (println "installing google protobuf compiler...")
       (shell "sudo" "make" "install"))))
 
 (defn install-protoc [project]
