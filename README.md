@@ -91,7 +91,7 @@ Then you can access the maps in clojure:
 
 In your [Leiningen](http://github.com/technomancy/leiningen) project.clj:
 
-    :dependencies [[compojure "0.0.1-SNAPSHOT"]]
+    :dependencies [[clojure-protobuf "0.0.1-SNAPSHOT"]]
 
 Build from source:
 
