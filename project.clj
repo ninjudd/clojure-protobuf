@@ -1,8 +1,8 @@
-(defproject clojure-protobuf "0.0.1-SNAPSHOT"
+(defproject clojure-protobuf "0.0.4-SNAPSHOT"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[clojure         "1.2.0-master-SNAPSHOT"]
                  [clojure-contrib "1.2.0-SNAPSHOT"]]
-  :dev-dependencies [[lein-protobuf "0.0.2-SNAPSHOT"]]
+  :dev-dependencies [[lein-protobuf "0.0.4-SNAPSHOT"]]
   :source-path "src/clj"
   :java-source-path "src/jvm")
 
