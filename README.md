@@ -89,9 +89,9 @@ Then you can access the maps in clojure:
 
 ## Installation
 
-[Leiningen](http://github.com/technomancy/leiningen):
+In your [Leiningen](http://github.com/technomancy/leiningen) project.clj:
 
-    :dependencies [[compojure "0.4.0-SNAPSHOT"]]
+    :dependencies [[compojure "0.0.1-SNAPSHOT"]]
 
 Build from source:
 
