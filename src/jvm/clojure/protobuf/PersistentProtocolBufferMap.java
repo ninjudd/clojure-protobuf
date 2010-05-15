@@ -109,6 +109,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   final Def def;
   final DynamicMessage message;
+  final IPersistentMap _meta;
 
   DynamicMessage built_message;
 
@@ -129,19 +130,19 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   protected PersistentProtocolBufferMap(IPersistentMap meta, Def def) {
-    super(meta);
+    this._meta   = meta;
     this.def     = def;
     this.message = null;
   }
 
   protected PersistentProtocolBufferMap(IPersistentMap meta, Def def, DynamicMessage message) {
-    super(meta);
+    this._meta   = meta;
     this.def     = def;
     this.message = message;
   }
 
   protected PersistentProtocolBufferMap(IPersistentMap meta, Def def, DynamicMessage.Builder builder) {
-    super(meta);
+    this._meta   = meta;
     this.def     = def;
     this.message = builder.build();
   }
@@ -338,9 +339,13 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  public Obj withMeta(IPersistentMap meta) {
+  public PersistentProtocolBufferMap withMeta(IPersistentMap meta) {
     if (meta == meta()) return this;
     return new PersistentProtocolBufferMap(meta(), def, message);
+  }
+
+  public IPersistentMap meta(){
+    return _meta;
   }
 
   public boolean containsKey(Object key) {
@@ -458,7 +463,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       if(meta != meta()) return new Seq(meta, map, fields, i);
       return this;
     }
-
+    
     public Object first() {
       if (i == fields.length) return null;
       Descriptors.FieldDescriptor field = fields[i];
