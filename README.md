@@ -13,9 +13,9 @@ Write a `.proto` file:
       repeated string likes = 4;
     }
 
-Compile the file to Java:
+If you put it in the protos directory of your project, you can compile it with lein:
 
-    protoclj example.proto
+    lein proto example.proto
 
 Now you can use the protocol buffer in clojure:
 
@@ -67,9 +67,9 @@ repeated fields. To use these, you must import the extension file and include it
       }
     }
 
-Compile the file to Java:
+Compile the file:
 
-     protoclj example.proto
+     lein proto example.proto
 
 Then you can access the maps in clojure:
 
@@ -87,28 +87,15 @@ Then you can access the maps in clojure:
     (protobuf-load Photo b)
     => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
 
-## protoclj
-
-When you install clojure-protobuf, a helper script called protoclj is installed that makes
-building .proto files with clojure extensions easier. You can use it like this:
-
-  protoclj package/foo.proto [src] [classes]
-
-Note that if you are using a package in your .proto file, then the file must be in a
-directory structure that corresponds to that package and you must call protoclj from the
-package root.
-
 ## Installation
 
-To download clojure.jar and google's protobuf source automatically and install protoc:
-    ant package
-    sudo ant install
+[Leiningen](http://github.com/technomancy/leiningen):
 
-You can also specify options to configure (like the install prefix):
-    ant package -Dconfigure='--prefix=/opt/local'
-    sudo ant install
+    :dependencies [[compojure "0.4.0-SNAPSHOT"]]
 
-Or you can specify a specific location for clojure.jar or the protobuf source:
-    ant package -Dclojure.jar=$HOME/lib/java/clojure-1.1.0.jar -Dprotobuf=$HOME/Downloads/protobuf-2.3.0
+Build from source:
 
-This code has been tested with clojure version 1.1.0 and protobuf version 2.3.0.
+    lein deps
+    lein jar
+
+This code works with Clojure 1.2. Here's the [1.1 branch](http://github.com/ninjudd/clojure-protobuf/tree/clojure-1.1).
