@@ -1,5 +1,6 @@
 *~
 lib
 classes
+pom.xml
 *.jar
 *.class

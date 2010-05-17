@@ -1,8 +1,8 @@
-(defproject clojure-protobuf "0.0.4-SNAPSHOT"
+(defproject clojure-protobuf "0.1.0-SNAPSHOT"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[clojure         "1.2.0-master-SNAPSHOT"]
-                 [clojure-contrib "1.2.0-SNAPSHOT"]]
-  :dev-dependencies [[lein-protobuf "0.0.4-SNAPSHOT"]]
+                 [clojure-contrib "1.2.0-SNAPSHOT"]
+                 [classlojure     "0.0.4-SNAPSHOT"]]
   :source-path "src/clj"
   :java-source-path "src/jvm")
 
@@ -20,7 +20,6 @@
      (System/exit 1))))
 
 (defn compile [project]
-  (println (get-classpath project))
   (compile-protobuf project)
   (lancet/javac {:srcdir    (make-path (:java-source-path project))
                  :destdir   (:compile-path project)
