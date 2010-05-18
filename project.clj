@@ -3,24 +3,18 @@
   :dependencies [[clojure         "1.2.0-master-SNAPSHOT"]
                  [clojure-contrib "1.2.0-SNAPSHOT"]
                  [classlojure     "0.0.4-SNAPSHOT"]]
-  :source-path "src/clj"
-  :java-source-path "src/jvm")
+  :source-path      "src/clj"
+  :java-source-path "src/jvm"
+  :resources-path   "protos")
 
-(ns leiningen.compile
-  (:require lancet)
-  (:use [leiningen.classpath :only [make-path get-classpath]])
-  (:refer-clojure :exclude [compile]))
+(use 'clojure.contrib.with-ns)
+(require 'leiningen.compile)
+(with-ns 'leiningen.compile
+  (use '[leiningen.proto :only [proto]])
 
-(defn compile-protobuf [project]
-  (try
-   (require 'leiningen.proto)
-   ((ns-resolve 'leiningen.proto 'proto) project)
-   (catch java.io.FileNotFoundException e
-     (println "you must run 'lein deps' before compile")
-     (System/exit 1))))
-
-(defn compile [project]
-  (compile-protobuf project)
-  (lancet/javac {:srcdir    (make-path (:java-source-path project))
-                 :destdir   (:compile-path project)
-                 :classpath (apply make-path (get-classpath project))}))
+  (defn compile [project]
+    (deps project :skip-dev)
+    (proto project)
+    (lancet/javac {:srcdir    (make-path (:java-source-path project))
+                   :destdir   (:compile-path project)
+                   :classpath (apply make-path (get-classpath project))})))
