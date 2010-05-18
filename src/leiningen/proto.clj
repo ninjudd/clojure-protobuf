@@ -23,14 +23,14 @@
 (defn proto-dependencies
   "look for lines starting with import in proto-file"
   [proto-file]
-  (for [line (read-lines (file "protos" proto-file)) :when (.startsWith line "import")]
+  (for [line (read-lines (file "proto" proto-file)) :when (.startsWith line "import")]
     (match #".*\"(.*)\".*" line)))
 
 (defn protoc [proto-file src-dir]
   (println "compiling" proto-file "to" src-dir)
   (mkdir {:dir src-dir})
   (let [src-dir (str "../" src-dir)]
-    (apply shell :dir "protos"
+    (apply shell :dir "proto"
        "protoc" proto-file (str "--java_out=" src-dir) "-I."
        (for [dir (map extract-proto (proto-dependencies proto-file)) :when dir]
          (str "-I" dir)))))
@@ -41,7 +41,7 @@
   (fetch-source)
   (let [src-dir    (str protobuf-dir "/java/src/main/java")
         descriptor "google/protobuf/descriptor.proto"
-        todir      "protos/google/protobuf"]
+        todir      "proto/google/protobuf"]
     (mkdir {:dir todir})
     (copy {:file (str protobuf-dir "/src/" descriptor) :todir todir})
     (protoc descriptor src-dir)
@@ -53,7 +53,7 @@
   ([project]
      (if (= "clojure-protobuf" (:name project))
        (build-protobuf project)
-       (apply proto project (proto-files "protos"))))
+       (apply proto project (proto-files "proto"))))
   ([project & files]
      (install)
      (let [src-dir (or (:proto-source-dir project) "lib/src")]

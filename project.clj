@@ -5,7 +5,7 @@
                  [classlojure     "0.0.4-SNAPSHOT"]]
   :source-path      "src/clj"
   :java-source-path "src/jvm"
-  :resources-path   "protos")
+  :resources-path   "proto")
 
 (use 'clojure.contrib.with-ns)
 (require 'leiningen.compile)
