@@ -7,4 +7,6 @@ extend google.protobuf.FieldOptions {
   optional bool   set    = 52001;
   optional bool   map    = 52002;
   optional string map_by = 52003;
+  //  optional bool   sorted = 52004;
+  //  optional bool   multi  = 52005;
 }
