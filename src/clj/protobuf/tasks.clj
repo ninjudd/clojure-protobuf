@@ -32,24 +32,24 @@
     (ant ExecTask {:dir srcdir :executable "sudo"}
          (args ["make" "install"]))))
 
-(defn- proto-dependencies
-  "look for lines starting with import in proto-file"
+(defn- proto-dependencies "look for lines starting with import in proto-file"
   [proto-file]
   (for [line (line-seq (reader proto-file)) :when (.startsWith line "import")]
     (second (re-matches #".*\"(.*)\".*" line))))
 
 (defn extract-resource [name dest-dir]
   (if-let [url (.findResource (.getClassLoader clojure.lang.RT) name)]
-    (let [conn (.openConnection url)]
+    (let [dest (File. dest-dir name)
+          conn (.openConnection url)]
+      (.mkdirs (.getParentFile dest))
       (if (instance? JarURLConnection conn)
-        (let [jar  (cast JarURLConnection conn)
-              dest (File. dest-dir (.. jar getJarEntry getName))]
+        (let [jar (cast JarURLConnection conn)]
           (copy (.getInputStream jar) dest))
-        (copy (File. (.getFile url)) (File. dest-dir name))))
+        (copy (File. (.getFile url)) dest))
+      dest)
     (throw (Exception. (format "unable to find %s on classpath" name)))))
 
-(defn extract-dependencies
-  "extract all files proto is dependent on"
+(defn extract-dependencies "extract all files proto is dependent on"
   [proto-file]
   (loop [files (vec (proto-dependencies proto-file))]
     (when-not (empty? files)
@@ -57,7 +57,7 @@
             files (pop files)]
         (if (or (.exists (file "proto" proto)) (.exists (file "build/proto" proto)))
           (recur files)
-          (let [proto-file (extract-resource (str "proto/" proto) "build/proto")]
+          (let [proto-file (extract-resource (str "proto/" proto) "build")]
             (recur (into files (proto-dependencies proto-file)))))))))
 
 (defn protoc
