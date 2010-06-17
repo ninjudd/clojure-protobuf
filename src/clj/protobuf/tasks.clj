@@ -39,14 +39,14 @@
     (second (re-matches #".*\"(.*)\".*" line))))
 
 (defn extract-resource [name dest-dir]
-  (let [loader (.getClassLoader clojure.lang.RT)
-        url    (.findResource loader name)
-        conn   (.openConnection url)]
-    (if (instance? JarURLConnection conn)
-      (let [jar  (cast JarURLConnection conn)
-            dest (File. dest-dir (.. jar getJarEntry getName))]
-        (copy (.getInputStream jar) dest))
-      (copy (File. (.getFile url)) (File. dest-dir name)))))
+  (if-let [url (.findResource (.getClassLoader clojure.lang.RT) name)]
+    (let [conn (.openConnection url)]
+      (if (instance? JarURLConnection conn)
+        (let [jar  (cast JarURLConnection conn)
+              dest (File. dest-dir (.. jar getJarEntry getName))]
+          (copy (.getInputStream jar) dest))
+        (copy (File. (.getFile url)) (File. dest-dir name))))
+    (throw (Exception. (format "unable to find %s on classpath" name)))))
 
 (defn extract-dependencies
   "extract all files proto is dependent on"
