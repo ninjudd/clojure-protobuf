@@ -6,3 +6,4 @@ build
 pom.xml
 *.jar
 *.class
+proto/google/protobuf/descriptor.proto
