@@ -57,7 +57,7 @@
             files (pop files)]
         (if (or (.exists (file "proto" proto)) (.exists (file "build/proto" proto)))
           (recur files)
-          (let [proto-file (extract-resource proto "build/proto")]
+          (let [proto-file (extract-resource (str "proto/" proto) "build/proto")]
             (recur (into files (proto-dependencies proto-file)))))))))
 
 (defn protoc
