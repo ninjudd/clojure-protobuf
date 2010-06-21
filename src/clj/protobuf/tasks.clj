@@ -84,6 +84,7 @@
   (for [file (rest (file-seq dir)) :when (.endsWith (.getName file) ".proto")]
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
+(deftask compile #{proto})
 (deftask proto
   (if (= "clojure-protobuf" (:artifact-id project))
     (do (run-task 'fetch-protoc)
