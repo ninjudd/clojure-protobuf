@@ -1,16 +1,16 @@
 (ns protobuf.tasks
   (:use cake cake.ant
         [clojure.java.shell :only [sh]]
-        [clojure.java.io :only [copy reader]])
+        [clojure.java.io :only [reader]]
+        [useful.io :only [extract-resource]])
   (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]
-           [java.net URL URLClassLoader URLConnection JarURLConnection]
-           [java.util.jar JarEntry]
+           [java.net URL URLConnection JarURLConnection]
            [java.io File]))
 
 (def version "2.3.0")
 (def srcdir  (format "build/protobuf-%s" version))
 (def tarfile (format "build/protobuf-%s.tar.gz" version))
-(def url     (java.net.URL. (format "http://protobuf.googlecode.com/files/protobuf-%s.tar.gz" version)))
+(def url     (URL. (format "http://protobuf.googlecode.com/files/protobuf-%s.tar.gz" version)))
 
 (defn installed? []
   (try (.contains (:out (sh "protoc" "--version")) version)
@@ -36,18 +36,6 @@
   [proto-file]
   (for [line (line-seq (reader proto-file)) :when (.startsWith line "import")]
     (second (re-matches #".*\"(.*)\".*" line))))
-
-(defn extract-resource [name dest-dir]
-  (if-let [url (.findResource (.getClassLoader clojure.lang.RT) name)]
-    (let [dest (File. dest-dir name)
-          conn (.openConnection url)]
-      (.mkdirs (.getParentFile dest))
-      (if (instance? JarURLConnection conn)
-        (let [jar (cast JarURLConnection conn)]
-          (copy (.getInputStream jar) dest))
-        (copy (File. (.getFile url)) dest))
-      dest)
-    (throw (Exception. (format "unable to find %s on classpath" name)))))
 
 (defn extract-dependencies "extract all files proto is dependent on"
   [proto-file]

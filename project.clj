@@ -4,5 +4,3 @@
                  [clojure-contrib "1.2.0-SNAPSHOT"]]
   :tasks [protobuf.tasks]
   :jar-files ["proto"])
-
-(deftask compile => proto)
