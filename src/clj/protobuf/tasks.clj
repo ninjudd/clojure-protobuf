@@ -3,14 +3,12 @@
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
         [useful.io :only [extract-resource]])
-  (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]
-           [java.net URL URLConnection JarURLConnection]
-           [java.io File]))
+  (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
 (def srcdir  (format "build/protobuf-%s" version))
 (def tarfile (format "build/protobuf-%s.tar.gz" version))
-(def url     (URL. (format "http://protobuf.googlecode.com/files/protobuf-%s.tar.gz" version)))
+(def url     (java.net.URL. (format "http://protobuf.googlecode.com/files/protobuf-%s.tar.gz" version)))
 
 (defn installed? []
   (try (.contains (:out (sh "protoc" "--version")) version)
@@ -48,19 +46,23 @@
           (let [proto-file (extract-resource (str "proto/" proto) "build")]
             (recur (into files (proto-dependencies proto-file)))))))))
 
+(defn modtime [dir]
+  (apply max (map #(.lastModified %) (file-seq (file dir)))))
+
 (defn protoc
   ([protos] (protoc protos "build/protosrc"))
   ([protos dest]
-      (doseq [proto protos]
-        (log "compiling" proto "to" dest)
-        (extract-dependencies (file "proto" proto))
-        (ant Mkdir {:dir dest})
-        (ant Mkdir {:dir "build/proto"})
-        (ant ExecTask {:executable "protoc" :dir "proto"}
-             (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"])))
-      (ant Javac {:srcdir    (path dest)
-                  :destdir   (file "classes")
-                  :classpath (classpath project)})))
+     (when (> (modtime "proto") (modtime dest))
+       (doseq [proto protos]
+         (log "compiling" proto "to" dest)
+         (extract-dependencies (file "proto" proto))
+         (ant Mkdir {:dir dest})
+         (ant Mkdir {:dir "build/proto"})
+         (ant ExecTask {:executable "protoc" :dir "proto"}
+              (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"])))
+       (ant Javac {:srcdir    (path dest)
+                   :destdir   (file "classes")
+                   :classpath (classpath project)}))))
 
 (defn build-protobuf []
   (ant Mkdir {:dir "proto/google/protobuf"})
