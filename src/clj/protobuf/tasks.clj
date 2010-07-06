@@ -47,12 +47,16 @@
             (recur (into files (proto-dependencies proto-file)))))))))
 
 (defn modtime [dir]
-  (apply max (map #(.lastModified %) (file-seq (file dir)))))
+  (let [files (rest (file-seq (file dir)))]
+    (if (empty? files)
+      0
+      (apply max (map #(.lastModified %) files)))))
 
 (defn protoc
   ([protos] (protoc protos "build/protosrc"))
   ([protos dest]
-     (when (> (modtime "proto") (modtime dest))
+     (when (or (> (modtime "proto") (modtime dest))
+               (> (modtime "proto") (modtime "classes")))
        (doseq [proto protos]
          (log "compiling" proto "to" dest)
          (extract-dependencies (file "proto" proto))
