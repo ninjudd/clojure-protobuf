@@ -75,7 +75,8 @@
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
 (deftask compile #{proto})
-(deftask proto
+(deftask proto #{install-protoc}
+  "Compile protocol buffer files located in proto dir."
   (if (= "clojure-protobuf" (:artifact-id project))
     (do (run-task 'fetch-protoc)
         (build-protobuf))
