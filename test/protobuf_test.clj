@@ -1,8 +1,8 @@
-(ns test.protobuf
+(ns protobuf-test
   (:use protobuf)
   (:use clojure.test))
 
-(defprotobuf Foo test.protobuf.Proto Foo)
+(defprotobuf Foo clojure.protobuf.Test Foo)
 
 (defn catbytes [& args]
   (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
@@ -62,7 +62,7 @@
   (testing "protofields"
     (let [fields '(:id :label :tags :parent :responses :tag_set :attr_map :foo_by_id :groups)]
       (is (= fields (protofields Foo)))
-      (is (= fields (protofields test.protobuf.Proto$Foo)))))
+      (is (= fields (protofields clojure.protobuf.Test$Foo)))))
   (testing "protodefault"
     (is (= 43  (protodefault Foo :id)))
     (is (= ""  (protodefault Foo :label)))
@@ -72,7 +72,7 @@
     (is (= #{} (protodefault Foo :tag_set)))
     (is (= {}  (protodefault Foo :foo_by_id)))
     (is (= {}  (protodefault Foo :groups)))
-    (is (= {}  (protodefault test.protobuf.Proto$Foo :groups)))
+    (is (= {}  (protodefault clojure.protobuf.Test$Foo :groups)))
   ))
 
 (deftest protobuf-extended

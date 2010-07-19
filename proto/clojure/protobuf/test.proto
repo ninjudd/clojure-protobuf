@@ -1,7 +1,7 @@
-package test.protobuf;
 import "clojure/protobuf/collections.proto";
 
-option java_outer_classname = "Proto";
+option java_package = "clojure.protobuf";
+option java_outer_classname = "Test";
 
 message Foo {
   optional uint32   id        = 1 [default = 43];

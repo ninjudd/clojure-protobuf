@@ -55,7 +55,8 @@
 (defn protoc
   ([protos] (protoc protos "build/protosrc"))
   ([protos dest]
-     (when (or (> (modtime "proto") (modtime dest))
+     (when (or (:recompile opts)
+               (> (modtime "proto") (modtime dest))
                (> (modtime "proto") (modtime "classes")))
        (doseq [proto protos]
          (log "compiling" proto "to" dest)
@@ -72,10 +73,15 @@
   (ant Mkdir {:dir "proto/google/protobuf"})
   (ant Copy {:file (str srcdir "/src/google/protobuf/descriptor.proto") :todir "proto/google/protobuf"})
   (protoc ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java"))
-  (protoc ["clojure/protobuf/collections.proto"]))
+  (protoc ["clojure/protobuf/collections.proto" "clojure/protobuf/test.proto"]))
+
+(defn proto-file? [file]
+  (let [name (.getName file)]
+    (and (.endsWith name ".proto")
+         (not (.startsWith name ".")))))
 
 (defn proto-files [dir]
-  (for [file (rest (file-seq dir)) :when (.endsWith (.getName file) ".proto")]
+  (for [file (rest (file-seq dir)) :when (proto-file? file)]
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
 (deftask compile #{proto})
