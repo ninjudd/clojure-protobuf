@@ -13,9 +13,9 @@ Write a `.proto` file:
       repeated string likes = 4;
     }
 
-If you put it in the protos directory of your project, you can compile it with lein:
+If you put it in the proto directory of your project, you can compile it with cake:
 
-    lein proto example.proto
+    cake proto example.proto
 
 Now you can use the protocol buffer in clojure:
 
@@ -40,12 +40,13 @@ Now you can use the protocol buffer in clojure:
 A protocol buffer map is immutable just like other clojure objects. It is similar to a
 struct-map, except you cannot insert fields that aren't specified in the `.proto` file.
 
-## Collection extensions
+## Extensions
 
 Clojure-protobuf supports extensions to protocol buffers which provide sets and maps using
-repeated fields. To use these, you must import the extension file and include it when compiling. For example:
+repeated fields. You can also provide metadata on protobuf fields using clojure syntax. To
+use these, you must import the extension file and include it when compiling. For example:
 
-    import "collections.proto";
+    import "clojure/protobuf/extensions.proto";
     message Photo {
       required int32  id     = 1;
       required string path   = 2;
@@ -60,7 +61,7 @@ repeated fields. To use these, you must import the extension file and include it
 
       message Tag {
         required int32 person_id = 1;
-        optional int32 x_coord   = 2;
+        optional int32 x_coord   = 2 [(meta) = "{:max 100.0 :min -100.0}"];
         optional int32 y_coord   = 3;
         optional int32 width     = 4;
         optional int32 height    = 5;
@@ -69,12 +70,13 @@ repeated fields. To use these, you must import the extension file and include it
 
 Compile the file:
 
-     lein proto example.proto
+     cake proto example.proto
 
 Then you can access the maps in clojure:
 
     (use 'protobuf)
     (defprotobuf Photo Example$Photo)
+    (defprotobuf Tag Example$Photo$Tag)
 
     (def p (protobuf Photo :id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}
                            :attrs {"dimensions" "1632x1224", "alpha" "no", "color space" "RGB"}
@@ -87,15 +89,14 @@ Then you can access the maps in clojure:
     (protobuf-load Photo b)
     => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
 
+    (:x-coord (protofields Tag))
+    => {:max 100.0 :min -100.0}
+
 ## Installation
 
-In your [Leiningen](http://github.com/technomancy/leiningen) project.clj:
+Add clojure-protobuf to your [Cake](http://github.com/ninjudd/cake) project.clj:
 
-    :dependencies [[clojure-protobuf "0.1.0-SNAPSHOT"]]
-
-Build from source:
-
-    lein deps
-    lein jar
+    :dependencies [[clojure-protobuf "0.2.4"]]
+    :dev-dependencies [[clojure-protobuf "0.2.4"]]
 
 This code works with Clojure 1.2. Here's the [1.1 branch](http://github.com/ninjudd/clojure-protobuf/tree/clojure-1.1).
