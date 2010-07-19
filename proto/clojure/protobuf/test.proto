@@ -1,11 +1,11 @@
-import "clojure/protobuf/collections.proto";
+import "clojure/protobuf/extensions.proto";
 
 option java_package = "clojure.protobuf";
 option java_outer_classname = "Test";
 
 message Foo {
   optional uint32   id        = 1 [default = 43];
-  optional string   label     = 2;
+  optional string   label     = 2 [(meta) = "{:a 1 :b 2 :c 3}"];
   repeated string   tags      = 3;
   optional Foo      parent    = 4;
   repeated Response responses = 5;

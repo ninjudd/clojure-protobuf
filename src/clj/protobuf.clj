@@ -30,8 +30,10 @@
 (defn protofields [type]
   (let [type #^clojure.protobuf.PersistentProtocolBufferMap$Def (protodef type)
         type #^com.google.protobuf.Descriptors$Descriptor (.getMessageType type)]
-    (for [#^com.google.protobuf.Descriptors$FieldDescriptor field (.getFields type)]
-      (keyword (.getName field)))))
+    (into {}
+      (for [#^com.google.protobuf.Descriptors$FieldDescriptor field (.getFields type)]
+        (let [meta-string (.. field getOptions (getExtension (clojure.protobuf.Extensions/meta)))]
+          [(keyword (.getName field)) (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]

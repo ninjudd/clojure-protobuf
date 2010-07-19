@@ -73,7 +73,7 @@
   (ant Mkdir {:dir "proto/google/protobuf"})
   (ant Copy {:file (str srcdir "/src/google/protobuf/descriptor.proto") :todir "proto/google/protobuf"})
   (protoc ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java"))
-  (protoc ["clojure/protobuf/collections.proto" "clojure/protobuf/test.proto"]))
+  (protoc ["clojure/protobuf/extensions.proto" "clojure/protobuf/test.proto"]))
 
 (defn proto-file? [file]
   (let [name (.getName file)]

@@ -190,7 +190,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   static protected Keyword mapFieldBy(Descriptors.FieldDescriptor field) {
     Keyword keyword = map_field_by.get(field);
     if (keyword == null) {
-      String name = field.getOptions().getExtension(Collections.mapBy);
+      String name = field.getOptions().getExtension(Extensions.mapBy);
 
       name = name.toLowerCase().replaceAll("_","-");
       keyword = Keyword.intern(Symbol.intern(name));
@@ -221,7 +221,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           }
         }
         return map.persistent();
-      } else if (options.getExtension(Collections.map)) {
+      } else if (options.getExtension(Extensions.map)) {
         Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
         Descriptors.FieldDescriptor key_field = def.fieldDescriptor(k_key);
         Descriptors.FieldDescriptor val_field = def.fieldDescriptor(k_val);
@@ -244,7 +244,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
         while (iterator.hasNext()) {
           list.add(fromProtoValue(field, iterator.next()));
         }
-        return options.getExtension(Collections.set) ? PersistentHashSet.create(list) : PersistentVector.create(list);
+        return options.getExtension(Extensions.set) ? PersistentHashSet.create(list) : PersistentVector.create(list);
       }
     } else {
       switch (field.getJavaType()) {
@@ -318,7 +318,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
             Object value = toProtoValue(field, map.assoc(map_field_by, e.getKey()));
             builder.addRepeatedField(field, value);
           }
-        } else if (field.getOptions().getExtension(Collections.map)) {
+        } else if (field.getOptions().getExtension(Extensions.map)) {
           for (ISeq s = RT.seq(val); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
             Object[] map = {k_key, e.getKey(), k_val, e.getValue()};

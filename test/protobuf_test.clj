@@ -60,7 +60,8 @@
       (is (= ["sweet" "savory"] (s :tags)))
     ))
   (testing "protofields"
-    (let [fields '(:id :label :tags :parent :responses :tag_set :attr_map :foo_by_id :groups)]
+    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil,
+                  :tag_set nil, :attr_map nil, :foo_by_id nil, :groups nil}]
       (is (= fields (protofields Foo)))
       (is (= fields (protofields clojure.protobuf.Test$Foo)))))
   (testing "protodefault"
