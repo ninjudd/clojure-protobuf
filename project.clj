@@ -1,4 +1,4 @@
-(defproject clojure-protobuf "0.2.4"
+(defproject clojure-protobuf "0.2.5"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[clojure         "1.2.0-master-SNAPSHOT"]
                  [clojure-contrib "1.2.0-SNAPSHOT"]]

@@ -59,7 +59,7 @@
                (> (modtime "proto") (modtime dest))
                (> (modtime "proto") (modtime "classes")))
        (doseq [proto protos]
-         (log "compiling" proto "to" dest)
+         (log "Compiling" proto "to" dest)
          (extract-dependencies (file "proto" proto))
          (ant Mkdir {:dir dest})
          (ant Mkdir {:dir "build/proto"})
@@ -67,7 +67,7 @@
               (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"])))
        (ant Javac {:srcdir    (path dest)
                    :destdir   (file "classes")
-                   :classpath (classpath project)}))))
+                   :classpath (classpath)}))))
 
 (defn build-protobuf []
   (ant Mkdir {:dir "proto/google/protobuf"})
