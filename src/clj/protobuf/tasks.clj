@@ -55,7 +55,7 @@
 (defn protoc
   ([protos] (protoc protos "build/protosrc"))
   ([protos dest]
-     (when (or (:recompile opts)
+     (when (or (:recompile *opts*)
                (> (modtime "proto") (modtime dest))
                (> (modtime "proto") (modtime "classes")))
        (doseq [proto protos]
@@ -87,7 +87,7 @@
 (deftask compile #{proto})
 (deftask proto #{install-protoc}
   "Compile protocol buffer files located in proto dir."
-  (if (= "clojure-protobuf" (:artifact-id project))
+  (if (= "clojure-protobuf" (:artifact-id *project*))
     (do (run-task 'fetch-protoc)
         (build-protobuf))
-    (protoc (or (:proto opts) (proto-files (file "proto"))))))
+    (protoc (or (:proto *opts*) (proto-files (file "proto"))))))
