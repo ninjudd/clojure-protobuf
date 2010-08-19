@@ -324,7 +324,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   protected void addField(DynamicMessage.Builder builder, Object key, Object val) {
-    if (key == null) return;
+    if (key == null || val == null) return;
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     boolean set = field.getOptions().getExtension(Extensions.set);
 
@@ -373,7 +373,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     } else {
       Object value = toProtoValue(field, val);
       if (value instanceof DynamicMessage) {
-        value = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) value);
+        value = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) value).build();
       }
       builder.setField(field, value);
     }
