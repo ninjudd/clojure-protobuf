@@ -199,8 +199,10 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return keyword == k_null ? null : keyword;
   }
 
-  static Keyword k_key = Keyword.intern(Symbol.intern("key"));
-  static Keyword k_val = Keyword.intern(Symbol.intern("val"));
+  static Keyword k_key    = Keyword.intern(Symbol.intern("key"));
+  static Keyword k_val    = Keyword.intern(Symbol.intern("val"));
+  static Keyword k_item   = Keyword.intern(Symbol.intern("item"));
+  static Keyword k_exists = Keyword.intern(Symbol.intern("exists"));
   static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
     if (value instanceof List) {
       List values = (List) value;
@@ -239,12 +241,34 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           }
         }
         return map.persistent();
+      } else if (options.getExtension(Extensions.set)) {
+        Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+        Descriptors.FieldDescriptor item_field  = def.fieldDescriptor(k_item);
+        Descriptors.FieldDescriptor exists_field = def.fieldDescriptor(k_exists);
+
+        ITransientSet set = (ITransientSet) PersistentHashSet.EMPTY.asTransient();
+        while (iterator.hasNext()) {
+          DynamicMessage message = (DynamicMessage) iterator.next();
+          Object  item   = fromProtoValue(item_field, message.getField(item_field));
+          Boolean exists = (Boolean) message.getField(exists_field);
+
+          if (exists) {
+            set.conj(item);
+          } else {
+            try {
+              set.disjoin(item);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }
+        return set.persistent();
       } else {
         List<Object> list = new ArrayList<Object>(values.size());
         while (iterator.hasNext()) {
           list.add(fromProtoValue(field, iterator.next()));
         }
-        return options.getExtension(Extensions.set) ? PersistentHashSet.create(list) : PersistentVector.create(list);
+        return PersistentVector.create(list);
       }
     } else {
       switch (field.getJavaType()) {
@@ -302,9 +326,10 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   protected void addField(DynamicMessage.Builder builder, Object key, Object val) {
     if (key == null) return;
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+    boolean set = field.getOptions().getExtension(Extensions.set);
 
     if (field.isRepeated()) {
-      if (val instanceof Sequential || val instanceof IPersistentSet) {
+      if (val instanceof Sequential && !set) {
         for (ISeq s = RT.seq(val); s != null; s = s.next()) {
           Object value = toProtoValue(field, s.first());
           builder.addRepeatedField(field, value);
@@ -324,6 +349,21 @@ public class PersistentProtocolBufferMap extends APersistentMap {
             Object[] map = {k_key, e.getKey(), k_val, e.getValue()};
             Object value = toProtoValue(field, new PersistentArrayMap(map));
             builder.addRepeatedField(field, value);
+          }
+        } else if (set) {
+          if (val instanceof IPersistentMap) {
+            for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+              Map.Entry e = (Map.Entry) s.first();
+              Object[] map = {k_item, e.getKey(), k_exists, e.getValue()};
+              Object value = toProtoValue(field, new PersistentArrayMap(map));
+              builder.addRepeatedField(field, value);
+            }
+          } else {
+            for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+              Object[] map = {k_item, s.first(), k_exists, true};
+              Object value = toProtoValue(field, new PersistentArrayMap(map));
+              builder.addRepeatedField(field, value);
+            }
           }
         } else {
           Object value = toProtoValue(field, val);
@@ -463,7 +503,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       if(meta != meta()) return new Seq(meta, map, fields, i);
       return this;
     }
-    
+
     public Object first() {
       if (i == fields.length) return null;
       Descriptors.FieldDescriptor field = fields[i];

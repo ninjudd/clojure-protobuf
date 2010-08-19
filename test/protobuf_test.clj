@@ -47,8 +47,8 @@
         (is (= ["check" "it" "out"] (p "tags"))))
       ))
   (testing "append"
-    (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"])
-          q (protobuf Foo :id 43 :tags ["savory"])
+    (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
+          q (protobuf Foo :id 43 :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
           r (protobuf Foo :label "bad")
           s (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump q)))
           t (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump r)))]
@@ -58,6 +58,8 @@
       (is (= "bad" (t :label)))
       (is (= ["sweet"] (t :tags)))
       (is (= ["sweet" "savory"] (s :tags)))
+      (is (= #{"foo" "bar" "baz"} (p :tag-set)))
+      (is (= #{"bap" "baz"} (s :tag-set)))
     ))
   (testing "protofields"
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil,
@@ -78,7 +80,7 @@
 
 (deftest protobuf-extended
   (testing "create"
-    (let [p (protobuf Foo :id 5 :tag-set ["little" "yellow"] :attr-map {"size" "little", "color" "yellow", "style" "different"})]
+    (let [p (protobuf Foo :id 5 :tag-set #{"little" "yellow"} :attr-map {"size" "little", "color" "yellow", "style" "different"})]
       (is (= #{"little" "yellow"} (:tag-set p)))
       (is (associative? (:attr-map p)))
       (is (= "different" (get-in p [:attr-map "style"])))

@@ -16,7 +16,7 @@ message Foo {
     MAYBE = 1;
   }
 
-  repeated string tag_set   = 10 [(set)    = true];
+  repeated Item   tag_set   = 10 [(set)    = true];
   repeated Pair   attr_map  = 11 [(map)    = true];
   repeated Foo    foo_by_id = 12 [(map_by) = "id"];
   repeated Group  groups    = 13 [(map)    = true];
@@ -30,4 +30,9 @@ message Pair {
 message Group {
   required string key = 1;
   repeated Foo    val = 2;
+}
+
+message Item {
+  required string item   = 1;
+  required bool   exists = 2 [default = true];
 }
