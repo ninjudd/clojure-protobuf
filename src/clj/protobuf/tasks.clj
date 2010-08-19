@@ -3,7 +3,7 @@
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
         [useful.io :only [extract-resource]])
-  (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]))
+  (:import [org.apache.tools.ant.taskdefs Chmod Copy Delete ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
 (def srcdir  (format "build/protobuf-%s" version))
@@ -57,14 +57,17 @@
   ([protos dest]
      (when (or (:recompile *opts*)
                (> (modtime "proto") (modtime dest))
-               (> (modtime "proto") (modtime "classes")))
+               (> (modtime "proto") (modtime "classes")))       
+       (ant Mkdir {:dir dest})
+       (ant Mkdir {:dir "build/proto"})
        (doseq [proto protos]
          (log "Compiling" proto "to" dest)
          (extract-dependencies (file "proto" proto))
-         (ant Mkdir {:dir dest})
-         (ant Mkdir {:dir "build/proto"})
-         (ant ExecTask {:executable "protoc" :dir "proto"}
-              (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"])))
+         (try (ant ExecTask {:executable "protoc" :dir "proto" :failonerror true}
+                   (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
+              (catch org.apache.tools.ant.BuildException e
+                (ant Delete {:dir dest})
+                (throw (Exception. (str "error compiling " proto))))))
        (ant Javac {:srcdir    (path dest)
                    :destdir   (file "classes")
                    :classpath (classpath)}))))
