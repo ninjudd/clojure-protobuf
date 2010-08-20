@@ -6,8 +6,8 @@
   (:import [org.apache.tools.ant.taskdefs Chmod Copy Delete ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
-(def srcdir  (format "build/protobuf-%s" version))
-(def tarfile (format "build/protobuf-%s.tar.gz" version))
+(def srcdir  (format "lib/protobuf-%s" version))
+(def tarfile (format "lib/protobuf-%s.tar.gz" version))
 (def url     (java.net.URL. (format "http://protobuf.googlecode.com/files/protobuf-%s.tar.gz" version)))
 
 (defn installed? []
@@ -17,7 +17,7 @@
 (deftask fetch-protoc
   (when-not (.exists (file srcdir))
     (ant Get   {:src url :dest tarfile})
-    (ant Untar {:src tarfile :dest "build" :compression "gzip"})))
+    (ant Untar {:src tarfile :dest "lib" :compression "gzip"})))
 
 (deftask install-protoc
   (when-not (installed?)
@@ -55,7 +55,7 @@
 (defn protoc
   ([protos] (protoc protos "build/protosrc"))
   ([protos dest]
-     (when (or (:recompile *opts*)
+     (when (or (:force *opts*)
                (> (modtime "proto") (modtime dest))
                (> (modtime "proto") (modtime "classes")))       
        (ant Mkdir {:dir dest})
@@ -88,7 +88,7 @@
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
 (deftask compile #{proto})
-(deftask proto #{install-protoc}
+(deftask proto #{deps install-protoc}
   "Compile protocol buffer files located in proto dir."
   (if (= "clojure-protobuf" (:artifact-id *project*))
     (do (run-task 'fetch-protoc)
