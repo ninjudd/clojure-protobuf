@@ -36,3 +36,13 @@ message Item {
   required string item   = 1;
   required bool   exists = 2 [default = true];
 }
+
+message ErrorMsg {
+  required sint32 code = 1;
+  optional string data = 2;
+}
+
+message Response {
+  required bool ok = 1;
+  optional ErrorMsg error = 2;
+}

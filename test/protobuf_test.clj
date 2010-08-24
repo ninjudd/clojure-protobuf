@@ -3,6 +3,8 @@
   (:use clojure.test))
 
 (defprotobuf Foo clojure.protobuf.Test Foo)
+(defprotobuf Response clojure.protobuf.Test Response)
+(defprotobuf ErrorMsg clojure.protobuf.Test ErrorMsg)
 
 (defn catbytes [& args]
   (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
@@ -102,3 +104,8 @@
         (is (= ["even" "even"]  (get-in p [:foo-by-id 6 :tags]))))
       )))
 
+(deftest protobuf-nested-message
+  (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]))
+
+(deftest protobuf-nil-field
+  (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]))
