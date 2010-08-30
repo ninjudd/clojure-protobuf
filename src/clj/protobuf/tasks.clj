@@ -20,6 +20,7 @@
     (ant Untar {:src tarfile :dest "lib" :compression "gzip"})))
 
 (deftask install-protoc
+  "Compile and install protoc to /usr/local."
   (when-not (installed?)
     (run-task 'fetch-protoc)
     (when-not (.exists (file srcdir "src" "protoc"))
@@ -27,8 +28,16 @@
       (ant Chmod {:file (file srcdir "install-sh") :perm "+x"})
       (ant ExecTask {:dir srcdir :executable "./configure"})
       (ant ExecTask {:dir srcdir :executable "make"}))
-    (ant ExecTask {:dir srcdir :executable "sudo"}
-         (args ["make" "install"]))))
+    (let [password (prompt-read "Password" :echo false)]
+      (ant ExecTask {:dir srcdir :executable "sudo" :input-string (str password "\n")}
+           (args ["-S" "make" "install"])))))
+
+(deftask uninstall-protoc
+  "Remove protoc if it is installed."
+  (when (installed?)
+    (let [password (prompt-read "Password" :echo false)]
+      (ant ExecTask {:dir srcdir :executable "sudo" :input-string (str password "\n")}
+           (args ["-S" "make" "uninstall"])))))
 
 (defn- proto-dependencies "look for lines starting with import in proto-file"
   [proto-file]
