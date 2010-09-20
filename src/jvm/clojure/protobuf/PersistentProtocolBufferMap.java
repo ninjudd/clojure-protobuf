@@ -329,6 +329,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     boolean set = field.getOptions().getExtension(Extensions.set);
 
     if (field.isRepeated()) {
+      builder.clearField(field);
       if (val instanceof Sequential && !set) {
         for (ISeq s = RT.seq(val); s != null; s = s.next()) {
           Object value = toProtoValue(field, s.first());
@@ -419,10 +420,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     DynamicMessage.Builder builder = builder();
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
-    if (field == null) return this;
-    if (field.isRepeated()) builder.clearField(field);
     addField(builder, field, val);
-
     return new PersistentProtocolBufferMap(meta(), def, builder);
   }
 
@@ -433,7 +431,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   public IPersistentCollection cons(Object o) {
     DynamicMessage.Builder builder = builder();
-
     if (o instanceof Map.Entry) {
       Map.Entry e = (Map.Entry) o;
       addField(builder, e.getKey(), e.getValue());
@@ -448,6 +445,16 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       }
     }
     return new PersistentProtocolBufferMap(meta(), def, builder);
+  }
+
+  public PersistentProtocolBufferMap append(IPersistentMap map) {
+    PersistentProtocolBufferMap proto;
+    if (map instanceof PersistentProtocolBufferMap) {
+      proto = (PersistentProtocolBufferMap) map;
+    } else {
+      proto = construct(def, map);
+    }
+    return new PersistentProtocolBufferMap(meta(), def, builder().mergeFrom(proto.message()));
   }
 
   public IPersistentMap without(Object key) throws Exception {

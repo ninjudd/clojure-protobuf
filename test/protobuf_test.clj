@@ -17,13 +17,25 @@
         (is (= "bar" (:label p)))
         (is (= ["little" "yellow"] (:tags p))))
       (let [p (conj p {:tags ["different"]})]
+        (is (= ["different"] (:tags p))))
+      (let [p (conj p {:tags ["little" "yellow" "different"] :label "very"})]
+        (is (= ["little" "yellow" "different"] (:tags p)))
+        (is (= "very" (:label p))))
+      ))
+  (testing "append"
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+      (let [p (append p {:label "bar"})]
+        (is (= 5     (:id p)))
+        (is (= "bar" (:label p)))
+        (is (= ["little" "yellow"] (:tags p))))
+      (let [p (append p {:tags ["different"]})]
         (is (= ["little" "yellow" "different"] (:tags p))))
-      (let [p (conj p {:tags ["different"] :label "very"})]
+      (let [p (append p {:tags ["different"] :label "very"})]
         (is (= ["little" "yellow" "different"] (:tags p)))
         (is (= "very" (:label p))))
       ))
   (testing "assoc"
-    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :foo-by-id {1 {:label "one"} 2 {:label "two"}})]
       (let [p (assoc p :label "baz" :tags ["nuprin"])]
         (is (= ["nuprin"] (:tags p)))
         (is (= "baz"      (:label p))))
@@ -31,6 +43,8 @@
         (is (= [:yes :no :maybe :no :yes] (:responses p))))
       (let [p (assoc p :tags "aspirin")]
         (is (= ["aspirin"] (:tags p))))
+      (let [p (assoc p :foo-by-id {3 {:label "three"} 2 {:label "two"}})]
+        (is (= {3 {:id 3, :label "three"} 2 {:id 2, :label "two"}} (:foo-by-id p))))
       ))
   (testing "dissoc"
     (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"])]
@@ -48,7 +62,7 @@
         (is (= ["check" "it" "out"] (p :tags)))
         (is (= ["check" "it" "out"] (p "tags"))))
       ))
-  (testing "append"
+  (testing "append bytes"
     (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
           q (protobuf Foo :id 43 :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
           r (protobuf Foo :label "bad")
@@ -99,9 +113,10 @@
       ))
   (testing "conj"
     (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five", :tag-set ["odd"]}, 6 {:label "six" :tags ["even"]}})]
-      (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["even"]}}})]
+      (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["odd"]}}})]
         (is (= #{"prime" "odd"} (get-in p [:foo-by-id 5 :tag-set])))
-        (is (= ["even" "even"]  (get-in p [:foo-by-id 6 :tags]))))
+        (is (= ["odd"]          (get-in p [:foo-by-id 6 :tags])))
+        (is (= ""               (get-in p [:foo-by-id 6 :label]))))
       )))
 
 (deftest protobuf-nested-message

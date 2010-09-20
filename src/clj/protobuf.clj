@@ -43,3 +43,6 @@
 
 (defn protobuf-dump [#^clojure.protobuf.PersistentProtocolBufferMap p]
   (.toByteArray p))
+
+(defn append [#^clojure.protobuf.PersistentProtocolBufferMap p map]
+  (.append p map))
