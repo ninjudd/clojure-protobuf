@@ -1,8 +1,9 @@
 (ns protobuf.tasks
   (:use cake cake.core cake.ant
+        [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
-        [useful.io :only [extract-resource]])
+        [cake.utils.io :only [extract-resource]])
   (:import [org.apache.tools.ant.taskdefs Chmod Copy Delete ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
@@ -77,9 +78,7 @@
               (catch org.apache.tools.ant.BuildException e
                 (ant Delete {:dir dest})
                 (throw (Exception. (str "error compiling " proto))))))
-       (ant Javac {:srcdir    (path dest)
-                   :destdir   (file "classes")
-                   :classpath (classpath)}))))
+       (compile-java (file dest)))))
 
 (defn build-protobuf []
   (ant Mkdir {:dir "proto/google/protobuf"})
