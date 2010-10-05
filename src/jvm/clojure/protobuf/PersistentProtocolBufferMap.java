@@ -326,6 +326,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   protected void addField(DynamicMessage.Builder builder, Object key, Object val) {
     if (key == null || val == null) return;
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+    if (field == null) return;
     boolean set = field.getOptions().getExtension(Extensions.set);
 
     if (field.isRepeated()) {
