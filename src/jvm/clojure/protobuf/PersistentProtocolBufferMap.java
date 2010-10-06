@@ -299,6 +299,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       if (value instanceof Integer) return value;
       Long l = (Long) value;
       return new Integer(l.intValue());
+    case FLOAT:
+      if (value instanceof Float) return value;
+      return new Float((Double)value);
     case ENUM:
       String name = (value instanceof Keyword) ? ((Keyword) value).getName() : (String) value;
       name = name.toUpperCase().replaceAll("-","_");

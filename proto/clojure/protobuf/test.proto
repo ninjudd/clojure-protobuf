@@ -10,6 +10,9 @@ message Foo {
   optional Foo      parent    = 4;
   repeated Response responses = 5;
 
+  repeated double doubles = 6;
+  repeated float  floats  = 7;
+
   enum Response {
     YES   = 0;
     NO    = 1;

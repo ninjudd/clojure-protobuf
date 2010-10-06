@@ -11,11 +11,14 @@
 
 (deftest protobuf-simple
   (testing "conj"
-    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2 3.4 5.6] :floats [0.01 0.02 0.03])]
       (let [p (conj p {:label "bar"})]
         (is (= 5     (:id p)))
         (is (= "bar" (:label p)))
-        (is (= ["little" "yellow"] (:tags p))))
+        (is (= ["little" "yellow"] (:tags p)))
+        (is (= [1.2 3.4 5.6] (:doubles p)))
+        (is (= [(float 0.01) (float 0.02) (float 0.03)] (:floats  p)))
+        )
       (let [p (conj p {:tags ["different"]})]
         (is (= ["different"] (:tags p))))
       (let [p (conj p {:tags ["little" "yellow" "different"] :label "very"})]
@@ -23,7 +26,7 @@
         (is (= "very" (:label p))))
       ))
   (testing "append"
-    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"])]
+    (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2] :floats [0.01])]
       (let [p (append p {:label "bar"})]
         (is (= 5     (:id p)))
         (is (= "bar" (:label p)))
@@ -33,6 +36,9 @@
       (let [p (append p {:tags ["different"] :label "very"})]
         (is (= ["little" "yellow" "different"] (:tags p)))
         (is (= "very" (:label p))))
+      (let [p (append p {:doubles [3.4] :floats [0.02]})]
+        (is (= [1.2 3.4] (:doubles p)))
+        (is (= [(float 0.01) (float 0.02)] (:floats  p))))
       ))
   (testing "assoc"
     (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :foo-by-id {1 {:label "one"} 2 {:label "two"}})]
@@ -79,7 +85,7 @@
     ))
   (testing "protofields"
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil,
-                  :tag_set nil, :attr_map nil, :foo_by_id nil, :groups nil}]
+                  :tag_set nil, :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil}]
       (is (= fields (protofields Foo)))
       (is (= fields (protofields clojure.protobuf.Test$Foo)))))
   (testing "protodefault"

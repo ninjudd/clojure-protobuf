@@ -1,5 +1,7 @@
 (ns protobuf.tasks
   (:use cake cake.core cake.ant
+        [cake.file :only [file]]
+        [cake.project :only [log]]
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
