@@ -2,11 +2,12 @@
   (:use cake cake.core cake.ant
         [cake.file :only [file]]
         [cake.project :only [log]]
+        [cake.tasks.deps :only [os-name]]
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
         [cake.utils.io :only [extract-resource]])
-  (:import [org.apache.tools.ant.taskdefs Chmod Copy Delete ExecTask Get Javac Mkdir Untar]))
+  (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
 (def srcdir  (format "lib/protobuf-%s" version))
@@ -31,9 +32,13 @@
       (ant Chmod {:file (file srcdir "install-sh") :perm "+x"})
       (ant ExecTask {:dir srcdir :executable "./configure"})
       (ant ExecTask {:dir srcdir :executable "make"}))
-    (let [password (prompt-read "Password" :echo false)]
-      (ant ExecTask {:dir srcdir :executable "sudo" :input-string (str password "\n")}
-           (args ["-S" "make" "install"])))))
+    (let [password (prompt-read "Password" :echo false)
+          opts     {:dir srcdir :input-string (str password "\n")}]
+      (if (= "linux "(os-name))
+        (ant ExecTask (assoc opts :executable "script")
+             (argline "-q -c 'sudo -S make install' /dev/null"))
+        (ant ExecTask (assoc opts :executable "sudo")
+             (args ["-S" "make" "install"]))))))
 
 (deftask uninstall-protoc
   "Remove protoc if it is installed."
@@ -78,7 +83,6 @@
          (try (ant ExecTask {:executable "protoc" :dir "proto" :failonerror true}
                    (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
               (catch org.apache.tools.ant.BuildException e
-                (ant Delete {:dir dest})
                 (throw (Exception. (str "error compiling " proto))))))
        (compile-java (file dest)))))
 
