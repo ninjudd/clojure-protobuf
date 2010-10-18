@@ -82,26 +82,10 @@
       (is (= ["sweet" "savory"] (s :tags)))
       (is (= #{"foo" "bar" "baz"} (p :tag-set)))
       (is (= #{"bap" "baz"} (s :tag-set)))
-    ))
-  (testing "protofields"
-    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil,
-                  :tag_set nil, :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil}]
-      (is (= fields (protofields Foo)))
-      (is (= fields (protofields clojure.protobuf.Test$Foo)))))
-  (testing "protodefault"
-    (is (= 43  (protodefault Foo :id)))
-    (is (= ""  (protodefault Foo :label)))
-    (is (= []  (protodefault Foo :tags)))
-    (is (= nil (protodefault Foo :parent)))
-    (is (= []  (protodefault Foo :responses)))
-    (is (= #{} (protodefault Foo :tag_set)))
-    (is (= {}  (protodefault Foo :foo_by_id)))
-    (is (= {}  (protodefault Foo :groups)))
-    (is (= {}  (protodefault clojure.protobuf.Test$Foo :groups)))
-  ))
+    )))
 
 (deftest protobuf-extended
-  (testing "create"
+  (comment testing "create"
     (let [p (protobuf Foo :id 5 :tag-set #{"little" "yellow"} :attr-map {"size" "little", "color" "yellow", "style" "different"})]
       (is (= #{"little" "yellow"} (:tag-set p)))
       (is (associative? (:attr-map p)))
@@ -117,13 +101,37 @@
         (is (= 6      (six  :id)))
         (is (= "six"  (six  :label))))
       ))
-  (testing "conj"
+  (testing "map-by with required field"
+    (let [p (protobuf Foo :id 1 :item-map {"foo" {:exists true} "bar" {:exists false}})]
+      (is (= "foo" (get-in p [:item-map "foo" :item])))
+      (is (= "bar" (get-in p [:item-map "bar" :item])))
+      ))
+  (comment testing "conj"
     (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five", :tag-set ["odd"]}, 6 {:label "six" :tags ["even"]}})]
       (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["odd"]}}})]
         (is (= #{"prime" "odd"} (get-in p [:foo-by-id 5 :tag-set])))
         (is (= ["odd"]          (get-in p [:foo-by-id 6 :tags])))
         (is (= ""               (get-in p [:foo-by-id 6 :label]))))
       )))
+
+(deftest protofields-and-defaults
+  (testing "protofields"
+    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil,
+                  :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil}]
+      (is (= fields (protofields Foo)))
+      (is (= fields (protofields clojure.protobuf.Test$Foo)))))
+  (testing "protodefault"
+    (is (= 43  (protodefault Foo :id)))
+    (is (= ""  (protodefault Foo :label)))
+    (is (= []  (protodefault Foo :tags)))
+    (is (= nil (protodefault Foo :parent)))
+    (is (= []  (protodefault Foo :responses)))
+    (is (= #{} (protodefault Foo :tag-set)))
+    (is (= {}  (protodefault Foo :foo-by-id)))
+    (is (= {}  (protodefault Foo :groups)))
+    (is (= {}  (protodefault Foo :item-map)))
+    (is (= {}  (protodefault clojure.protobuf.Test$Foo :groups)))
+  ))
 
 (deftest protobuf-nested-message
   (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]))

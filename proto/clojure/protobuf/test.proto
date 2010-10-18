@@ -19,10 +19,11 @@ message Foo {
     MAYBE = 1;
   }
 
-  repeated Item   tag_set   = 10 [(set)    = true];
-  repeated Pair   attr_map  = 11 [(map)    = true];
-  repeated Foo    foo_by_id = 12 [(map_by) = "id"];
-  repeated Group  groups    = 13 [(map)    = true];
+  repeated Item  tag_set   = 10 [(set)    = true];
+  repeated Pair  attr_map  = 11 [(map)    = true];
+  repeated Foo   foo_by_id = 12 [(map_by) = "id"];
+  repeated Group groups    = 13 [(map)    = true];
+  repeated Item  item_map  = 14 [(map_by) = "item"];
 }
 
 message Pair {
