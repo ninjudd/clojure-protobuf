@@ -38,8 +38,8 @@
 (defn protobuf-load
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
      (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data)))
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data #^Integer length]
-     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data length))))
+  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data #^Integer offset #^Integer length]
+     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data offset length))))
 
 (defn protobuf-dump [#^clojure.protobuf.PersistentProtocolBufferMap p]
   (.toByteArray p))
