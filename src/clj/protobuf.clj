@@ -32,8 +32,9 @@
         type #^com.google.protobuf.Descriptors$Descriptor (.getMessageType type)]
     (into {}
       (for [#^com.google.protobuf.Descriptors$FieldDescriptor field (.getFields type)]
-        (let [meta-string (.. field getOptions (getExtension (clojure.protobuf.Extensions/meta)))]
-          [(keyword (.getName field)) (when-not (empty? meta-string) (read-string meta-string))])))))
+        (let [meta-string (.. field getOptions (getExtension (clojure.protobuf.Extensions/meta)))
+              field-name  (keyword (.replaceAll (.getName field) "_" "-"))]
+          [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load
   ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]

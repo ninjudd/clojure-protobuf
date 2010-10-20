@@ -116,8 +116,8 @@
 
 (deftest protofields-and-defaults
   (testing "protofields"
-    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil,
-                  :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil}]
+    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil,
+                  :attr-map nil, :foo-by-id nil, :groups nil, :doubles nil, :floats nil, :item-map nil}]
       (is (= fields (protofields Foo)))
       (is (= fields (protofields clojure.protobuf.Test$Foo)))))
   (testing "protodefault"
