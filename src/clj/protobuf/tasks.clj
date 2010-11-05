@@ -34,7 +34,7 @@
       (ant ExecTask {:dir srcdir :executable "make"}))
     (let [password (prompt-read "Password" :echo false)
           opts     {:dir srcdir :input-string (str password "\n")}]
-      (if (= "linux "(os-name))
+      (if (= "linux" (os-name))
         (ant ExecTask (assoc opts :executable "script")
              (argline "-q -c 'sudo -S make install' /dev/null"))
         (ant ExecTask (assoc opts :executable "sudo")
