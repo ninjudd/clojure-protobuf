@@ -2,7 +2,7 @@
   (:use cake cake.core cake.ant
         [cake.file :only [file]]
         [cake.project :only [log]]
-        [cake.tasks.deps :only [os-name]]
+        [cake.utils :only [os-name prompt-read]]
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
