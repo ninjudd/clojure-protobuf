@@ -412,6 +412,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   public Object valAt(Object key) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return null;
+    if (!field.isRepeated() && !message().hasField(field)) return null;
     return fromProtoValue(field, message().getField(field));
   }
 
