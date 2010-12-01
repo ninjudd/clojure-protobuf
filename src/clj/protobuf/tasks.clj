@@ -6,7 +6,7 @@
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
-        [cake.utils.io :only [extract-resource]])
+        [cake.utils :only [extract-resource]])
   (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
@@ -26,7 +26,7 @@
 (deftask install-protoc
   "Compile and install protoc to /usr/local."
   (when-not (installed?)
-    (run-task 'fetch-protoc)
+    (invoke fetch-protoc)
     (when-not (.exists (file srcdir "src" "protoc"))
       (ant Chmod {:file (file srcdir "configure")  :perm "+x"})
       (ant Chmod {:file (file srcdir "install-sh") :perm "+x"})
@@ -105,6 +105,6 @@
 (deftask proto #{deps install-protoc}
   "Compile protocol buffer files located in proto dir."
   (if (= "clojure-protobuf" (:artifact-id *project*))
-    (do (run-task 'fetch-protoc)
+    (do (invoke fetch-protoc)
         (build-protobuf))
     (protoc (or (:proto *opts*) (proto-files (file "proto"))))))
