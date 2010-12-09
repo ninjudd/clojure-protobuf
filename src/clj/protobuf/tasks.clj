@@ -6,7 +6,7 @@
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
-        [cake.utils :only [extract-resource]])
+        [bake.io :only [extract-resource]])
   (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]))
 
 (def version "2.3.0")
