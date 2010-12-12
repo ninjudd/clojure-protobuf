@@ -1,5 +1,5 @@
 (ns protobuf.tasks
-  (:use cake cake.core cake.ant
+  (:use cake cake.core uncle.core
         [cake.file :only [file]]
         [bake.core :only [log]]
         [cake.utils :only [os-name prompt-read]]
