@@ -82,7 +82,16 @@
       (is (= ["sweet"] (t :tags)))
       (is (= ["sweet" "savory"] (s :tags)))
       (is (= #{"foo" "bar" "baz"} (p :tag-set)))
-      (is (= #{"bap" "baz"} (s :tag-set))))))
+      (is (= #{"bap" "baz"} (s :tag-set)))))
+
+  (testing "coercing doubles and floats"
+    (let [p (protobuf Foo :lat 5 :long 6)]
+      (is (= 5.0 (p :lat)))
+      (is (= 6.0 (p :long))))
+    (let [p (protobuf Foo :lat (float 5.0) :long (double 6.0))]
+      (is (= 5.0 (p :lat)))
+      (is (= 6.0 (p :long))))
+    ))
 
 (deftest protobuf-extended
 
@@ -117,12 +126,14 @@
 
   (testing "protofields"
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil,
-                  :attr-map nil, :foo-by-id nil, :groups nil, :doubles nil, :floats nil, :item-map nil}]
+                  :attr-map nil, :foo-by-id nil, :groups nil, :doubles nil, :floats nil, :item-map nil, :lat nil, :long nil}]
       (is (= fields (protofields Foo)))
       (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
   (testing "protodefault"
     (is (= 43  (protodefault Foo :id)))
+    (is (= 0.0 (protodefault Foo :lat)))
+    (is (= 0.0 (protodefault Foo :long)))
     (is (= ""  (protodefault Foo :label)))
     (is (= []  (protodefault Foo :tags)))
     (is (= nil (protodefault Foo :parent)))
