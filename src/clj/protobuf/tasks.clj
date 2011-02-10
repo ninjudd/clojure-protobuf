@@ -101,7 +101,7 @@
   (for [file (rest (file-seq dir)) :when (proto-file? file)]
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
-(deftask compile #{proto})
+(deftask compile-native #{proto})
 (deftask proto #{deps install-protoc}
   "Compile protocol buffer files located in proto dir."
   (if (= "clojure-protobuf" (:artifact-id *project*))
