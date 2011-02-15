@@ -17,9 +17,10 @@ message Foo {
   optional float  long = 9;
 
   enum Response {
-    YES   = 0;
-    NO    = 1;
-    MAYBE = 1;
+    YES      = 0;
+    NO       = 1;
+    MAYBE    = 2;
+    NOT_SURE = 3;
   }
 
   repeated Item  tag_set   = 10 [(set)    = true];

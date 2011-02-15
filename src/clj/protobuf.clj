@@ -1,49 +1,51 @@
-(ns protobuf)
+(ns protobuf
+  (:import (clojure.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
+           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor)))
 
 (defn protobuf? [obj]
-  (instance? clojure.protobuf.PersistentProtocolBufferMap obj))
+  (instance? PersistentProtocolBufferMap obj))
 
 (defn protodef? [obj]
-  (instance? clojure.protobuf.PersistentProtocolBufferMap$Def obj))
+  (instance? PersistentProtocolBufferMap$Def obj))
 
 (defn protodef [class]
   (if (or (protodef? class) (nil? class))
     class
-    (clojure.protobuf.PersistentProtocolBufferMap$Def/create class)))
+    (PersistentProtocolBufferMap$Def/create class)))
 
 (defmacro defprotobuf [sym & args]
   (let [class (apply str (interpose "$" (map name args)))]
     `(def ~sym (protodef ~class))))
 
 (defn protobuf
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type]
-     (clojure.protobuf.PersistentProtocolBufferMap/construct type {}))
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type m]
-     (clojure.protobuf.PersistentProtocolBufferMap/construct type m))
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type k v & kvs]
-     (clojure.protobuf.PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
+  ([#^PersistentProtocolBufferMap$Def type]
+     (PersistentProtocolBufferMap/construct type {}))
+  ([#^PersistentProtocolBufferMap$Def type m]
+     (PersistentProtocolBufferMap/construct type m))
+  ([#^PersistentProtocolBufferMap$Def type k v & kvs]
+     (PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
 (defn protodefault [type key]
-  (let [type #^clojure.protobuf.PersistentProtocolBufferMap$Def (protodef type)]
+  (let [type #^PersistentProtocolBufferMap$Def (protodef type)]
     (.defaultValue type key)))
 
 (defn protofields [type]
-  (let [type #^clojure.protobuf.PersistentProtocolBufferMap$Def (protodef type)
-        type #^com.google.protobuf.Descriptors$Descriptor (.getMessageType type)]
+  (let [type #^PersistentProtocolBufferMap$Def (protodef type)
+        type #^Descriptors$Descriptor (.getMessageType type)]
     (into {}
-      (for [#^com.google.protobuf.Descriptors$FieldDescriptor field (.getFields type)]
-        (let [meta-string (.. field getOptions (getExtension (clojure.protobuf.Extensions/meta)))
+      (for [#^Descriptors$FieldDescriptor field (.getFields type)]
+        (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
               field-name  (keyword (.replaceAll (.getName field) "_" "-"))]
           [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data]
-     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data)))
-  ([#^clojure.protobuf.PersistentProtocolBufferMap$Def type #^bytes data #^Integer offset #^Integer length]
-     (if data (clojure.protobuf.PersistentProtocolBufferMap/create type data offset length))))
+  ([#^PersistentProtocolBufferMap$Def type #^bytes data]
+     (if data (PersistentProtocolBufferMap/create type data)))
+  ([#^PersistentProtocolBufferMap$Def type #^bytes data #^Integer offset #^Integer length]
+     (if data (PersistentProtocolBufferMap/create type data offset length))))
 
-(defn protobuf-dump [#^clojure.protobuf.PersistentProtocolBufferMap p]
+(defn protobuf-dump [#^PersistentProtocolBufferMap p]
   (.toByteArray p))
 
-(defn append [#^clojure.protobuf.PersistentProtocolBufferMap p map]
+(defn append [#^PersistentProtocolBufferMap p map]
   (.append p map))

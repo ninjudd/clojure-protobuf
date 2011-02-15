@@ -171,12 +171,28 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
+
+  static boolean use_underscores = false;
+  static public void setUseUnderscores(boolean val) {
+    use_underscores = val;
+    enum_to_keyword.clear();
+    map_field_by.clear();
+  }
+
+  static protected String normalize(String s) {
+    s = s.toLowerCase();
+    if (!use_underscores) {
+      s = s.replaceAll("_","-");
+    }
+    return s;
+  }
+
   static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword =
      new ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword>();
   static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
     Keyword keyword = enum_to_keyword.get(enum_value);
     if (keyword == null) {
-      String name = enum_value.getName().toLowerCase().replaceAll("_","-");
+      String name = normalize(enum_value.getName());
       keyword = Keyword.intern(Symbol.intern(name));
       enum_to_keyword.putIfAbsent(enum_value, keyword);
     }
@@ -192,7 +208,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     if (keyword == null) {
       String name = field.getOptions().getExtension(Extensions.mapBy);
 
-      name = name.toLowerCase().replaceAll("_","-");
+      name = normalize(name);
       keyword = Keyword.intern(Symbol.intern(name));
       map_field_by.putIfAbsent(field, keyword);
     }
@@ -524,7 +540,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     public Object first() {
       if (i == fields.length) return null;
       Descriptors.FieldDescriptor field = fields[i];
-      String name = field.getName().replaceAll("_","-");
+      String name = normalize(field.getName());
       Keyword key = Keyword.intern(Symbol.intern(name));
       Object  val = PersistentProtocolBufferMap.fromProtoValue(field, map.get(field));
       return new MapEntry(key, val);

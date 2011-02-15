@@ -144,6 +144,17 @@
     (is (= {}  (protodefault Foo :item-map)))
     (is (= {}  (protodefault clojure.protobuf.Test$Foo :groups)))))
 
+(deftest use-underscores
+  (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
+    (is (= '(:responses :tag-set)                (keys p)))
+    (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
+
+    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores true)
+    (is (= '(:responses :tag_set)                (keys p)))
+    (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
+
+    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
+
 (deftest protobuf-nested-message
   (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]))
 
