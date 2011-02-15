@@ -171,7 +171,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-
   static boolean use_underscores = false;
   static public void setUseUnderscores(boolean val) {
     use_underscores = val;
@@ -179,7 +178,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     map_field_by.clear();
   }
 
-  static protected String normalize(String s) {
+  static public String normalize(String s) {
     s = s.toLowerCase();
     if (!use_underscores) {
       s = s.replaceAll("_","-");

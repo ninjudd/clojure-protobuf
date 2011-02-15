@@ -153,6 +153,10 @@
     (is (= '(:responses :tag_set)                (keys p)))
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
+    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil,
+                  :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil, :lat nil, :long nil}]
+      (is (= fields (protofields Foo))))
+
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
 
 (deftest protobuf-nested-message
