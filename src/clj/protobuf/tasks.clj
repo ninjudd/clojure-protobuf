@@ -1,8 +1,8 @@
 (ns protobuf.tasks
   (:use cake cake.core uncle.core
         [cake.file :only [file]]
-        [bake.core :only [log]]
-        [cake.utils :only [os-name prompt-read]]
+        [bake.core :only [log os-name]]
+        [cake.utils :only [prompt-read]]
         [cake.tasks.compile :only [compile-java]]
         [clojure.java.shell :only [sh]]
         [clojure.java.io :only [reader]]
@@ -74,7 +74,7 @@
   ([protos dest]
      (when (or (:force *opts*)
                (> (modtime "proto") (modtime dest))
-               (> (modtime "proto") (modtime "classes")))       
+               (> (modtime "proto") (modtime "classes")))
        (ant Mkdir {:dir dest})
        (ant Mkdir {:dir "build/proto"})
        (doseq [proto protos]
