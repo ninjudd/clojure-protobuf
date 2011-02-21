@@ -1,6 +1,6 @@
 (ns protobuf
   (:import (clojure.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
-           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor)))
+           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)))
 
 (defn protobuf? [obj]
   (instance? PersistentProtocolBufferMap obj))
@@ -18,34 +18,37 @@
     `(def ~sym (protodef ~class))))
 
 (defn protobuf
-  ([#^PersistentProtocolBufferMap$Def type]
+  ([^PersistentProtocolBufferMap$Def type]
      (PersistentProtocolBufferMap/construct type {}))
-  ([#^PersistentProtocolBufferMap$Def type m]
+  ([^PersistentProtocolBufferMap$Def type m]
      (PersistentProtocolBufferMap/construct type m))
-  ([#^PersistentProtocolBufferMap$Def type k v & kvs]
+  ([^PersistentProtocolBufferMap$Def type k v & kvs]
      (PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
 (defn protodefault [type key]
-  (let [type #^PersistentProtocolBufferMap$Def (protodef type)]
+  (let [type ^PersistentProtocolBufferMap$Def (protodef type)]
     (.defaultValue type key)))
 
 (defn protofields [type]
-  (let [type #^PersistentProtocolBufferMap$Def (protodef type)
-        type #^Descriptors$Descriptor (.getMessageType type)]
+  (let [type ^PersistentProtocolBufferMap$Def (protodef type)
+        type ^Descriptors$Descriptor (.getMessageType type)]
     (into {}
-      (for [#^Descriptors$FieldDescriptor field (.getFields type)]
+      (for [^Descriptors$FieldDescriptor field (.getFields type)]
         (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
               field-name  (keyword (PersistentProtocolBufferMap/normalize (.getName field)))]
           [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load
-  ([#^PersistentProtocolBufferMap$Def type #^bytes data]
-     (if data (PersistentProtocolBufferMap/create type data)))
-  ([#^PersistentProtocolBufferMap$Def type #^bytes data #^Integer offset #^Integer length]
-     (if data (PersistentProtocolBufferMap/create type data offset length))))
+  ([^PersistentProtocolBufferMap$Def type ^bytes data]
+     (when data
+       (PersistentProtocolBufferMap/create type data)))
+  ([^PersistentProtocolBufferMap$Def type ^bytes data ^Integer offset ^Integer length]
+     (when data
+       (let [^CodedInputStream in (CodedInputStream/newInstance data offset length)]
+         (PersistentProtocolBufferMap/read type in)))))
 
-(defn protobuf-dump [#^PersistentProtocolBufferMap p]
+(defn protobuf-dump [^PersistentProtocolBufferMap p]
   (.toByteArray p))
 
-(defn append [#^PersistentProtocolBufferMap p map]
+(defn append [^PersistentProtocolBufferMap p map]
   (.append p map))

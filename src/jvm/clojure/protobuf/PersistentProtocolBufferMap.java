@@ -118,9 +118,8 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return new PersistentProtocolBufferMap(null, def, message);
   }
 
-  static public PersistentProtocolBufferMap create(Def def, byte[] bytes, Integer offset, Integer length) throws IOException {
-    CodedInputStream input = CodedInputStream.newInstance(bytes, offset.intValue(), length.intValue());
-    DynamicMessage message = def.parseFrom(input);
+  static public PersistentProtocolBufferMap read(Def def, CodedInputStream in) throws IOException {
+    DynamicMessage message = def.parseFrom(in);
     return new PersistentProtocolBufferMap(null, def, message);
   }
 
