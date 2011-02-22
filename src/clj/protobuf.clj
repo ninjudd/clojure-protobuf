@@ -4,22 +4,31 @@
            (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)
            (java.io InputStream OutputStream)))
 
-(defn protobuf? [obj]
+(defn protobuf?
+  "Is the given object a PersistentProtocolBufferMap?"
+  [obj]
   (instance? PersistentProtocolBufferMap obj))
 
-(defn protodef? [obj]
+(defn protodef?
+  "Is the given object a PersistentProtocolBufferMap$Def?"
+  [obj]
   (instance? PersistentProtocolBufferMap$Def obj))
 
-(defn protodef [class]
+(defn protodef
+  "Create a protodef from a string or protobuf class."
+  [class]
   (if (or (protodef? class) (nil? class))
     class
     (PersistentProtocolBufferMap$Def/create class)))
 
-(defmacro defprotobuf [sym & args]
+(defmacro defprotobuf
+  "Helper macro for defining a protodef object."
+  [sym & args]
   (let [class (apply str (interpose "$" (map name args)))]
     `(def ~sym (protodef ~class))))
 
 (defn protobuf
+  "Construct a protobuf of the given type."
   ([^PersistentProtocolBufferMap$Def type]
      (PersistentProtocolBufferMap/construct type {}))
   ([^PersistentProtocolBufferMap$Def type m]
@@ -27,11 +36,15 @@
   ([^PersistentProtocolBufferMap$Def type k v & kvs]
      (PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
-(defn protodefault [type key]
+(defn protodefault
+  "Return the default empty protobuf of the given type."
+  [type key]
   (let [type ^PersistentProtocolBufferMap$Def (protodef type)]
     (.defaultValue type key)))
 
-(defn protofields [type]
+(defn protofields
+  "Return a map of the protobuf fields to the clojure.protobuf.Extensions metadata for each field."
+  [type]
   (let [type ^PersistentProtocolBufferMap$Def (protodef type)
         type ^Descriptors$Descriptor (.getMessageType type)]
     (into {}
@@ -41,6 +54,7 @@
           [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load
+  "Load a protobuf of the given type from an array of bytes."
   ([^PersistentProtocolBufferMap$Def type ^bytes data]
      (when data
        (PersistentProtocolBufferMap/create type data)))
@@ -50,22 +64,30 @@
          (PersistentProtocolBufferMap/parseFrom type in)))))
 
 
-(defn protobuf-dump [^PersistentProtocolBufferMap p]
+(defn protobuf-dump
+  "Return the byte representation of the given protobuf."
+  [^PersistentProtocolBufferMap p]
   (.toByteArray p))
 
-(defn protobuf-seq [^PersistentProtocolBufferMap$Def type in]
+(defn protobuf-seq
+  "Lazily read a sequence of length-delimited protobufs of the specified type from the given input stream."
+  [^PersistentProtocolBufferMap$Def type in]
   (lazy-seq
    (io!
     (let [^InputStream in (input-stream in)]
       (when-let [p (PersistentProtocolBufferMap/parseDelimitedFrom type in)]
         (cons p (protobuf-seq type in)))))))
 
-(defn protobuf-write [out & ps]
+(defn protobuf-write
+  "Write the given protobufs to the given output stream, prefixing each with its length to delimit them."
+  [out & ps]
   (io!
    (let [^OutputStream out (output-stream out)]
      (doseq [^PersistentProtocolBufferMap p ps]
        (.writeDelimitedTo p out))
      (.flush out))))
 
-(defn append [^PersistentProtocolBufferMap p map]
+(defn append
+  "Merge the given map into the protobuf. Equivalent to appending the byte representations."
+  [^PersistentProtocolBufferMap p map]
   (.append p map))
