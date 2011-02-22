@@ -1,6 +1,7 @@
 (ns protobuf-test
   (:use protobuf)
-  (:use clojure.test))
+  (:use clojure.test)
+  (:import (java.io PipedInputStream PipedOutputStream)))
 
 (defprotobuf Foo clojure.protobuf.Test Foo)
 (defprotobuf Response clojure.protobuf.Test Response)
@@ -164,3 +165,14 @@
 
 (deftest protobuf-nil-field
   (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]))
+
+(deftest protobuf-seq-and-write-protobuf
+  (let [in  (PipedInputStream.)
+        out (PipedOutputStream. in)
+        foo (protobuf Foo :id 1 :label "foo")
+        bar (protobuf Foo :id 2 :label "bar")
+        baz (protobuf Foo :id 3 :label "baz")]
+    (protobuf-write out foo bar baz)
+    (.close out)
+    (is (= [{:id 1, :label "foo"} {:id 2, :label "bar"} {:id 3, :label "baz"}]
+           (protobuf-seq Foo in)))))

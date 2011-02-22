@@ -1,6 +1,8 @@
 (ns protobuf
+  (:use [clojure.java.io :only [input-stream output-stream]])
   (:import (clojure.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
-           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)))
+           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)
+           (java.io InputStream OutputStream)))
 
 (defn protobuf? [obj]
   (instance? PersistentProtocolBufferMap obj))
@@ -45,10 +47,25 @@
   ([^PersistentProtocolBufferMap$Def type ^bytes data ^Integer offset ^Integer length]
      (when data
        (let [^CodedInputStream in (CodedInputStream/newInstance data offset length)]
-         (PersistentProtocolBufferMap/read type in)))))
+         (PersistentProtocolBufferMap/parseFrom type in)))))
+
 
 (defn protobuf-dump [^PersistentProtocolBufferMap p]
   (.toByteArray p))
+
+(defn protobuf-seq [^PersistentProtocolBufferMap$Def type in]
+  (lazy-seq
+   (io!
+    (let [^InputStream in (input-stream in)]
+      (when-let [p (PersistentProtocolBufferMap/parseDelimitedFrom type in)]
+        (cons p (protobuf-seq type in)))))))
+
+(defn protobuf-write [out & ps]
+  (io!
+   (let [^OutputStream out (output-stream out)]
+     (doseq [^PersistentProtocolBufferMap p ps]
+       (.writeDelimitedTo p out))
+     (.flush out))))
 
 (defn append [^PersistentProtocolBufferMap p map]
   (.append p map))

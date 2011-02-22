@@ -13,6 +13,7 @@ package clojure.protobuf;
 import clojure.lang.*;
 import java.util.*;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +23,7 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
 
 public class PersistentProtocolBufferMap extends APersistentMap {
   public static class Def {
@@ -59,6 +61,15 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
     public DynamicMessage parseFrom(CodedInputStream input) throws IOException {
       return DynamicMessage.parseFrom(type, input);
+    }
+
+    public DynamicMessage.Builder parseDelimitedFrom(InputStream input) throws IOException {
+      DynamicMessage.Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder;
+      } else {
+        return null;
+      }
     }
 
     public DynamicMessage.Builder newBuilder() {
@@ -118,9 +129,18 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return new PersistentProtocolBufferMap(null, def, message);
   }
 
-  static public PersistentProtocolBufferMap read(Def def, CodedInputStream in) throws IOException {
-    DynamicMessage message = def.parseFrom(in);
+  static public PersistentProtocolBufferMap parseFrom(Def def, CodedInputStream input) throws IOException {
+    DynamicMessage message = def.parseFrom(input);
     return new PersistentProtocolBufferMap(null, def, message);
+  }
+
+  static public PersistentProtocolBufferMap parseDelimitedFrom(Def def, InputStream input) throws IOException {
+    DynamicMessage.Builder builder = def.parseDelimitedFrom(input);
+    if (builder != null) {
+      return new PersistentProtocolBufferMap(null, def, builder);
+    } else {
+      return null;
+    }
   }
 
   static public PersistentProtocolBufferMap construct(Def def, IPersistentMap keyvals) {
@@ -148,6 +168,14 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   public byte[] toByteArray() {
     return message().toByteArray();
+  }
+
+  public void writeTo(CodedOutputStream output) throws IOException {
+    message().writeTo(output);
+  }
+
+  public void writeDelimitedTo(OutputStream output) throws IOException {
+    message().writeDelimitedTo(output);
   }
 
   public Descriptors.Descriptor getMessageType() {
