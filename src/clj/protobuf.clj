@@ -75,8 +75,9 @@
   (lazy-seq
    (io!
     (let [^InputStream in (input-stream in)]
-      (when-let [p (PersistentProtocolBufferMap/parseDelimitedFrom type in)]
-        (cons p (protobuf-seq type in)))))))
+      (if-let [p (PersistentProtocolBufferMap/parseDelimitedFrom type in)]
+        (cons p (protobuf-seq type in))
+        (.close in))))))
 
 (defn protobuf-write
   "Write the given protobufs to the given output stream, prefixing each with its length to delimit them."
