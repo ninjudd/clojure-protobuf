@@ -201,16 +201,22 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   static boolean use_underscores = false;
   static public void setUseUnderscores(boolean val) {
     use_underscores = val;
+    field_name_to_keyword.clear();
     enum_to_keyword.clear();
     map_field_by.clear();
   }
 
-  static public String normalize(String s) {
-    s = s.toLowerCase();
-    if (!use_underscores) {
-      s = s.replaceAll("_","-");
+  static ConcurrentHashMap<String, Keyword> field_name_to_keyword =
+     new ConcurrentHashMap<String, Keyword>();
+  static public Keyword intern(String name) {
+    Keyword keyword = field_name_to_keyword.get(name);
+    if (keyword == null) {
+      name = name.toLowerCase();
+      if (!use_underscores) name = name.replaceAll("_","-");
+      keyword = Keyword.intern(Symbol.intern(name));
+      field_name_to_keyword.putIfAbsent(name, keyword);
     }
-    return s;
+    return keyword;
   }
 
   static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword =
@@ -218,8 +224,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
     Keyword keyword = enum_to_keyword.get(enum_value);
     if (keyword == null) {
-      String name = normalize(enum_value.getName());
-      keyword = Keyword.intern(Symbol.intern(name));
+      keyword = intern(enum_value.getName());
       enum_to_keyword.putIfAbsent(enum_value, keyword);
     }
     return keyword;
@@ -233,9 +238,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     Keyword keyword = map_field_by.get(field);
     if (keyword == null) {
       String name = field.getOptions().getExtension(Extensions.mapBy);
-
-      name = normalize(name);
-      keyword = Keyword.intern(Symbol.intern(name));
+      keyword = intern(name);
       map_field_by.putIfAbsent(field, keyword);
     }
     return keyword == k_null ? null : keyword;
@@ -459,7 +462,8 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   public Object valAt(Object key) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return null;
-    if (!field.isRepeated() && !message().hasField(field)) return null;
+    if (field.isRepeated() && message().getRepeatedFieldCount(field) == 0) return null;
+    if (!field.isRepeated() && !field.hasDefaultValue() && !message().hasField(field)) return null;
     return fromProtoValue(field, message().getField(field));
   }
 
@@ -486,7 +490,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     if (o instanceof Map.Entry) {
       Map.Entry e = (Map.Entry) o;
       addField(builder, e.getKey(), e.getValue());
-    }	else if (o instanceof IPersistentVector) {
+    } else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector) o;
       if (v.count() != 2) throw new IllegalArgumentException("Vector arg to map conj must be a pair");
       addField(builder, v.nth(0), v.nth(1));
@@ -528,7 +532,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   public ISeq seq() {
-    return Seq.create(message());
+    return Seq.create(null, this, RT.seq(def.type.getFields()));
   }
 
   public IPersistentCollection empty() {
@@ -538,43 +542,38 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   static class Seq extends ASeq {
-    final Map<Descriptors.FieldDescriptor, Object> map;
-    final Descriptors.FieldDescriptor[] fields;
-    final int i;
+    final PersistentProtocolBufferMap proto;
+    final MapEntry first;
+    final ISeq fields;
 
-    static public Seq create(DynamicMessage message) {
-      Map<Descriptors.FieldDescriptor, Object> map = message.getAllFields();
-      if (map.size() == 0) return null;
-
-      Descriptors.FieldDescriptor[] fields = new Descriptors.FieldDescriptor[map.size()];
-      fields = (Descriptors.FieldDescriptor[]) map.keySet().toArray(fields);
-      return new Seq(null, map, fields, 0);
+    static public Seq create(IPersistentMap meta, PersistentProtocolBufferMap proto, ISeq fields){
+      for (ISeq s = fields; s != null; s = s.next()) {
+        Descriptors.FieldDescriptor field = (Descriptors.FieldDescriptor) s.first();
+        Keyword key = intern(field.getName());
+        Object  val = proto.valAt(key);
+        if (val != null) return new Seq(meta, proto, new MapEntry(key, val), s);
+      }
+      return null;
     }
 
-    protected Seq(IPersistentMap meta, Map<Descriptors.FieldDescriptor, Object> map, Descriptors.FieldDescriptor[] fields, int i){
+    protected Seq(IPersistentMap meta, PersistentProtocolBufferMap proto, MapEntry first, ISeq fields){
       super(meta);
-      this.map    = map;
+      this.proto  = proto;
+      this.first  = first;
       this.fields = fields;
-      this.i      = i;
     }
 
     public Obj withMeta(IPersistentMap meta) {
-      if(meta != meta()) return new Seq(meta, map, fields, i);
+      if (meta != meta()) return new Seq(meta, proto, first, fields);
       return this;
     }
 
     public Object first() {
-      if (i == fields.length) return null;
-      Descriptors.FieldDescriptor field = fields[i];
-      String name = normalize(field.getName());
-      Keyword key = Keyword.intern(Symbol.intern(name));
-      Object  val = PersistentProtocolBufferMap.fromProtoValue(field, map.get(field));
-      return new MapEntry(key, val);
+      return first;
     }
 
     public ISeq next() {
-      if (i + 1 < fields.length) return new Seq(meta(), map, fields, i + 1);
-      return null;
+      return create(meta(), proto, fields.next());
     }
   }
 }

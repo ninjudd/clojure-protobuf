@@ -28,6 +28,7 @@ message Foo {
   repeated Foo   foo_by_id = 12 [(map_by) = "id"];
   repeated Group groups    = 13 [(map)    = true];
   repeated Item  item_map  = 14 [(map_by) = "item"];
+  optional bool  deleted   = 15 [default  = false];
 }
 
 message Pair {

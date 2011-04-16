@@ -50,7 +50,7 @@
     (into {}
       (for [^Descriptors$FieldDescriptor field (.getFields type)]
         (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-              field-name  (keyword (PersistentProtocolBufferMap/normalize (.getName field)))]
+              field-name  (keyword (PersistentProtocolBufferMap/intern (.getName field)))]
           [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
 
 (defn protobuf-load

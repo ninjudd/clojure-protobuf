@@ -162,14 +162,14 @@
 
 (deftest use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
-    (is (= '(:responses :tag-set)                (keys p)))
+    (is (= '(:id :responses :tag-set :deleted)   (keys p)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores true)
-    (is (= '(:responses :tag_set)                (keys p)))
+    (is (= '(:id :responses :tag_set :deleted)   (keys p)))
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
-    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil,
+    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
                   :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil, :lat nil, :long nil}]
       (is (= fields (protofields Foo))))
 
