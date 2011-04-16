@@ -92,3 +92,8 @@
   "Merge the given map into the protobuf. Equivalent to appending the byte representations."
   [^PersistentProtocolBufferMap p map]
   (.append p map))
+
+(defn adjoin
+  "Merge the given map into the protobuf. Like append, except default values in map will be used if it i."
+  [^PersistentProtocolBufferMap p map]
+  (.adjoin p map))

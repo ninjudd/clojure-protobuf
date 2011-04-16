@@ -143,7 +143,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  static public PersistentProtocolBufferMap construct(Def def, IPersistentMap keyvals) {
+  static public PersistentProtocolBufferMap construct(Def def, Object keyvals) {
     PersistentProtocolBufferMap protobuf = new PersistentProtocolBufferMap(null, def);
     return (PersistentProtocolBufferMap) protobuf.cons(keyvals);
   }
@@ -511,6 +511,15 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       proto = construct(def, map);
     }
     return new PersistentProtocolBufferMap(meta(), def, builder().mergeFrom(proto.message()));
+  }
+
+  public PersistentProtocolBufferMap adjoin(IPersistentMap map) {
+    if (map instanceof PersistentProtocolBufferMap) {
+      PersistentProtocolBufferMap proto = (PersistentProtocolBufferMap) map;
+      return append(construct(def, proto.seq()));
+    } else {
+      return append(map);
+    }
   }
 
   public IPersistentMap without(Object key) throws Exception {
