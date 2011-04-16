@@ -291,7 +291,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
         Descriptors.FieldDescriptor item_field  = def.fieldDescriptor(k_item);
         Descriptors.FieldDescriptor exists_field = def.fieldDescriptor(k_exists);
 
-        ITransientSet set = (ITransientSet) PersistentHashSet.EMPTY.asTransient();
+        ITransientSet set = (ITransientSet) PersistentOrderedSet.EMPTY.asTransient();
         while (iterator.hasNext()) {
           DynamicMessage message = (DynamicMessage) iterator.next();
           Object  item   = fromProtoValue(item_field, message.getField(item_field));
