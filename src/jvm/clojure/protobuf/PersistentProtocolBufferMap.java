@@ -268,6 +268,12 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           }
         }
         return map.persistent();
+      } else if (options.getExtension(Extensions.count)) {
+        Object count = iterator.next();
+        while (iterator.hasNext()) {
+          count = Numbers.add(count, iterator.next());
+        }
+        return count;
       } else if (options.getExtension(Extensions.map)) {
         Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
         Descriptors.FieldDescriptor key_field = def.fieldDescriptor(k_key);
