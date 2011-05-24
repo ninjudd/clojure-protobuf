@@ -16,8 +16,8 @@ message Foo {
   optional double lat  = 8;
   optional float  long = 9;
 
-  repeated uint32 count_int    = 10 [(count) = true];
-  repeated double count_double = 11 [(count) = true];
+  repeated int32  count_int    = 10 [(counter) = true];
+  repeated double count_double = 11 [(counter) = true];
 
   enum Response {
     YES      = 0;
