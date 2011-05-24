@@ -395,8 +395,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           for (ISeq s = RT.seq(val); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
             IPersistentMap map = (IPersistentMap) e.getValue();
-            Object value = toProtoValue(field, map.assoc(map_field_by, e.getKey()));
-            builder.addRepeatedField(field, value);
+            Object k = e.getKey();
+            Object v = toProtoValue(field, map.assoc(map_field_by, k).assoc(map_field_by.getName(), k));
+            builder.addRepeatedField(field, v);
           }
         } else if (field.getOptions().getExtension(Extensions.map)) {
           for (ISeq s = RT.seq(val); s != null; s = s.next()) {

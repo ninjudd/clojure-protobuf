@@ -132,6 +132,14 @@
     (is (= "foo" (get-in p [:item-map "foo" :item])))
     (is (= "bar" (get-in p [:item-map "bar" :item])))))
 
+(deftest test-map-by-with-inconsistent-keys
+  (let [p (protobuf Foo :pair-map {"foo" {"key" "bar" "val" "hmm"}})]
+    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
+    (is (= nil   (get-in p [:pair-map "bar" :val]))))
+  (let [p (protobuf Foo :pair-map {"foo" {:key "bar" :val "hmm"}})]
+    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
+    (is (= nil   (get-in p [:pair-map "bar" :val])))))
+
 (deftest test-conj
   (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five", :tag-set ["odd"]}, 6 {:label "six" :tags ["even"]}})]
     (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["odd"]}}})]
@@ -141,7 +149,8 @@
 
 (deftest test-protofields
   (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil, :deleted nil,
-                :attr-map nil, :foo-by-id nil, :groups nil, :doubles nil, :floats nil, :item-map nil, :lat nil, :long nil}]
+                :attr-map nil, :foo-by-id nil, :pair-map nil, :groups nil, :doubles nil, :floats nil, :item-map nil,
+                :lat nil, :long nil}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
@@ -170,7 +179,8 @@
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
-                  :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil, :lat nil, :long nil}]
+                  :attr_map nil, :foo_by_id nil, :pair_map nil, :groups nil, :doubles nil, :floats nil, :item_map nil,
+                  :lat nil, :long nil}]
       (is (= fields (protofields Foo))))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
