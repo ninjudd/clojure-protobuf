@@ -132,6 +132,14 @@
     (is (= "foo" (get-in p [:item-map "foo" :item])))
     (is (= "bar" (get-in p [:item-map "bar" :item])))))
 
+(deftest test-map-by-with-inconsistent-keys
+  (let [p (protobuf Foo :pair-map {"foo" {"key" "bar" "val" "hmm"}})]
+    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
+    (is (= nil   (get-in p [:pair-map "bar" :val]))))
+  (let [p (protobuf Foo :pair-map {"foo" {:key "bar" :val "hmm"}})]
+    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
+    (is (= nil   (get-in p [:pair-map "bar" :val])))))
+
 (deftest test-conj
   (let [p (protobuf Foo :id 1 :foo-by-id {5 {:label "five", :tag-set ["odd"]}, 6 {:label "six" :tags ["even"]}})]
     (let [p (conj p {:foo-by-id {5 {:tag-set ["prime" "odd"]} 6 {:tags ["odd"]}}})]
@@ -139,9 +147,25 @@
       (is (= ["odd"]          (get-in p [:foo-by-id 6 :tags])))
       (is (= nil              (get-in p [:foo-by-id 6 :label]))))))
 
+(deftest test-counts
+  (let [p (protobuf Foo :count-int 5)]
+    (is (= 5 (get p :count-int)))
+    (let [p (append p {:count-int 2})]
+      (is (= 7 (get p :count-int)))
+      (let [p (append p {:count-int -8})]
+        (is (= -1 (get p :count-int))))))
+  (let [p (protobuf Foo :count-double 5.0)]
+    (is (= 5.0 (get p :count-double)))
+    (let [p (append p {:count-double -2.4})]
+      (is (= 2.6 (get p :count-double)))
+      (let [p (append p {:count-double 4.06})]
+        (is (= 6.66 (get p :count-double)))))))
+
+
 (deftest test-protofields
   (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil, :deleted nil,
-                :attr-map nil, :foo-by-id nil, :groups nil, :doubles nil, :floats nil, :item-map nil, :lat nil, :long nil}]
+                :attr-map nil, :foo-by-id nil, :pair-map nil, :groups nil, :doubles nil, :floats nil, :item-map nil,
+                :count-int nil, :count-double nil, :lat nil, :long nil}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
@@ -170,7 +194,8 @@
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
-                  :attr_map nil, :foo_by_id nil, :groups nil, :doubles nil, :floats nil, :item_map nil, :lat nil, :long nil}]
+                  :attr_map nil, :foo_by_id nil, :pair_map nil, :groups nil, :doubles nil, :floats nil, :item_map nil,
+                  :count_int nil, :count_double nil, :lat nil, :long nil}]
       (is (= fields (protofields Foo))))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
