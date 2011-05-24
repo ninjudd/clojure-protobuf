@@ -16,6 +16,9 @@ message Foo {
   optional double lat  = 8;
   optional float  long = 9;
 
+  repeated uint32 count_int    = 10 [(count) = true];
+  repeated double count_double = 11 [(count) = true];
+
   enum Response {
     YES      = 0;
     NO       = 1;
@@ -23,13 +26,13 @@ message Foo {
     NOT_SURE = 3;
   }
 
-  repeated Item  tag_set   = 10 [(set)    = true];
-  repeated Pair  attr_map  = 11 [(map)    = true];
-  repeated Foo   foo_by_id = 12 [(map_by) = "id"];
-  repeated Group groups    = 13 [(map)    = true];
-  repeated Item  item_map  = 14 [(map_by) = "item"];
-  repeated Pair  pair_map  = 15 [(map_by) = "key"];
-  optional bool  deleted   = 16 [default  = false];
+  repeated Item  tag_set   = 20 [(set)    = true];
+  repeated Pair  attr_map  = 21 [(map)    = true];
+  repeated Foo   foo_by_id = 22 [(map_by) = "id"];
+  repeated Group groups    = 23 [(map)    = true];
+  repeated Item  item_map  = 24 [(map_by) = "item"];
+  repeated Pair  pair_map  = 25 [(map_by) = "key"];
+  optional bool  deleted   = 26 [default  = false];
 }
 
 message Pair {
