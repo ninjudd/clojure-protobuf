@@ -268,7 +268,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           }
         }
         return map.persistent();
-      } else if (options.getExtension(Extensions.count)) {
+      } else if (options.getExtension(Extensions.counter)) {
         Object count = iterator.next();
         while (iterator.hasNext()) {
           count = Numbers.add(count, iterator.next());
