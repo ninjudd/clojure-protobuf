@@ -262,7 +262,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           Object key = val.valAt(map_field_by);
           PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(key);
           if (existing != null) {
-            map.assoc(key, existing.cons(val));
+            map.assoc(key, existing.append(val));
           } else {
             map.assoc(key, val);
           }

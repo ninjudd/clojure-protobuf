@@ -148,24 +148,22 @@
       (is (= nil              (get-in p [:foo-by-id 6 :label]))))))
 
 (deftest test-counts
-  (let [p (protobuf Foo :count-int 5)]
-    (is (= 5 (get p :count-int)))
-    (let [p (append p {:count-int 2})]
-      (is (= 7 (get p :count-int)))
-      (let [p (append p {:count-int -8})]
-        (is (= -1 (get p :count-int))))))
-  (let [p (protobuf Foo :count-double 5.0)]
-    (is (= 5.0 (get p :count-double)))
-    (let [p (append p {:count-double -2.4})]
-      (is (= 2.6 (get p :count-double)))
-      (let [p (append p {:count-double 4.06})]
-        (is (= 6.66 (get p :count-double)))))))
-
+  (let [p (protobuf Foo :counts {"foo" {:i 5 :d 5.0}})]
+    (is (= 5   (get-in p [:counts "foo" :i])))
+    (is (= 5.0 (get-in p [:counts "foo" :d])))
+    (let [p (append p {:counts {"foo" {:i 2 :d -2.4} "bar" {:i 99}}})]
+      (is (= 7   (get-in p [:counts "foo" :i])))
+      (is (= 2.6 (get-in p [:counts "foo" :d])))
+      (is (= 99  (get-in p [:counts "bar" :i])))
+      (let [p (append p {:counts {"foo" {:i -8 :d 4.06} "bar" {:i -66}}})]
+        (is (= -1   (get-in p [:counts "foo" :i])))
+        (is (= 6.66 (get-in p [:counts "foo" :d])))
+        (is (= 33   (get-in p [:counts "bar" :i])))))))
 
 (deftest test-protofields
   (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil, :deleted nil,
                 :attr-map nil, :foo-by-id nil, :pair-map nil, :groups nil, :doubles nil, :floats nil, :item-map nil,
-                :count-int nil, :count-double nil, :lat nil, :long nil}]
+                :counts nil, :lat nil, :long nil}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
@@ -184,7 +182,7 @@
   (is (= false (protodefault Foo :deleted)))
   (is (= {}    (protodefault clojure.protobuf.Test$Foo :groups))))
 
-(deftest use-underscores
+(deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
     (is (= '(:id :responses :tag-set :deleted)   (keys p)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
@@ -195,18 +193,20 @@
 
     (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
                   :attr_map nil, :foo_by_id nil, :pair_map nil, :groups nil, :doubles nil, :floats nil, :item_map nil,
-                  :count_int nil, :count_double nil, :lat nil, :long nil}]
+                  :counts nil, :lat nil, :long nil}]
       (is (= fields (protofields Foo))))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
 
-(deftest protobuf-nested-message
-  (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]))
+(deftest test-protobuf-nested-message
+  (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]
+    (is (= "abc" (get-in p [:error :data])))))
 
-(deftest protobuf-nil-field
-  (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]))
+(deftest test-protobuf-nested-null-field
+  (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]
+    (is (:ok p))))
 
-(deftest protobuf-seq-and-write-protobuf
+(deftest test-protobuf-seq-and-write-protobuf
   (let [in  (PipedInputStream.)
         out (PipedOutputStream. in)
         foo (protobuf Foo :id 1 :label "foo")
