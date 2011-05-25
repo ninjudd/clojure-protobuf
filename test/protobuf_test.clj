@@ -182,7 +182,7 @@
   (is (= false (protodefault Foo :deleted)))
   (is (= {}    (protodefault clojure.protobuf.Test$Foo :groups))))
 
-(deftest use-underscores
+(deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
     (is (= '(:id :responses :tag-set :deleted)   (keys p)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
@@ -198,13 +198,15 @@
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
 
-(deftest protobuf-nested-message
-  (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]))
+(deftest test-protobuf-nested-message
+  (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]
+    (is (= "abc" (get-in p [:error :data])))))
 
-(deftest protobuf-nil-field
-  (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]))
+(deftest test-protobuf-nested-null-field
+  (let [p (protobuf Response :ok true :error (protobuf ErrorMsg :code -10 :data nil))]
+    (is (:ok p))))
 
-(deftest protobuf-seq-and-write-protobuf
+(deftest test-protobuf-seq-and-write-protobuf
   (let [in  (PipedInputStream.)
         out (PipedOutputStream. in)
         foo (protobuf Foo :id 1 :label "foo")
