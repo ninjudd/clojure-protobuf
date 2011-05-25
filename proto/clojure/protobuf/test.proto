@@ -16,8 +16,7 @@ message Foo {
   optional double lat  = 8;
   optional float  long = 9;
 
-  repeated int32  count_int    = 10 [(counter) = true];
-  repeated double count_double = 11 [(counter) = true];
+  repeated Count counts = 10 [(map_by) = "key"];
 
   enum Response {
     YES      = 0;
@@ -48,6 +47,12 @@ message Group {
 message Item {
   required string item   = 1;
   required bool   exists = 2 [default = true];
+}
+
+message Count {
+  required string key = 1;
+  repeated int32  i   = 2 [(counter) = true];
+  repeated double d   = 3 [(counter) = true];
 }
 
 message ErrorMsg {
