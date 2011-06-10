@@ -1,5 +1,6 @@
 (ns protobuf
-  (:use [clojure.java.io :only [input-stream output-stream]])
+  (:use [clojure.java.io :only [input-stream output-stream]]
+        [clojure.string :only [lower-case]])
   (:import (clojure.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)
            (java.io InputStream OutputStream)))
@@ -50,8 +51,12 @@
     (into {}
       (for [^Descriptors$FieldDescriptor field (.getFields type)]
         (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-              field-name  (keyword (PersistentProtocolBufferMap/intern (.getName field)))]
-          [field-name (when-not (empty? meta-string) (read-string meta-string))])))))
+              field-name  (keyword (PersistentProtocolBufferMap/intern (.getName field)))
+              field-type  (keyword (lower-case (.name (.getJavaType field))))]
+          [field-name (assoc (when-not (empty? meta-string)
+                               (read-string meta-string))
+                        :type     field-type
+                        :repeated (.isRepeated field))])))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

@@ -161,9 +161,23 @@
         (is (= 33   (get-in p [:counts "bar" :i])))))))
 
 (deftest test-protofields
-  (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil, :deleted nil,
-                :attr-map nil, :foo-by-id nil, :pair-map nil, :groups nil, :doubles nil, :floats nil, :item-map nil,
-                :counts nil, :lat nil, :long nil}]
+  (let [fields {:parent    {:repeated false, :type :message},
+                :floats    {:repeated true,  :type :float},
+                :doubles   {:repeated true,  :type :double},
+                :counts    {:repeated true,  :type :message},
+                :attr-map  {:repeated true,  :type :message},
+                :tag-set   {:repeated true,  :type :message},
+                :item-map  {:repeated true,  :type :message},
+                :groups    {:repeated true,  :type :message},
+                :responses {:repeated true,  :type :enum},
+                :lat       {:repeated false, :type :double},
+                :pair-map  {:repeated true,  :type :message},
+                :foo-by-id {:repeated true,  :type :message},
+                :label     {:repeated false, :type :string, :a 1, :b 2, :c 3},
+                :id        {:repeated false, :type :int},
+                :long      {:repeated false, :type :float},
+                :deleted   {:repeated false, :type :boolean},
+                :tags      {:repeated true,  :type :string}}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
@@ -191,10 +205,9 @@
     (is (= '(:id :responses :tag_set :deleted)   (keys p)))
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
-    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
-                  :attr_map nil, :foo_by_id nil, :pair_map nil, :groups nil, :doubles nil, :floats nil, :item_map nil,
-                  :counts nil, :lat nil, :long nil}]
-      (is (= fields (protofields Foo))))
+    (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
+             :pair_map :groups :doubles :floats :item_map :counts :lat :long}
+           (set (keys (protofields Foo)))))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
 
