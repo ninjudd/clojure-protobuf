@@ -147,7 +147,7 @@
       (is (= ["odd"]          (get-in p [:foo-by-id 6 :tags])))
       (is (= nil              (get-in p [:foo-by-id 6 :label]))))))
 
-(deftest test-counts
+(deftest test-nested-counters
   (let [p (protobuf Foo :counts {"foo" {:i 5 :d 5.0}})]
     (is (= 5   (get-in p [:counts "foo" :i])))
     (is (= 5.0 (get-in p [:counts "foo" :d])))
@@ -158,13 +158,32 @@
       (let [p (append p {:counts {"foo" {:i -8 :d 4.06} "bar" {:i -66}}})]
         (is (= -1   (get-in p [:counts "foo" :i])))
         (is (= 6.66 (get-in p [:counts "foo" :d])))
-        (is (= 33   (get-in p [:counts "bar" :i])))))))
+        (is (= 33   (get-in p [:counts "bar" :i])))
+        (is (= [{:key "foo", :i 5, :d 5.0}
+                {:key "foo", :i 2, :d -2.4}
+                {:key "bar", :i 99}
+                {:key "foo", :i -8, :d 4.06}
+                {:key "bar", :i -66}]
+               (get-raw p :counts)))))))
+
+(deftest test-succession
+  (let [p (protobuf Foo :time {:year 1978 :month 11 :day 24})]
+    (is (= 1978 (get-in p [:time :year])))
+    (is (= 11   (get-in p [:time :month])))
+    (is (= 24   (get-in p [:time :day])))
+    (let [p (append p {:time {:year 1974 :month 1}})]
+      (is (= 1974 (get-in p [:time :year])))
+      (is (= 1    (get-in p [:time :month])))
+      (is (= nil  (get-in p [:time :day])))
+      (is (= [{:year 1978, :month 11, :day 24} {:year 1974, :month 1}]
+             (get-raw p :time))))))
 
 (deftest test-protofields
   (let [fields {:parent    {:repeated false, :type :message},
                 :floats    {:repeated true,  :type :float},
                 :doubles   {:repeated true,  :type :double},
                 :counts    {:repeated true,  :type :message},
+                :time      {:repeated true,  :type :message},
                 :attr-map  {:repeated true,  :type :message},
                 :tag-set   {:repeated true,  :type :message},
                 :item-map  {:repeated true,  :type :message},
@@ -206,7 +225,7 @@
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
     (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
-             :pair_map :groups :doubles :floats :item_map :counts :lat :long}
+             :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
            (set (keys (protofields Foo)))))
 
     (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))

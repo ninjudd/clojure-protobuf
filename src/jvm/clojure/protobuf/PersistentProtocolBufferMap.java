@@ -249,78 +249,85 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   static Keyword k_item   = Keyword.intern(Symbol.intern("item"));
   static Keyword k_exists = Keyword.intern(Symbol.intern("exists"));
   static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
+    return fromProtoValue(field, value, true);
+  }
+
+  static protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value, boolean use_extensions) {
     if (value instanceof List) {
       List values = (List) value;
       Iterator iterator = values.iterator();
 
-      Keyword map_field_by = mapFieldBy(field);
-      DescriptorProtos.FieldOptions options = field.getOptions();
-      if (map_field_by != null) {
-        ITransientMap map = PersistentHashMap.EMPTY.asTransient();
-        while (iterator.hasNext()) {
-          PersistentProtocolBufferMap val = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
-          Object key = val.valAt(map_field_by);
-          PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(key);
-          if (existing != null) {
-            map.assoc(key, existing.append(val));
-          } else {
-            map.assoc(key, val);
-          }
-        }
-        return map.persistent();
-      } else if (options.getExtension(Extensions.counter)) {
-        Object count = iterator.next();
-        while (iterator.hasNext()) {
-          count = Numbers.add(count, iterator.next());
-        }
-        return count;
-      } else if (options.getExtension(Extensions.map)) {
-        Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
-        Descriptors.FieldDescriptor key_field = def.fieldDescriptor(k_key);
-        Descriptors.FieldDescriptor val_field = def.fieldDescriptor(k_val);
-
-        ITransientMap map = PersistentHashMap.EMPTY.asTransient();
-        while (iterator.hasNext()) {
-          DynamicMessage message = (DynamicMessage) iterator.next();
-          Object key = fromProtoValue(key_field, message.getField(key_field));
-          Object val = fromProtoValue(val_field, message.getField(val_field));
-          Object existing = map.valAt(key);
-          if (existing != null && existing instanceof IPersistentCollection) {
-            map.assoc(key, ((IPersistentCollection) existing).cons(val));
-          } else {
-            map.assoc(key, val);
-          }
-        }
-        return map.persistent();
-      } else if (options.getExtension(Extensions.set)) {
-        Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
-        Descriptors.FieldDescriptor item_field  = def.fieldDescriptor(k_item);
-        Descriptors.FieldDescriptor exists_field = def.fieldDescriptor(k_exists);
-
-        ITransientSet set = (ITransientSet) PersistentOrderedSet.EMPTY.asTransient();
-        while (iterator.hasNext()) {
-          DynamicMessage message = (DynamicMessage) iterator.next();
-          Object  item   = fromProtoValue(item_field, message.getField(item_field));
-          Boolean exists = (Boolean) message.getField(exists_field);
-
-          if (exists) {
-            set.conj(item);
-          } else {
-            try {
-              set.disjoin(item);
-            } catch (Exception e) {
-              e.printStackTrace();
+      if (use_extensions) {
+        Keyword map_field_by = mapFieldBy(field);
+        DescriptorProtos.FieldOptions options = field.getOptions();
+        if (map_field_by != null) {
+          ITransientMap map = PersistentHashMap.EMPTY.asTransient();
+          while (iterator.hasNext()) {
+            PersistentProtocolBufferMap val = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
+            Object key = val.valAt(map_field_by);
+            PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(key);
+            if (existing != null) {
+              map.assoc(key, existing.append(val));
+            } else {
+              map.assoc(key, val);
             }
           }
+          return map.persistent();
+        } else if (options.getExtension(Extensions.counter)) {
+          Object count = iterator.next();
+          while (iterator.hasNext()) {
+            count = Numbers.add(count, iterator.next());
+          }
+          return count;
+        } else if (options.getExtension(Extensions.succession)) {
+          return fromProtoValue(field, values.get(values.size() - 1));
+        } else if (options.getExtension(Extensions.map)) {
+          Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+          Descriptors.FieldDescriptor key_field = def.fieldDescriptor(k_key);
+          Descriptors.FieldDescriptor val_field = def.fieldDescriptor(k_val);
+
+          ITransientMap map = PersistentHashMap.EMPTY.asTransient();
+          while (iterator.hasNext()) {
+            DynamicMessage message = (DynamicMessage) iterator.next();
+            Object key = fromProtoValue(key_field, message.getField(key_field));
+            Object val = fromProtoValue(val_field, message.getField(val_field));
+            Object existing = map.valAt(key);
+            if (existing != null && existing instanceof IPersistentCollection) {
+              map.assoc(key, ((IPersistentCollection) existing).cons(val));
+            } else {
+              map.assoc(key, val);
+            }
+          }
+          return map.persistent();
+        } else if (options.getExtension(Extensions.set)) {
+          Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
+          Descriptors.FieldDescriptor item_field  = def.fieldDescriptor(k_item);
+          Descriptors.FieldDescriptor exists_field = def.fieldDescriptor(k_exists);
+
+          ITransientSet set = (ITransientSet) PersistentOrderedSet.EMPTY.asTransient();
+          while (iterator.hasNext()) {
+            DynamicMessage message = (DynamicMessage) iterator.next();
+            Object  item   = fromProtoValue(item_field, message.getField(item_field));
+            Boolean exists = (Boolean) message.getField(exists_field);
+
+            if (exists) {
+              set.conj(item);
+            } else {
+              try {
+                set.disjoin(item);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          }
+          return set.persistent();
         }
-        return set.persistent();
-      } else {
-        List<Object> list = new ArrayList<Object>(values.size());
-        while (iterator.hasNext()) {
-          list.add(fromProtoValue(field, iterator.next()));
-        }
-        return PersistentVector.create(list);
       }
+      List<Object> list = new ArrayList<Object>(values.size());
+      while (iterator.hasNext()) {
+        list.add(fromProtoValue(field, iterator.next(), use_extensions));
+      }
+      return PersistentVector.create(list);
     } else {
       switch (field.getJavaType()) {
       case ENUM:
@@ -331,7 +338,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
         DynamicMessage message = (DynamicMessage) value;
 
         // Total hack because getField() doesn't return an empty array for repeated messages.
-        if (field.isRepeated() && !message.isInitialized()) return fromProtoValue(field, new ArrayList());
+        if (field.isRepeated() && !message.isInitialized()) return fromProtoValue(field, new ArrayList(), use_extensions);
 
         return new PersistentProtocolBufferMap(null, def, message);
       default:
@@ -467,16 +474,20 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   public Object valAt(Object key) {
-    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
-    if (field == null) return null;
-    if (field.isRepeated() && message().getRepeatedFieldCount(field) == 0) return null;
-    if (!field.isRepeated() && !field.hasDefaultValue() && !message().hasField(field)) return null;
-    return fromProtoValue(field, message().getField(field));
+    return getValAt(key, true);
   }
 
   public Object valAt(Object key, Object notFound) {
     Object val = valAt(key);
     return (val == null) ? notFound : val;
+  }
+
+  public Object getValAt(Object key, boolean use_extensions) {
+    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+    if (field == null) return null;
+    if (field.isRepeated() && message().getRepeatedFieldCount(field) == 0) return null;
+    if (!field.isRepeated() && !field.hasDefaultValue() && !message().hasField(field)) return null;
+    return fromProtoValue(field, message().getField(field), use_extensions);
   }
 
   public IPersistentMap assoc(Object key, Object val) {

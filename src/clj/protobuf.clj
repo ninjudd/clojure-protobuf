@@ -102,3 +102,8 @@
   "Merge the given map into the protobuf. Like append, except default values in map will be used if it i."
   [^PersistentProtocolBufferMap p map]
   (.adjoin p map))
+
+(defn get-raw
+  "Get value at key ignoring extension fields."
+  [^PersistentProtocolBufferMap p key]
+  (.getValAt p key false))

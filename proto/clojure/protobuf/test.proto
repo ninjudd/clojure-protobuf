@@ -18,6 +18,8 @@ message Foo {
 
   repeated Count counts = 10 [(map_by) = "key"];
 
+  repeated Time time = 11 [(succession) = true];
+
   enum Response {
     YES      = 0;
     NO       = 1;
@@ -32,6 +34,14 @@ message Foo {
   repeated Item  item_map  = 24 [(map_by) = "item"];
   repeated Pair  pair_map  = 25 [(map_by) = "key"];
   optional bool  deleted   = 26 [default  = false];
+}
+
+message Time {
+  optional sint32 year   = 1;
+  optional int32  month  = 2;
+  optional int32  day    = 3;
+  optional int32  hour   = 4;
+  optional int32  minute = 5;
 }
 
 message Pair {
