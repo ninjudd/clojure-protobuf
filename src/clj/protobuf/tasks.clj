@@ -45,7 +45,7 @@
   (when (installed?)
     (let [password (prompt-read "Password" :echo false)]
       (ant ExecTask {:dir srcdir :executable "sudo" :input-string (str password "\n")}
-           (args ["-S" "make" "uninstall"])))))
+        (args ["-S" "make" "uninstall"])))))
 
 (defn- proto-dependencies "look for lines starting with import in proto-file"
   [proto-file]
@@ -81,7 +81,7 @@
          (log "Compiling" proto "to" dest)
          (extract-dependencies (file "proto" proto))
          (try (ant ExecTask {:executable "protoc" :dir "proto" :failonerror true}
-                   (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
+                (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
               (catch org.apache.tools.ant.BuildException e
                 (throw (Exception. (str "error compiling " proto))))))
        (compile-java (file dest)))))
@@ -102,7 +102,7 @@
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
 (deftask compile-native #{proto})
-(deftask proto #{deps install-protoc}
+(deftask proto #{install-protoc}
   "Compile protocol buffer files located in proto dir."
   (if (= "clojure-protobuf" (:artifact-id *project*))
     (do (invoke fetch-protoc)
