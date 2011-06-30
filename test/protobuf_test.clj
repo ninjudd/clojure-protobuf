@@ -179,35 +179,40 @@
              (get-raw p :time))))))
 
 (deftest test-protofields
-  (let [fields {:parent    {:repeated false, :type :message},
-                :floats    {:repeated true,  :type :float},
-                :doubles   {:repeated true,  :type :double},
-                :counts    {:repeated true,  :type :message},
-                :time      {:repeated true,  :type :message},
-                :attr-map  {:repeated true,  :type :message},
-                :tag-set   {:repeated true,  :type :message},
-                :item-map  {:repeated true,  :type :message},
-                :groups    {:repeated true,  :type :message},
-                :responses {:repeated true,  :type :enum},
-                :lat       {:repeated false, :type :double},
-                :pair-map  {:repeated true,  :type :message},
-                :foo-by-id {:repeated true,  :type :message},
-                :label     {:repeated false, :type :string, :a 1, :b 2, :c 3},
-                :id        {:repeated false, :type :int},
-                :long      {:repeated false, :type :float},
-                :deleted   {:repeated false, :type :boolean},
-                :tags      {:repeated true,  :type :string}}]
+  (let [fields {:floats    {:type :float,   :repeated true},
+                :doubles   {:type :double,  :repeated true},
+                :counts    {:type :message, :repeated true},
+                :time      {:type :message, :repeated true},
+                :attr-map  {:type :message, :repeated true},
+                :tag-set   {:type :message, :repeated true},
+                :item-map  {:type :message, :repeated true},
+                :groups    {:type :message, :repeated true},
+                :responses {:type :enum,    :repeated true, :values #{:yes :no :maybe :not-sure}},
+                :pair-map  {:type :message, :repeated true},
+                :foo-by-id {:type :message, :repeated true},
+                :tags      {:type :string,  :repeated true},
+                :label     {:type :string, :a 1, :b 2, :c 3},
+                :id        {:type :int},
+                :parent    {:type :message},
+                :lat       {:type :double},
+                :long      {:type :float},
+                :deleted   {:type :boolean}}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
 (deftest test-nested-protofields
-  (is (= {:year   {:repeated false, :type :int},
-          :month  {:repeated false, :type :int},
-          :day    {:repeated false, :type :int},
-          :hour   {:repeated false, :type :int},
-          :minute {:repeated false, :type :int}}
-         (protofields Foo :time))))
-
+  (is (= {:year   {:type :int},
+          :month  {:type :int},
+          :day    {:type :int},
+          :hour   {:type :int},
+          :minute {:type :int}}
+         (protofields Foo :time)))
+  (is (= {:year   {:type :int},
+          :month  {:type :int},
+          :day    {:type :int},
+          :hour   {:type :int},
+          :minute {:type :int}}
+         (protofields Foo :parent :foo-by-id :time))))
 
 (deftest test-protodefault
   (is (= 43    (protodefault Foo :id)))

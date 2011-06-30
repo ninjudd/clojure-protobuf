@@ -21,11 +21,16 @@
      (if (or (protodef? class) (nil? class))
        class
        (PersistentProtocolBufferMap$Def/create class)))
-  ([class field]
-     (-> (protodef class)
-         (.fieldDescriptor field)
-         .getMessageType
-         protodef)))
+  ([class & fields]
+     (loop [type   (protodef class)
+            fields fields]
+       (if (empty? fields)
+         type
+         (recur (-> type
+                    (.fieldDescriptor (first fields))
+                    .getMessageType
+                    protodef)
+                (rest fields))))))
 
 (defmacro defprotobuf
   "Helper macro for defining a protodef object."
@@ -55,10 +60,15 @@
     (into {}
           (for [^Descriptors$FieldDescriptor field (.getFields ^Descriptors$Descriptor type)]
             (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-                  field-name  (PersistentProtocolBufferMap/intern (.getName field))]
-              [field-name (assoc (when (seq meta-string) (read-string meta-string))
-                            :type     (keyword (lower-case (.name (.getJavaType field))))
-                            :repeated (.isRepeated field))])))))
+                  field-name  (PersistentProtocolBufferMap/intern (.getName field))
+                  field-type  (keyword (lower-case (.name (.getJavaType field))))]
+              [field-name (merge (when (seq meta-string) (read-string meta-string))
+                                 {:type field-type}
+                                 (when (.isRepeated field)
+                                   {:repeated true})
+                                 (when (= :enum field-type)
+                                   {:values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
+                                                      (.. field getEnumType getValues)))}))])))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

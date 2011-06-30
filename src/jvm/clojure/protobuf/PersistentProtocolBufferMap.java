@@ -221,7 +221,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   static ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword> enum_to_keyword =
      new ConcurrentHashMap<Descriptors.EnumValueDescriptor, Keyword>();
-  static protected Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
+  static public Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
     Keyword keyword = enum_to_keyword.get(enum_value);
     if (keyword == null) {
       keyword = intern(enum_value.getName());
@@ -229,7 +229,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
     return keyword;
   }
-
 
   static Keyword k_null = Keyword.intern(Symbol.intern(""));
   static ConcurrentHashMap<Descriptors.FieldDescriptor, Keyword> map_field_by =
