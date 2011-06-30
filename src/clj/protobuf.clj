@@ -17,10 +17,15 @@
 
 (defn protodef
   "Create a protodef from a string or protobuf class."
-  [class]
-  (if (or (protodef? class) (nil? class))
-    class
-    (PersistentProtocolBufferMap$Def/create class)))
+  ([class]
+     (if (or (protodef? class) (nil? class))
+       class
+       (PersistentProtocolBufferMap$Def/create class)))
+  ([class field]
+     (-> (protodef class)
+         (.fieldDescriptor field)
+         .getMessageType
+         protodef)))
 
 (defmacro defprotobuf
   "Helper macro for defining a protodef object."
@@ -45,18 +50,15 @@
 
 (defn protofields
   "Return a map of the protobuf fields to the clojure.protobuf.Extensions metadata for each field."
-  [type]
-  (let [type ^PersistentProtocolBufferMap$Def (protodef type)
-        type ^Descriptors$Descriptor (.getMessageType type)]
+  [& args]
+  (let [type (.getMessageType ^PersistentProtocolBufferMap$Def (apply protodef args))]
     (into {}
-      (for [^Descriptors$FieldDescriptor field (.getFields type)]
-        (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-              field-name  (keyword (PersistentProtocolBufferMap/intern (.getName field)))
-              field-type  (keyword (lower-case (.name (.getJavaType field))))]
-          [field-name (assoc (when-not (empty? meta-string)
-                               (read-string meta-string))
-                        :type     field-type
-                        :repeated (.isRepeated field))])))))
+          (for [^Descriptors$FieldDescriptor field (.getFields ^Descriptors$Descriptor type)]
+            (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
+                  field-name  (PersistentProtocolBufferMap/intern (.getName field))]
+              [field-name (assoc (when (seq meta-string) (read-string meta-string))
+                            :type     (keyword (lower-case (.name (.getJavaType field))))
+                            :repeated (.isRepeated field))])))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

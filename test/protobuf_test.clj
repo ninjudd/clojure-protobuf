@@ -200,6 +200,15 @@
     (is (= fields (protofields Foo)))
     (is (= fields (protofields clojure.protobuf.Test$Foo)))))
 
+(deftest test-nested-protofields
+  (is (= {:year   {:repeated false, :type :int},
+          :month  {:repeated false, :type :int},
+          :day    {:repeated false, :type :int},
+          :hour   {:repeated false, :type :int},
+          :minute {:repeated false, :type :int}}
+         (protofields Foo :time))))
+
+
 (deftest test-protodefault
   (is (= 43    (protodefault Foo :id)))
   (is (= 0.0   (protodefault Foo :lat)))
