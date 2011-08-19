@@ -24,6 +24,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.GeneratedMessage;
 
 public class PersistentProtocolBufferMap extends APersistentMap {
   public static class Def {
@@ -262,13 +263,13 @@ public class PersistentProtocolBufferMap extends APersistentMap {
         if (map_field_by != null) {
           ITransientMap map = PersistentHashMap.EMPTY.asTransient();
           while (iterator.hasNext()) {
-            PersistentProtocolBufferMap val = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
-            Object key = val.valAt(map_field_by);
-            PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(key);
+            PersistentProtocolBufferMap v = (PersistentProtocolBufferMap) fromProtoValue(field, iterator.next());
+            Object k = v.valAt(map_field_by);
+            PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(k);
             if (existing != null) {
-              map.assoc(key, existing.append(val));
+              map.assoc(k, existing.append(v));
             } else {
-              map.assoc(key, val);
+              map.assoc(k, v);
             }
           }
           return map.persistent();
@@ -288,13 +289,13 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           ITransientMap map = PersistentHashMap.EMPTY.asTransient();
           while (iterator.hasNext()) {
             DynamicMessage message = (DynamicMessage) iterator.next();
-            Object key = fromProtoValue(key_field, message.getField(key_field));
-            Object val = fromProtoValue(val_field, message.getField(val_field));
-            Object existing = map.valAt(key);
+            Object k = fromProtoValue(key_field, message.getField(key_field));
+            Object v = fromProtoValue(val_field, message.getField(val_field));
+            Object existing = map.valAt(k);
             if (existing != null && existing instanceof IPersistentCollection) {
-              map.assoc(key, ((IPersistentCollection) existing).cons(val));
+              map.assoc(k, ((IPersistentCollection) existing).cons(v));
             } else {
-              map.assoc(key, val);
+              map.assoc(k, v);
             }
           }
           return map.persistent();
@@ -341,21 +342,26 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
         return new PersistentProtocolBufferMap(null, def, message);
       default:
+        if (use_extensions &&
+            field.getOptions().getExtension(Extensions.nullable) &&
+            field.getOptions().getExtension(nullExtension(field)).equals(value))
+          return null;
         return value;
       }
     }
   }
 
   static protected Object toProtoValue(Descriptors.FieldDescriptor field, Object value) {
+    if (value == null && field.getOptions().getExtension(Extensions.nullable))
+      value = field.getOptions().getExtension(nullExtension(field));
+
     switch (field.getJavaType()) {
     case LONG:
       if (value instanceof Long) return value;
-      Integer i = (Integer) value;
-      return new Long(i.longValue());
+      return new Long(((Integer) value).longValue());
     case INT:
       if (value instanceof Integer) return value;
-      Long l = (Long) value;
-      return new Integer(l.intValue());
+      return new Integer(((Long) value).intValue());
     case FLOAT:
       if (value instanceof Integer) return new Float((Integer) value * 1.0);
       if (value instanceof Double)  return new Float((Double) value);
@@ -388,23 +394,35 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     }
   }
 
-  protected void addField(DynamicMessage.Builder builder, Object key, Object val) {
-    if (key == null || val == null) return;
+  static protected GeneratedMessage.GeneratedExtension nullExtension(Descriptors.FieldDescriptor field) {
+    switch (field.getJavaType()) {
+    case LONG:   return Extensions.nullLong;
+    case INT:    return Extensions.nullInt;
+    case FLOAT:  return Extensions.nullFloat;
+    case DOUBLE: return Extensions.nullDouble;
+    case STRING: return Extensions.nullString;
+    }
+    return null;
+  }
+
+  protected void addField(DynamicMessage.Builder builder, Object key, Object value) {
+    if (key == null) return;
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return;
+    if (value == null && !(field.getOptions().getExtension(Extensions.nullable))) return;
     boolean set = field.getOptions().getExtension(Extensions.set);
 
     if (field.isRepeated()) {
       builder.clearField(field);
-      if (val instanceof Sequential && !set) {
-        for (ISeq s = RT.seq(val); s != null; s = s.next()) {
-          Object value = toProtoValue(field, s.first());
-          builder.addRepeatedField(field, value);
+      if (value instanceof Sequential && !set) {
+        for (ISeq s = RT.seq(value); s != null; s = s.next()) {
+          Object v = toProtoValue(field, s.first());
+          builder.addRepeatedField(field, v);
         }
       } else {
         Keyword map_field_by = mapFieldBy(field);
         if (map_field_by != null) {
-          for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+          for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
             IPersistentMap map = (IPersistentMap) e.getValue();
             Object k = e.getKey();
@@ -412,38 +430,38 @@ public class PersistentProtocolBufferMap extends APersistentMap {
             builder.addRepeatedField(field, v);
           }
         } else if (field.getOptions().getExtension(Extensions.map)) {
-          for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+          for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
             Object[] map = {k_key, e.getKey(), k_val, e.getValue()};
-            Object value = toProtoValue(field, new PersistentArrayMap(map));
-            builder.addRepeatedField(field, value);
+            Object v = toProtoValue(field, new PersistentArrayMap(map));
+            builder.addRepeatedField(field, v);
           }
         } else if (set) {
-          if (val instanceof IPersistentMap) {
-            for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+          if (value instanceof IPersistentMap) {
+            for (ISeq s = RT.seq(value); s != null; s = s.next()) {
               Map.Entry e = (Map.Entry) s.first();
               Object[] map = {k_item, e.getKey(), k_exists, e.getValue()};
-              Object value = toProtoValue(field, new PersistentArrayMap(map));
-              builder.addRepeatedField(field, value);
+              Object v = toProtoValue(field, new PersistentArrayMap(map));
+              builder.addRepeatedField(field, v);
             }
           } else {
-            for (ISeq s = RT.seq(val); s != null; s = s.next()) {
+            for (ISeq s = RT.seq(value); s != null; s = s.next()) {
               Object[] map = {k_item, s.first(), k_exists, true};
-              Object value = toProtoValue(field, new PersistentArrayMap(map));
-              builder.addRepeatedField(field, value);
+              Object v = toProtoValue(field, new PersistentArrayMap(map));
+              builder.addRepeatedField(field, v);
             }
           }
         } else {
-          Object value = toProtoValue(field, val);
-          builder.addRepeatedField(field, value);
+          Object v = toProtoValue(field, value);
+          builder.addRepeatedField(field, v);
         }
       }
     } else {
-      Object value = toProtoValue(field, val);
-      if (value instanceof DynamicMessage) {
-        value = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) value).build();
+      Object v = toProtoValue(field, value);
+      if (v instanceof DynamicMessage) {
+        v = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) v).build();
       }
-      builder.setField(field, value);
+      builder.setField(field, v);
     }
   }
 
@@ -477,8 +495,8 @@ public class PersistentProtocolBufferMap extends APersistentMap {
   }
 
   public Object valAt(Object key, Object notFound) {
-    Object val = valAt(key);
-    return (val == null) ? notFound : val;
+    Object value = valAt(key);
+    return (value == null) ? notFound : value;
   }
 
   public Object getValAt(Object key, boolean use_extensions) {
@@ -489,17 +507,17 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return fromProtoValue(field, message().getField(field), use_extensions);
   }
 
-  public IPersistentMap assoc(Object key, Object val) {
+  public IPersistentMap assoc(Object key, Object value) {
     DynamicMessage.Builder builder = builder();
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
-    addField(builder, field, val);
+    addField(builder, field, value);
     return new PersistentProtocolBufferMap(meta(), def, builder);
   }
 
-  public IPersistentMap assocEx(Object key, Object val) throws Exception {
+  public IPersistentMap assocEx(Object key, Object value) throws Exception {
     if(containsKey(key)) throw new Exception("Key already present");
-    return assoc(key, val);
+    return assoc(key, value);
   }
 
   public IPersistentCollection cons(Object o) {
@@ -575,9 +593,9 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     static public Seq create(IPersistentMap meta, PersistentProtocolBufferMap proto, ISeq fields){
       for (ISeq s = fields; s != null; s = s.next()) {
         Descriptors.FieldDescriptor field = (Descriptors.FieldDescriptor) s.first();
-        Keyword key = intern(field.getName());
-        Object  val = proto.valAt(key);
-        if (val != null) return new Seq(meta, proto, new MapEntry(key, val), s);
+        Keyword k = intern(field.getName());
+        Object  v = proto.valAt(k);
+        if (v != null) return new Seq(meta, proto, new MapEntry(k, v), s);
       }
       return null;
     }

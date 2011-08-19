@@ -36,6 +36,17 @@ message Foo {
   optional bool  deleted   = 26 [default  = false];
 }
 
+message Bar {
+  optional int32  int  = 1 [(nullable) = true, (null_int)    = -1];
+  optional int64  long = 2 [(nullable) = true, (null_long)   = -999999999999];
+  optional float  flt  = 3 [(nullable) = true, (null_float)  = -0.0001];
+  optional double dbl  = 4 [(nullable) = true, (null_double) = -0.00000001];
+  optional string str  = 5 [(nullable) = true, (null_string) = "NULL"];
+
+  repeated string label  = 6 [(nullable) = true, (null_string) = "", (succession) = true];
+  repeated string labels = 7 [(nullable) = true, (null_string) = ""];
+}
+
 message Time {
   optional sint32 year   = 1;
   optional int32  month  = 2;

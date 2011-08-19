@@ -4,6 +4,7 @@
   (:import (java.io PipedInputStream PipedOutputStream)))
 
 (defprotobuf Foo clojure.protobuf.Test Foo)
+(defprotobuf Bar clojure.protobuf.Test Bar)
 (defprotobuf Response clojure.protobuf.Test Response)
 (defprotobuf ErrorMsg clojure.protobuf.Test ErrorMsg)
 
@@ -17,8 +18,7 @@
       (is (= "bar" (:label p)))
       (is (= ["little" "yellow"] (:tags p)))
       (is (= [1.2 3.4 5.6] (:doubles p)))
-      (is (= [(float 0.01) (float 0.02) (float 0.03)] (:floats  p)))
-      )
+      (is (= [(float 0.01) (float 0.02) (float 0.03)] (:floats  p))))
     (let [p (conj p {:tags ["different"]})]
       (is (= ["different"] (:tags p))))
     (let [p (conj p {:tags ["little" "yellow" "different"] :label "very"})]
@@ -177,6 +177,34 @@
       (is (= nil  (get-in p [:time :day])))
       (is (= [{:year 1978, :month 11, :day 24} {:year 1974, :month 1}]
              (get-raw p :time))))))
+
+(deftest test-nullable
+  (let [p (protobuf Bar :int 1 :long 330000000000 :flt 1.23 :dbl 9.87654321 :str "foo")]
+    (is (= 1            (get p :int)))
+    (is (= 330000000000 (get p :long)))
+    (is (= (float 1.23) (get p :flt)))
+    (is (= 9.87654321   (get p :dbl)))
+    (is (= "foo"        (get p :str)))
+    (is (= [:int :long :flt :dbl :str] (keys p)))
+    (let [p (append p {:int nil :long nil :flt nil :dbl nil :str nil})]
+      (is (= nil (get p :int)))
+      (is (= nil (get p :long)))
+      (is (= nil (get p :flt)))
+      (is (= nil (get p :dbl)))
+      (is (= nil (get p :str)))
+      (is (= nil (keys p))))
+    (testing "nullable successions"
+      (let [p (protobuf Bar :label "foo")]
+        (is (= "foo" (get p :label)))
+        (let [p (append p {:label nil})]
+          (is (= nil        (get     p :label)))
+          (is (= ["foo" ""] (get-raw p :label))))))
+    (testing "repeated nullable"
+      (let [p (protobuf Bar :labels ["foo" "bar"])]
+        (is (= ["foo" "bar"] (get p :labels)))
+        (let [p (append p {:labels [nil]})]
+          (is (= ["foo" "bar" nil] (get     p :labels)))
+          (is (= ["foo" "bar" ""]  (get-raw p :labels))))))))
 
 (deftest test-protofields
   (let [fields {:floats    {:type :float,   :repeated true},
