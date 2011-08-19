@@ -104,7 +104,7 @@
 (deftask compile-native #{proto})
 (deftask proto #{install-protoc}
   "Compile protocol buffer files located in proto dir."
-  (if (= "clojure-protobuf" (:artifact-id *project*))
+  (if (= "protobuf" (:artifact-id *project*))
     (do (invoke fetch-protoc)
         (build-protobuf))
     (protoc (or (:proto *opts*) (proto-files (file "proto"))))))
