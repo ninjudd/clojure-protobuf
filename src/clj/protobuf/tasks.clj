@@ -84,7 +84,7 @@
                 (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
               (catch org.apache.tools.ant.BuildException e
                 (throw (Exception. (str "error compiling " proto))))))
-       (compile-java dest))))
+       (compile-java (file dest)))))
 
 (defn build-protobuf []
   (ant Mkdir {:dir "proto/google/protobuf"})
