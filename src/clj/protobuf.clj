@@ -80,6 +80,12 @@
        (let [^CodedInputStream in (CodedInputStream/newInstance data offset length)]
          (PersistentProtocolBufferMap/parseFrom type in)))))
 
+(defn protobuf-load-stream
+  "Load a protobuf of the given type from an InputStream."
+  [^PersistentProtocolBufferMap$Def type ^InputStream stream]
+  (when stream
+    (let [^CodedInputStream in (CodedInputStream/newInstance stream)]
+      (PersistentProtocolBufferMap/parseFrom type in))))
 
 (defn protobuf-dump
   "Return the byte representation of the given protobuf."
