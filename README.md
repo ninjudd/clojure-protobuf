@@ -94,11 +94,10 @@ Then you can access the maps in clojure:
 
 ## Installation
 
-Add the `clojure-protobuf` to your [Cake](http://github.com/ninjudd/cake) project.clj:
+Add `clojure-protobuf` and the `cake-protobuf` plugin to your [Cake](http://github.com/ninjudd/cake) project.clj:
 
     :dependencies [[clojure-protobuf "LATEST"]]
-    :dev-dependencies [[clojure-protobuf "LATEST"]]
-    :tasks [protobuf.tasks]
-
+    :cake-plugins [[cake-protobuf "LATEST"]]
+    
 You should probably replace `"LATEST"` with whatever the latest version is, but I'm going to forget
 to update this every time I bump the version, so I'm not going to put an actual number here.
