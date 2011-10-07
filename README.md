@@ -102,3 +102,5 @@ As of [Cake](http://github.com/ninjudd/cake) 0.7.0, add `protobuf` and the `cake
 You should probably replace `"LATEST"` with whatever the latest version is, but I'm going to forget
 to update this every time I bump the version, so I'm not going to put an actual number here. You can
 find the lastest versions here (https://clojars.org/cake-protobuf https://clojars.org/protobuf).
+
+If you have any questions or need help, you can find us on IRC in [#flatland](irc://irc.freenode.net/#flatland).
