@@ -1,6 +1,6 @@
-import "clojure/protobuf/extensions.proto";
+import "protobuf/core/extensions.proto";
 
-option java_package = "clojure.protobuf";
+option java_package = "protobuf.core";
 option java_outer_classname = "Test";
 
 message Foo {

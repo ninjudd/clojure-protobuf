@@ -8,7 +8,7 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-package clojure.protobuf;
+package protobuf.core;
 
 import clojure.lang.*;
 import java.util.*;

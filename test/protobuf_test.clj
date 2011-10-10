@@ -1,12 +1,12 @@
 (ns protobuf-test
-  (:use protobuf)
+  (:use protobuf.core)
   (:use clojure.test)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
-(defprotobuf Foo clojure.protobuf.Test Foo)
-(defprotobuf Bar clojure.protobuf.Test Bar)
-(defprotobuf Response clojure.protobuf.Test Response)
-(defprotobuf ErrorMsg clojure.protobuf.Test ErrorMsg)
+(defprotobuf Foo protobuf.core.Test Foo)
+(defprotobuf Bar protobuf.core.Test Bar)
+(defprotobuf Response protobuf.core.Test Response)
+(defprotobuf ErrorMsg protobuf.core.Test ErrorMsg)
 
 (defn catbytes [& args]
   (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
@@ -208,7 +208,7 @@
                 :long      {:type :float},
                 :deleted   {:type :boolean}}]
     (is (= fields (protofields Foo)))
-    (is (= fields (protofields clojure.protobuf.Test$Foo)))))
+    (is (= fields (protofields protobuf.core.Test$Foo)))))
 
 (deftest test-nested-protofields
   (is (= {:year   {:type :int},
@@ -237,14 +237,14 @@
   (is (= {}    (protodefault Foo :groups)))
   (is (= {}    (protodefault Foo :item-map)))
   (is (= false (protodefault Foo :deleted)))
-  (is (= {}    (protodefault clojure.protobuf.Test$Foo :groups))))
+  (is (= {}    (protodefault protobuf.core.Test$Foo :groups))))
 
 (deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
     (is (= '(:id :responses :tag-set :deleted)   (keys p)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
 
-    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores true)
+    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores true)
     (is (= '(:id :responses :tag_set :deleted)   (keys p)))
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
@@ -252,7 +252,7 @@
              :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
            (set (keys (protofields Foo)))))
 
-    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
+    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores false)))
 
 (deftest test-protobuf-nested-message
   (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]

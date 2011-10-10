@@ -1,7 +1,7 @@
-(ns protobuf
+(ns protobuf.core
   (:use [clojure.java.io :only [input-stream output-stream]]
         [clojure.string :only [lower-case]])
-  (:import (clojure.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
+  (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)
            (java.io InputStream OutputStream)))
 
