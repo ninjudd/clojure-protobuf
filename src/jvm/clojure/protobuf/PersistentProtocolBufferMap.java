@@ -548,15 +548,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return new PersistentProtocolBufferMap(meta(), def, builder().mergeFrom(proto.message()));
   }
 
-  public PersistentProtocolBufferMap adjoin(IPersistentMap map) {
-    if (map instanceof PersistentProtocolBufferMap) {
-      PersistentProtocolBufferMap proto = (PersistentProtocolBufferMap) map;
-      return append(construct(def, proto.seq()));
-    } else {
-      return append(map);
-    }
-  }
-
   public IPersistentMap without(Object key) throws Exception {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) return this;

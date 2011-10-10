@@ -43,24 +43,6 @@
       (is (= [1.2 3.4] (:doubles p)))
       (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
 
-(deftest test-adjoin
-  (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2] :floats [0.01])]
-    (let [p (adjoin p {:label "bar"})]
-      (is (= 5     (:id p)))
-      (is (= "bar" (:label p)))
-      (is (= false (:deleted p)))
-      (is (= ["little" "yellow"] (:tags p))))
-    (let [p (adjoin (assoc p :deleted true) p)]
-      (is (= false (:deleted p))))
-    (let [p (adjoin p {:tags ["different"]})]
-      (is (= ["little" "yellow" "different"] (:tags p))))
-    (let [p (adjoin p {:tags ["different"] :label "very"})]
-      (is (= ["little" "yellow" "different"] (:tags p)))
-      (is (= "very" (:label p))))
-    (let [p (adjoin p {:doubles [3.4] :floats [0.02]})]
-      (is (= [1.2 3.4] (:doubles p)))
-      (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
-
 (deftest test-assoc
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :foo-by-id {1 {:label "one"} 2 {:label "two"}})]
     (let [p (assoc p :label "baz" :tags ["nuprin"])]
