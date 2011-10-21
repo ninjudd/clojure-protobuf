@@ -2,8 +2,10 @@
   (:use [clojure.java.io :only [input-stream output-stream]]
         [clojure.string :only [lower-case]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
-           (com.google.protobuf Descriptors$Descriptor Descriptors$FieldDescriptor CodedInputStream)
-           (java.io InputStream OutputStream)))
+           (com.google.protobuf GeneratedMessage CodedInputStream
+                                Descriptors$Descriptor Descriptors$FieldDescriptor)
+           (java.io InputStream OutputStream)
+           (clojure.lang Reflector)))
 
 (defn protobuf?
   "Is the given object a PersistentProtocolBufferMap?"
@@ -17,16 +19,20 @@
 
 (defn protodef
   "Create a protodef from a string or protobuf class."
-  ([class]
-     (if (or (protodef? class) (nil? class))
-       class
-       (PersistentProtocolBufferMap$Def/create class)))
-  ([class & fields]
-     (loop [type   (protodef class)
+  ([def]
+     (if (or (protodef? def) (nil? def))
+       def
+       (PersistentProtocolBufferMap$Def/create
+        ^Descriptors.Descriptor
+        (if (instance? Descriptors$Descriptor def)
+          def
+          (Reflector/invokeStaticMethod ^Class def "getDescriptor" (to-array nil))))))
+  ([def & fields]
+     (loop [^PersistentProtocolBufferMap$Def def (protodef def)
             fields fields]
        (if (empty? fields)
-         type
-         (recur (-> type
+         def
+         (recur (-> def
                     (.fieldDescriptor (first fields))
                     .getMessageType
                     protodef)
@@ -35,7 +41,7 @@
 (defmacro defprotobuf
   "Helper macro for defining a protodef object."
   [sym & args]
-  (let [class (apply str (interpose "$" (map name args)))]
+  (let [class (symbol (apply str (interpose "$" (map name args))))]
     `(def ~sym (protodef ~class))))
 
 (defn protobuf

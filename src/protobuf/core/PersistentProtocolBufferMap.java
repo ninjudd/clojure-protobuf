@@ -32,16 +32,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;
     static ConcurrentHashMap<Descriptors.Descriptor, Def> type_to_def = new ConcurrentHashMap<Descriptors.Descriptor, Def>();
 
-    public static Def create(String class_name) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
-      Class<?> c = Class.forName(class_name);
-      return create(c);
-    }
-
-    public static Def create(Class<?> c) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-      Descriptors.Descriptor type = (Descriptors.Descriptor) c.getMethod("getDescriptor").invoke(null);
-      return create(type);
-    }
-
     public static Def create(Descriptors.Descriptor type) {
       Def def = type_to_def.get(type);
       if (def == null) {
