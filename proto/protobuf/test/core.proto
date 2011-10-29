@@ -1,7 +1,7 @@
 import "protobuf/core/extensions.proto";
 
-option java_package = "protobuf.core";
-option java_outer_classname = "Test";
+option java_package = "protobuf.test";
+option java_outer_classname = "Core";
 
 message Foo {
   optional uint32   id        = 1 [default = 43];

@@ -38,12 +38,6 @@
                     protodef)
                 (rest fields))))))
 
-(defmacro defprotobuf
-  "Helper macro for defining a protodef object."
-  [sym & args]
-  (let [class (symbol (apply str (interpose "$" (map name args))))]
-    `(def ~sym (protodef ~class))))
-
 (defn protobuf
   "Construct a protobuf of the given type."
   ([^PersistentProtocolBufferMap$Def type]

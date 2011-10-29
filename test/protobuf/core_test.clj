@@ -1,11 +1,11 @@
-(ns protobuf-test
+(ns protobuf.core-test
   (:use protobuf.core clojure.test)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
-(def Foo      (protodef protobuf.core.Test$Foo))
-(def Bar      (protodef protobuf.core.Test$Bar))
-(def Response (protodef protobuf.core.Test$Response))
-(def ErrorMsg (protodef protobuf.core.Test$ErrorMsg))
+(def Foo      (protodef protobuf.test.Core$Foo))
+(def Bar      (protodef protobuf.test.Core$Bar))
+(def Response (protodef protobuf.test.Core$Response))
+(def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
 
 (defn catbytes [& args]
   (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
