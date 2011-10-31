@@ -1,5 +1,5 @@
 (ns protobuf.codec-test
-  (:use clojure.test gloss.io cereal.core protobuf.codec)
+  (:use clojure.test gloss.io protobuf.codec)
   (:import (java.nio ByteBuffer)))
 
 (deftest protobuf-codec-test
@@ -45,3 +45,15 @@
             data3 (encode codec {:nested {:baz 5 :tags ["foo"] :nested {:tag-set {"b" true "c" false}}}})]
         (is (= {:nested {:foo 4 :bar 3 :baz 5 :tags ["bar" "baz" "foo"] :nested {:tag-set #{"a" "b"}}}}
                (decode codec (concat data1 data2 data3))))))))
+
+(deftest repeated-protobufs
+  (let [len   (length-prefix protobuf.test.Codec$Foo)
+        codec (protobuf-codec protobuf.test.Codec$Foo :repeated true)]
+    (testing "length-prefix"
+      (doseq [i [0 10 100 1000 10000 100000 Integer/MAX_VALUE]]
+        (is (= i (decode len (encode len i))))))
+    (testing "repeated"
+      (let [data1 (encode codec [{:foo 1 :bar 2}])
+            data2 (encode codec [{:foo 4 :baz 8}])]
+        (is (= [{:foo 1 :bar 2} {:foo 4 :baz 8}]
+               (decode codec (concat data1 data2))))))))

@@ -89,8 +89,10 @@
 
 (defn protobuf-dump
   "Return the byte representation of the given protobuf."
-  [^PersistentProtocolBufferMap p]
-  (.toByteArray p))
+  ([^PersistentProtocolBufferMap p]
+     (.toByteArray p))
+  ([^PersistentProtocolBufferMap$Def type m]
+     (protobuf-dump (PersistentProtocolBufferMap/construct type m))))
 
 (defn protobuf-seq
   "Lazily read a sequence of length-delimited protobufs of the specified type from the given input stream."

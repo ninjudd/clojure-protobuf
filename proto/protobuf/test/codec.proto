@@ -14,7 +14,8 @@ message Foo {
 
   optional Foo nested = 7;
 
-  optional int32 rev = 8;
+  repeated int32 revisions = 8;
+  optional fixed32 _len = 9;
 }
 
 message Item {
