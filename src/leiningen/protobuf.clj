@@ -38,7 +38,8 @@
     (when-not (empty? files)
       (let [proto (peek files)
             files (pop files)]
-        (if (or (.exists (io/file "proto" proto)) (.exists (io/file "build/proto" proto)))
+        (if (or (.exists (io/file "proto" proto))
+                (.exists (io/file "build/proto" proto)))
           (recur files)
           (let [location (str "proto/" proto)
                 proto-file (io/file "build" location)]
@@ -69,7 +70,7 @@
   (flush)
   (join (.readPassword (System/console))))
 
-(defn fetch [project]
+(defn fetch []
   (when-not (.exists (io/file srcdir))
     (with-open [stream (.openStream url)]
       (io/copy stream (io/file zipfile)))
@@ -77,7 +78,7 @@
 
 (defn uninstall
   "Remove protoc if it is installed."
-  [project]
+  []
   (when (installed?)
     (let [password (read-pass)]
       (sh "sudo" "-S" "make" "uninstall"
@@ -85,9 +86,9 @@
 
 (defn install
   "Compile and install protoc to /usr/local."
-  [project]
+  []
   (when-not (installed?)
-    (fetch nil)
+    (fetch)
     (when-not (.exists (io/file srcdir "src" "protoc"))
       (.setExecutable (io/file srcdir "configure") true)
       (.setExecutable (io/file srcdir "install-sh") true)
@@ -128,7 +129,7 @@
      (protoc project files)))
 
 (defn google
-  [project]
+  []
   (let [proto-files (io/file "proto/google/protobuf")]
     (.mkdirs proto-files)
     (io/copy
@@ -146,8 +147,8 @@
   ([project] (println (help-for "protobuf")))
   ([project subtask & args]
      (case subtask
-       "proto"     (apply google project args)
-       "fetch"     (apply fetch project args)
-       "install"   (apply install project args)
-       "uninstall" (apply uninstall project args)
-       "compile"   (apply compile project args))))
+       "proto"     (apply google args)
+       "fetch"     (apply fetch args)
+       "install"   (apply install args)
+       "uninstall" (apply uninstall args)
+       "compile"   (apply compile args))))
