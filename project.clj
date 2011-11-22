@@ -7,5 +7,5 @@
                  [classlojure "0.6.3"]]
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.1.0-alpha1"]]
-  :eval-in-leiningen true
+  :eval-in-project true
   :jar-files ["proto"])
