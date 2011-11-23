@@ -4,11 +4,9 @@
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
         [leiningen.util.paths :only [get-os]]
-        [leiningen.core :only [prepend-tasks]]
-        uncle.core)
+        [leiningen.core :only [prepend-tasks]])
   (:require [clojure.java.io :as io])
-  (:import [org.apache.tools.ant.taskdefs Chmod Copy ExecTask Get Javac Mkdir Untar]
-           java.util.zip.ZipFile))
+  (:import java.util.zip.ZipFile))
 
 (def version "2.3.0")
 (def srcdir  (format "lib/protobuf-%s" version))
@@ -106,8 +104,8 @@
             :dir srcdir :in password)))))
 
 (defn protoc
-  ([project protos] (protoc project "build/protosrc" protos))
-  ([project dest protos]
+  ([project protos] (protoc project protos "build/protosrc"))
+  ([project protos dest]
      (when (or (> (modtime "proto") (modtime dest))
                (> (modtime "proto") (modtime "classes")))
        (.mkdirs (io/file dest))
@@ -115,30 +113,24 @@
        (doseq [proto protos]
          (println "Compiling" proto "to" dest)
          (extract-dependencies (io/file "proto" proto))
-         (try (ant ExecTask {:executable "protoc" :dir "proto" :failonerror true}
-                (args [proto (str "--java_out=../" dest) "-I." "-I../build/proto"]))
-              (catch org.apache.tools.ant.BuildException e
-                (throw (Exception. (str "error compiling " proto))))))
-       (javac project dest))))
+         (sh "protoc" proto (str "--java_out=../" dest) "-I." "-I../build/proto"
+             :dir "proto"))
+       (javac (assoc project :java-source-path dest)))))
 
-(defn compile
+(defn compile-protos
   "Compile protocol buffer files located in proto dir."
-  ([project] (compile project (proto-files (io/file "proto"))))
+  ([project] (compile-protos project (proto-files (io/file "proto"))))
   ([project files]
      (install)
      (protoc project files)))
 
 (defn google
-  []
+  [project]
   (let [proto-files (io/file "proto/google/protobuf")]
     (.mkdirs proto-files)
-    (io/copy
-     (io/reader
-      (str srcdir "/src/google/protobuf/descriptor.proto"))
-     proto-files))
-  (protoc ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java")))
-
-(prepend-tasks #'javac compile)
+    (io/copy (io/file (str srcdir "/src/google/protobuf/descriptor.proto"))
+             (io/file proto-files "descriptor.proto")))
+  (protoc project ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java")))
 
 (defn ^{:doc "Tasks for installing and uninstalling protobuf libraries."
         :help-arglists '([subtask & args])
@@ -147,8 +139,8 @@
   ([project] (println (help-for "protobuf")))
   ([project subtask & args]
      (case subtask
-       "proto"     (apply google args)
+       "google"    (apply google project args)
        "fetch"     (apply fetch args)
        "install"   (apply install args)
        "uninstall" (apply uninstall args)
-       "compile"   (apply compile args))))
+       "compile"   (apply compile-protos project args))))
