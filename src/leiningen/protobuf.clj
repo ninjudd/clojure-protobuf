@@ -1,4 +1,5 @@
 (ns leiningen.protobuf
+  (:refer-clojure :exclude [compile])
   (:use [clojure.java.shell :only [sh]]
         [clojure.string :only [join]]
         [leiningen.help :only [help-for]]
@@ -16,7 +17,7 @@
                "http://protobuf.googlecode.com/files/protobuf-%s.zip"
                version)))
 
-(defn- unzip [source target-dir] 
+(defn- unzip [source target-dir]
   (let [zip (ZipFile. source)
         entries (enumeration-seq (.entries zip))
         target-file #(io/file target-dir (.getName %))]
@@ -68,7 +69,9 @@
   (flush)
   (join (.readPassword (System/console))))
 
-(defn fetch []
+(defn fetch
+  "Fetch protocol-buffer source and unzip it."
+  []
   (when-not (.exists (io/file srcdir))
     (with-open [stream (.openStream url)]
       (io/copy stream (io/file zipfile)))
@@ -104,6 +107,7 @@
             :dir srcdir :in password)))))
 
 (defn protoc
+  "Create .java and .class files from the provided .proto files."
   ([project protos] (protoc project protos "build/protosrc"))
   ([project protos dest]
      (when (or (> (modtime "proto") (modtime dest))
@@ -117,20 +121,26 @@
              :dir "proto"))
        (javac (assoc project :java-source-path dest)))))
 
-(defn compile-protos
-  "Compile protocol buffer files located in proto dir."
-  ([project] (compile-protos project (proto-files (io/file "proto"))))
-  ([project files]
-     (install)
-     (protoc project files)))
-
-(defn google
+(defn compile-google-protobuf
+  "Compile com.google.protobuf.*"
   [project]
   (let [proto-files (io/file "proto/google/protobuf")]
     (.mkdirs proto-files)
     (io/copy (io/file (str srcdir "/src/google/protobuf/descriptor.proto"))
              (io/file proto-files "descriptor.proto")))
-  (protoc project ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java")))
+  (protoc project
+          ["google/protobuf/descriptor.proto"]
+          (str srcdir "/java/src/main/java")))
+
+(defn compile
+  "Compile protocol buffer files located in proto dir."
+  ([project] (compile project (proto-files (io/file "proto"))))
+  ([project files]
+     (install)
+     (fetch)
+     (when (= "protobuf" (:name project))
+       (compile-google-protobuf project))
+     (protoc project files)))
 
 (defn ^{:doc "Tasks for installing and uninstalling protobuf libraries."
         :help-arglists '([subtask & args])
@@ -139,8 +149,6 @@
   ([project] (println (help-for "protobuf")))
   ([project subtask & args]
      (case subtask
-       "google"    (apply google project args)
-       "fetch"     (apply fetch args)
        "install"   (apply install args)
        "uninstall" (apply uninstall args)
-       "compile"   (apply compile-protos project args))))
+       "compile"   (apply compile project args))))
