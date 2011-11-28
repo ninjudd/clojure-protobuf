@@ -77,9 +77,11 @@
   (let [target (:target-dir project)]
     (when-not (.exists (io/file target srcdir)) 
       (let [zipped (io/file target zipfile)]
+        (println "Downloading" zipfile)
         (with-open [stream (.openStream url)]
           (io/copy stream (io/file zipped)))
-        (unzip (io/file zipped) (:target-dir project))))))
+        (println "Unzipping" zipfile "to" target)
+        (unzip (io/file zipped) target)))))
 
 (defn uninstall
   "Remove protoc if it is installed."
@@ -99,13 +101,13 @@
       (when-not (.exists (io/file source "src" "protoc"))
         (.setExecutable (io/file source "configure") true)
         (.setExecutable (io/file source "install-sh") true)
-        (println "Configuring protoc...")
+        (println "Configuring protoc")
         (sh "./configure" :dir source)
-        (println "Running 'make'...")
+        (println "Running 'make'")
         (sh "make" :dir source))
+      (println "Installing")
       (let [password (str (read-pass) "\n")
             opts     {:dir source :input-string (str password "\n")}]
-        (println "Installing...")
         (if (= :linux (get-os))
           (sh "script" "-q" "-c" "sudo -S make install" "/dev/null"
               :dir source :in password)
