@@ -1,3 +1,4 @@
+.lein*
 .cake
 *~
 lib
@@ -8,3 +9,4 @@ pom.xml
 *.class
 proto/google/protobuf/descriptor.proto
 docs
+protobuf-*
