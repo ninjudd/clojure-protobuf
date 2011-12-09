@@ -154,6 +154,7 @@
   ([project files]
      (install project)
      (when (= "protobuf" (:name project))
+       (fetch project)
        (compile-google-protobuf project))
      (protoc project files)))
 
