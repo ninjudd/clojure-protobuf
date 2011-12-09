@@ -153,7 +153,6 @@
   ([project] (compile project (proto-files (io/file "proto"))))
   ([project files]
      (install project)
-     (fetch project)
      (when (= "protobuf" (:name project))
        (compile-google-protobuf project))
      (protoc project files)))
