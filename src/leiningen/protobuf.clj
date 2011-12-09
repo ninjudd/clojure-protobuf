@@ -130,9 +130,9 @@
            (extract-dependencies (io/file "proto" proto) target)
            (sh "protoc"
                proto
-               (str "--java_out=../" dest-path)
+               (str "--java_out=" dest-path)
                "-I."
-               (str "-I../" target "/proto")
+               (str "-I" target "/proto")
                :dir "proto"))
          (javac (assoc project :java-source-path dest-path))))))
 
