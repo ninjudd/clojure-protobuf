@@ -44,6 +44,7 @@
           (recur files)
           (let [location (str "proto/" proto)
                 proto-file (io/file target location)]
+            (.mkdirs (.getParentFile proto-file))
             (io/copy (io/reader (io/resource location)) proto-file)
             (recur (into files (proto-dependencies proto-file)))))))))
 
