@@ -7,4 +7,6 @@
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.1.0-alpha2"]]
   :eval-in-project true
+  :source-path "src/clj"
+  :java-source-path "src/java"
   :jar-files ["proto"])
