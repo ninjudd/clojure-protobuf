@@ -207,7 +207,7 @@
                 :long      {:type :float},
                 :deleted   {:type :boolean}}]
     (is (= fields (protofields Foo)))
-    (is (= fields (protofields protobuf.core.Test$Foo)))))
+    (is (= fields (protofields protobuf.test.Core$Foo)))))
 
 (deftest test-nested-protofields
   (is (= {:year   {:type :int},
@@ -236,7 +236,7 @@
   (is (= {}    (protodefault Foo :groups)))
   (is (= {}    (protodefault Foo :item-map)))
   (is (= false (protodefault Foo :deleted)))
-  (is (= {}    (protodefault protobuf.core.Test$Foo :groups))))
+  (is (= {}    (protodefault protobuf.test.Core$Foo :groups))))
 
 (deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
