@@ -1,11 +1,11 @@
-(ns protobuf-test
-  (:use protobuf)
-  (:use clojure.test)
+(ns protobuf.core-test
+  (:use protobuf.core clojure.test)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
-(defprotobuf Foo clojure.protobuf.Test Foo)
-(defprotobuf Response clojure.protobuf.Test Response)
-(defprotobuf ErrorMsg clojure.protobuf.Test ErrorMsg)
+(def Foo      (protodef protobuf.test.Core$Foo))
+(def Bar      (protodef protobuf.test.Core$Bar))
+(def Response (protodef protobuf.test.Core$Response))
+(def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
 
 (defn catbytes [& args]
   (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
@@ -17,8 +17,7 @@
       (is (= "bar" (:label p)))
       (is (= ["little" "yellow"] (:tags p)))
       (is (= [1.2 3.4 5.6] (:doubles p)))
-      (is (= [(float 0.01) (float 0.02) (float 0.03)] (:floats  p)))
-      )
+      (is (= [(float 0.01) (float 0.02) (float 0.03)] (:floats  p))))
     (let [p (conj p {:tags ["different"]})]
       (is (= ["different"] (:tags p))))
     (let [p (conj p {:tags ["little" "yellow" "different"] :label "very"})]
@@ -40,24 +39,6 @@
       (is (= ["little" "yellow" "different"] (:tags p)))
       (is (= "very" (:label p))))
     (let [p (append p {:doubles [3.4] :floats [0.02]})]
-      (is (= [1.2 3.4] (:doubles p)))
-      (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
-
-(deftest test-adjoin
-  (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2] :floats [0.01])]
-    (let [p (adjoin p {:label "bar"})]
-      (is (= 5     (:id p)))
-      (is (= "bar" (:label p)))
-      (is (= false (:deleted p)))
-      (is (= ["little" "yellow"] (:tags p))))
-    (let [p (adjoin (assoc p :deleted true) p)]
-      (is (= false (:deleted p))))
-    (let [p (adjoin p {:tags ["different"]})]
-      (is (= ["little" "yellow" "different"] (:tags p))))
-    (let [p (adjoin p {:tags ["different"] :label "very"})]
-      (is (= ["little" "yellow" "different"] (:tags p)))
-      (is (= "very" (:label p))))
-    (let [p (adjoin p {:doubles [3.4] :floats [0.02]})]
       (is (= [1.2 3.4] (:doubles p)))
       (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
 
@@ -147,7 +128,7 @@
       (is (= ["odd"]          (get-in p [:foo-by-id 6 :tags])))
       (is (= nil              (get-in p [:foo-by-id 6 :label]))))))
 
-(deftest test-counts
+(deftest test-nested-counters
   (let [p (protobuf Foo :counts {"foo" {:i 5 :d 5.0}})]
     (is (= 5   (get-in p [:counts "foo" :i])))
     (is (= 5.0 (get-in p [:counts "foo" :d])))
@@ -158,14 +139,89 @@
       (let [p (append p {:counts {"foo" {:i -8 :d 4.06} "bar" {:i -66}}})]
         (is (= -1   (get-in p [:counts "foo" :i])))
         (is (= 6.66 (get-in p [:counts "foo" :d])))
-        (is (= 33   (get-in p [:counts "bar" :i])))))))
+        (is (= 33   (get-in p [:counts "bar" :i])))
+        (is (= [{:key "foo", :i 5, :d 5.0}
+                {:key "foo", :i 2, :d -2.4}
+                {:key "bar", :i 99}
+                {:key "foo", :i -8, :d 4.06}
+                {:key "bar", :i -66}]
+               (get-raw p :counts)))))))
+
+(deftest test-succession
+  (let [p (protobuf Foo :time {:year 1978 :month 11 :day 24})]
+    (is (= 1978 (get-in p [:time :year])))
+    (is (= 11   (get-in p [:time :month])))
+    (is (= 24   (get-in p [:time :day])))
+    (let [p (append p {:time {:year 1974 :month 1}})]
+      (is (= 1974 (get-in p [:time :year])))
+      (is (= 1    (get-in p [:time :month])))
+      (is (= nil  (get-in p [:time :day])))
+      (is (= [{:year 1978, :month 11, :day 24} {:year 1974, :month 1}]
+             (get-raw p :time))))))
+
+(deftest test-nullable
+  (let [p (protobuf Bar :int 1 :long 330000000000 :flt 1.23 :dbl 9.87654321 :str "foo")]
+    (is (= 1            (get p :int)))
+    (is (= 330000000000 (get p :long)))
+    (is (= (float 1.23) (get p :flt)))
+    (is (= 9.87654321   (get p :dbl)))
+    (is (= "foo"        (get p :str)))
+    (is (= [:int :long :flt :dbl :str] (keys p)))
+    (let [p (append p {:int nil :long nil :flt nil :dbl nil :str nil})]
+      (is (= nil (get p :int)))
+      (is (= nil (get p :long)))
+      (is (= nil (get p :flt)))
+      (is (= nil (get p :dbl)))
+      (is (= nil (get p :str)))
+      (is (= nil (keys p))))
+    (testing "nullable successions"
+      (let [p (protobuf Bar :label "foo")]
+        (is (= "foo" (get p :label)))
+        (let [p (append p {:label nil})]
+          (is (= nil        (get     p :label)))
+          (is (= ["foo" ""] (get-raw p :label))))))
+    (testing "repeated nullable"
+      (let [p (protobuf Bar :labels ["foo" "bar"])]
+        (is (= ["foo" "bar"] (get p :labels)))
+        (let [p (append p {:labels [nil]})]
+          (is (= ["foo" "bar" nil] (get     p :labels)))
+          (is (= ["foo" "bar" ""]  (get-raw p :labels))))))))
 
 (deftest test-protofields
-  (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag-set nil, :deleted nil,
-                :attr-map nil, :foo-by-id nil, :pair-map nil, :groups nil, :doubles nil, :floats nil, :item-map nil,
-                :counts nil, :lat nil, :long nil}]
+  (let [fields {:floats    {:type :float,   :repeated true},
+                :doubles   {:type :double,  :repeated true},
+                :counts    {:type :message, :repeated true},
+                :time      {:type :message, :repeated true},
+                :attr-map  {:type :message, :repeated true},
+                :tag-set   {:type :message, :repeated true},
+                :item-map  {:type :message, :repeated true},
+                :groups    {:type :message, :repeated true},
+                :responses {:type :enum,    :repeated true, :values #{:yes :no :maybe :not-sure}},
+                :pair-map  {:type :message, :repeated true},
+                :foo-by-id {:type :message, :repeated true},
+                :tags      {:type :string,  :repeated true},
+                :label     {:type :string, :a 1, :b 2, :c 3},
+                :id        {:type :int},
+                :parent    {:type :message},
+                :lat       {:type :double},
+                :long      {:type :float},
+                :deleted   {:type :boolean}}]
     (is (= fields (protofields Foo)))
-    (is (= fields (protofields clojure.protobuf.Test$Foo)))))
+    (is (= fields (protofields protobuf.core.Test$Foo)))))
+
+(deftest test-nested-protofields
+  (is (= {:year   {:type :int},
+          :month  {:type :int},
+          :day    {:type :int},
+          :hour   {:type :int},
+          :minute {:type :int}}
+         (protofields Foo :time)))
+  (is (= {:year   {:type :int},
+          :month  {:type :int},
+          :day    {:type :int},
+          :hour   {:type :int},
+          :minute {:type :int}}
+         (protofields Foo :parent :foo-by-id :time))))
 
 (deftest test-protodefault
   (is (= 43    (protodefault Foo :id)))
@@ -180,23 +236,22 @@
   (is (= {}    (protodefault Foo :groups)))
   (is (= {}    (protodefault Foo :item-map)))
   (is (= false (protodefault Foo :deleted)))
-  (is (= {}    (protodefault clojure.protobuf.Test$Foo :groups))))
+  (is (= {}    (protodefault protobuf.core.Test$Foo :groups))))
 
 (deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
     (is (= '(:id :responses :tag-set :deleted)   (keys p)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
 
-    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores true)
+    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores true)
     (is (= '(:id :responses :tag_set :deleted)   (keys p)))
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
 
-    (let [fields {:id nil, :label {:a 1, :b 2, :c 3}, :tags nil, :parent nil, :responses nil, :tag_set nil, :deleted nil,
-                  :attr_map nil, :foo_by_id nil, :pair_map nil, :groups nil, :doubles nil, :floats nil, :item_map nil,
-                  :counts nil, :lat nil, :long nil}]
-      (is (= fields (protofields Foo))))
+    (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
+             :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
+           (set (keys (protofields Foo)))))
 
-    (clojure.protobuf.PersistentProtocolBufferMap/setUseUnderscores false)))
+    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores false)))
 
 (deftest test-protobuf-nested-message
   (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]

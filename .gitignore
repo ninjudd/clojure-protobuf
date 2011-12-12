@@ -7,3 +7,4 @@ pom.xml
 *.jar
 *.class
 proto/google/protobuf/descriptor.proto
+docs

@@ -1,7 +1,7 @@
-import "clojure/protobuf/extensions.proto";
+import "protobuf/core/extensions.proto";
 
-option java_package = "clojure.protobuf";
-option java_outer_classname = "Test";
+option java_package = "protobuf.test";
+option java_outer_classname = "Core";
 
 message Foo {
   optional uint32   id        = 1 [default = 43];
@@ -18,6 +18,8 @@ message Foo {
 
   repeated Count counts = 10 [(map_by) = "key"];
 
+  repeated Time time = 11 [(succession) = true];
+
   enum Response {
     YES      = 0;
     NO       = 1;
@@ -32,6 +34,25 @@ message Foo {
   repeated Item  item_map  = 24 [(map_by) = "item"];
   repeated Pair  pair_map  = 25 [(map_by) = "key"];
   optional bool  deleted   = 26 [default  = false];
+}
+
+message Bar {
+  optional int32  int  = 1 [(nullable) = true, (null_int)    = -1];
+  optional int64  long = 2 [(nullable) = true, (null_long)   = -999999999999];
+  optional float  flt  = 3 [(nullable) = true, (null_float)  = -0.0001];
+  optional double dbl  = 4 [(nullable) = true, (null_double) = -0.00000001];
+  optional string str  = 5 [(nullable) = true, (null_string) = "NULL"];
+
+  repeated string label  = 6 [(nullable) = true, (null_string) = "", (succession) = true];
+  repeated string labels = 7 [(nullable) = true, (null_string) = ""];
+}
+
+message Time {
+  optional sint32 year   = 1;
+  optional int32  month  = 2;
+  optional int32  day    = 3;
+  optional int32  hour   = 4;
+  optional int32  minute = 5;
 }
 
 message Pair {

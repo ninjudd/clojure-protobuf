@@ -1,0 +1,19 @@
+import "google/protobuf/descriptor.proto";
+
+option java_package = "protobuf.core";
+option java_outer_classname = "Extensions";
+
+extend google.protobuf.FieldOptions {
+  optional bool   set         = 52001;
+  optional bool   map         = 52002;
+  optional string map_by      = 52003;
+  optional bool   counter     = 52004;
+  optional bool   succession  = 52005;
+  optional string meta        = 52010;
+  optional bool   nullable    = 52020;
+  optional string null_string = 52021;
+  optional sint32 null_int    = 52022;
+  optional sint64 null_long   = 52023;
+  optional float  null_float  = 52024;
+  optional double null_double = 52025;
+}
