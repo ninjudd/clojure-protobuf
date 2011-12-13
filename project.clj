@@ -7,5 +7,8 @@
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.1.0-alpha2"]]
   :eval-in-project true
-  :source-path "src/clj"
-  :java-source-path "src/java")
+  ;; Bug in the current 1.x branch of Leiningen causes
+  ;; jar to implicitly clean no matter what, wiping stuff.
+  ;; This prevents that.
+  :disable-implicit-clean true
+  :java-source-path "src")

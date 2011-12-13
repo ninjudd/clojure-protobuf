@@ -138,6 +138,8 @@
                :dir proto-path))
          (javac (assoc project :java-source-path dest-path))))))
 
+
+
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"
   [project]
