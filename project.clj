@@ -3,10 +3,10 @@
   :dependencies [[clojure "1.2.0"]
                  [ordered-set "0.2.2"]
                  [useful "0.7.4-alpha4"]
-                 [classlojure "0.6.3"]]
+                 [fs "1.0.0"]]
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.1.0-alpha2"]]
-  :eval-in-project true
+  :eval-in-leiningen true
   ;; Bug in the current 1.x branch of Leiningen causes
   ;; jar to implicitly clean no matter what, wiping stuff.
   ;; This prevents that.
