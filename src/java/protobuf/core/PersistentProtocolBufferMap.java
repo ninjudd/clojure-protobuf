@@ -370,7 +370,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       name = name.toUpperCase().replaceAll("-","_");
       Descriptors.EnumDescriptor      enum_type  = field.getEnumType();
       Descriptors.EnumValueDescriptor enum_value = enum_type.findValueByName(name);
-			if (enum_value == null) {
+      if (enum_value == null) {
         PrintWriter err = (PrintWriter) RT.ERR.deref();
         err.format("invalid enum value %s for enum type %s\n", name, enum_type.getFullName());
       }
@@ -400,6 +400,28 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     return null;
   }
 
+  protected void addRepeatedField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object value) {
+    try {
+      builder.addRepeatedField(field, value);
+    } catch (IllegalArgumentException e) {
+      String msg = String.format("error adding %s to %s field %s",
+                                 value, field.getJavaType().toString().toLowerCase(),
+                                 field.getFullName());
+      throw new IllegalArgumentException(msg, e);
+    }
+  }
+
+  protected void setField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object value) {
+    try {
+      builder.setField(field, value);
+    } catch (IllegalArgumentException e) {
+      String msg = String.format("error setting %s field %s to %s",
+                                 field.getJavaType().toString().toLowerCase(),
+                                 field.getFullName(), value);
+      throw new IllegalArgumentException(msg, e);
+    }
+  }
+
   protected void addField(DynamicMessage.Builder builder, Object key, Object value) {
     if (key == null) return;
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
@@ -412,7 +434,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       if (value instanceof Sequential && !set) {
         for (ISeq s = RT.seq(value); s != null; s = s.next()) {
           Object v = toProtoValue(field, s.first());
-          builder.addRepeatedField(field, v);
+          addRepeatedField(builder,field, v);
         }
       } else {
         Keyword map_field_by = mapFieldBy(field);
@@ -422,14 +444,14 @@ public class PersistentProtocolBufferMap extends APersistentMap {
             IPersistentMap map = (IPersistentMap) e.getValue();
             Object k = e.getKey();
             Object v = toProtoValue(field, map.assoc(map_field_by, k).assoc(map_field_by.getName(), k));
-            builder.addRepeatedField(field, v);
+            addRepeatedField(builder, field, v);
           }
         } else if (field.getOptions().getExtension(Extensions.map)) {
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
             Object[] map = {k_key, e.getKey(), k_val, e.getValue()};
             Object v = toProtoValue(field, new PersistentArrayMap(map));
-            builder.addRepeatedField(field, v);
+            addRepeatedField(builder, field, v);
           }
         } else if (set) {
           if (value instanceof IPersistentMap) {
@@ -437,18 +459,18 @@ public class PersistentProtocolBufferMap extends APersistentMap {
               Map.Entry e = (Map.Entry) s.first();
               Object[] map = {k_item, e.getKey(), k_exists, e.getValue()};
               Object v = toProtoValue(field, new PersistentArrayMap(map));
-              builder.addRepeatedField(field, v);
+              addRepeatedField(builder, field, v);
             }
           } else {
             for (ISeq s = RT.seq(value); s != null; s = s.next()) {
               Object[] map = {k_item, s.first(), k_exists, true};
               Object v = toProtoValue(field, new PersistentArrayMap(map));
-              builder.addRepeatedField(field, v);
+              addRepeatedField(builder, field, v);
             }
           }
         } else {
           Object v = toProtoValue(field, value);
-          builder.addRepeatedField(field, v);
+          addRepeatedField(builder, field, v);
         }
       }
     } else {
@@ -456,7 +478,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
       if (v instanceof DynamicMessage) {
         v = ((DynamicMessage) builder.getField(field)).toBuilder().mergeFrom((DynamicMessage) v).build();
       }
-      builder.setField(field, v);
+      setField(builder, field, v);
     }
   }
 

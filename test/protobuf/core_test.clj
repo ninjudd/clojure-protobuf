@@ -271,3 +271,9 @@
     (.close out)
     (is (= [{:id 1, :label "foo"} {:id 2, :label "bar"} {:id 3, :label "baz"}]
            (protobuf-seq Foo in)))))
+
+(deftest test-encoding-errors
+  (is (thrown-with-msg? IllegalArgumentException #"error setting string field Foo.label to 8"
+        (protobuf Foo :label 8)))
+  (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field Foo.tags"
+        (protobuf Foo :tags [1 2 3]))))
