@@ -5,7 +5,7 @@
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
         [leiningen.util.paths :only [get-os]]
-        [leiningen.core :only [prepend-tasks]])
+        [robert.hooke :only [add-hook]])
   (:require [clojure.java.io :as io]
             [fs.core :as fs])
   (:import java.util.zip.ZipFile))
@@ -13,6 +13,8 @@
 (def version "2.3.0")
 (def srcdir  (str "protobuf-" version))
 (def zipfile (format "protobuf-%s.zip" version))
+
+(def ^{:dynamic true} *compile?* true)
 
 (def url
   (java.net.URL.
@@ -128,9 +130,8 @@
                "-I."
                (str "-I" target "/proto")
                :dir proto-path))
-         (javac (assoc project :java-source-path dest-path))))))
-
-
+         (binding [*compile?* false]
+           (javac (assoc project :java-source-path dest-path)))))))
 
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"
@@ -154,6 +155,12 @@
        (fetch project)
        (compile-google-protobuf project))
      (protoc project files)))
+
+(add-hook #'javac
+          (fn [f & args]
+            (when *compile?*
+              (compile (first args)))
+            (apply f args)))
 
 (defn ^{:doc "Tasks for installing and uninstalling protobuf libraries."
         :help-arglists '([subtask & args])
