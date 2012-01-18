@@ -5,26 +5,20 @@
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
         [leiningen.util.paths :only [get-os]]
-        [leiningen.core :only [prepend-tasks]])
-  (:require [clojure.java.io :as io])
+        [robert.hooke :only [add-hook]])
+  (:require [clojure.java.io :as io]
+            [fs.core :as fs])
   (:import java.util.zip.ZipFile))
 
 (def version "2.3.0")
 (def srcdir  (str "protobuf-" version))
 (def zipfile (format "protobuf-%s.zip" version))
 
+(def ^{:dynamic true} *compile?* true)
+
 (def url
   (java.net.URL.
    (format "http://protobuf.googlecode.com/files/protobuf-%s.zip"  version)))
-
-(defn- unzip [source target-dir]
-  (let [zip (ZipFile. source)
-        entries (enumeration-seq (.entries zip))
-        target-file #(io/file target-dir (.getName %))]
-    (doseq [entry entries :when (not (.isDirectory entry))
-            :let [f (target-file entry)]]
-      (.mkdirs (.getParentFile f))
-      (io/copy (.getInputStream zip entry) f))))
 
 (defn- proto-dependencies
   "look for lines starting with import in proto-file"
@@ -52,7 +46,7 @@
   (let [files (-> dir io/file file-seq rest)]
     (if (empty? files)
       0
-      (apply max (map #(.lastModified %) files)))))
+      (apply max (map fs/mod-time files)))))
 
 (defn proto-file? [file]
   (let [name (.getName file)]
@@ -82,7 +76,7 @@
         (with-open [stream (.openStream url)]
           (io/copy stream (io/file zipped)))
         (println "Unzipping" zipfile "to" target)
-        (unzip (io/file zipped) target)))))
+        (fs/unzip zipped target)))))
 
 (defn uninstall
   "Remove protoc if it is installed."
@@ -100,8 +94,8 @@
     (fetch project)
     (let [source (io/file (:target-dir project) srcdir)]
       (when-not (.exists (io/file source "src" "protoc"))
-        (.setExecutable (io/file source "configure") true)
-        (.setExecutable (io/file source "install-sh") true)
+        (fs/chmod "+x" (io/file source "configure"))
+        (fs/chmod "+x" (io/file source "install-sh"))
         (println "Configuring protoc")
         (sh "./configure" :dir source)
         (println "Running 'make'")
@@ -136,7 +130,8 @@
                "-I."
                (str "-I" target "/proto")
                :dir proto-path))
-         (javac (assoc project :java-source-path dest-path))))))
+         (binding [*compile?* false]
+           (javac (assoc project :java-source-path dest-path)))))))
 
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"
@@ -160,6 +155,12 @@
        (fetch project)
        (compile-google-protobuf project))
      (protoc project files)))
+
+(add-hook #'javac
+          (fn [f & args]
+            (when *compile?*
+              (compile (first args)))
+            (apply f args)))
 
 (defn ^{:doc "Tasks for installing and uninstalling protobuf libraries."
         :help-arglists '([subtask & args])
