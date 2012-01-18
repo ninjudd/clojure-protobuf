@@ -128,14 +128,18 @@
          (.mkdirs dest)
          (.mkdir (io/file target "proto"))
          (doseq [proto protos]
-           (println "Compiling" proto "to" dest-path)
+           (print "Compiling" proto "to" dest-path "... ")
            (extract-dependencies (io/file proto-path proto) target)
-           (sh "protoc"
-               proto
-               (str "--java_out=" dest-path)
-               "-I."
-               (str "-I" target "/proto")
-               :dir proto-path))
+           (let [protoc-result (sh "protoc"
+                                   proto
+                                   (str "--java_out=" dest-path)
+                                   "-I."
+                                   (str "-I" target "/proto")
+                                   :dir proto-path)]
+             (if (= (:exit protoc-result) 0)
+               (println "Success")
+               (do (println "Error")
+                   (println (:err protoc-result))))))
          (javac (assoc project :java-source-path dest-path))))))
 
 (defn compile-google-protobuf
