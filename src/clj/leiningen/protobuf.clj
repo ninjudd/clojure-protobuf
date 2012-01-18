@@ -121,20 +121,21 @@
      (protoc project protos (io/file (:target-dir project) "protosrc")))
   ([project protos dest]
      (let [target (:target-dir project)
-           dest-path (.getPath dest)]
-       (when (or (> (modtime "proto") (modtime dest))
-                 (> (modtime "proto") (modtime "classes")))
+           dest-path (.getPath dest)
+           proto-path (or (:proto-path project) "proto")]
+       (when (or (> (modtime proto-path) (modtime dest))
+                 (> (modtime proto-path) (modtime "classes")))
          (.mkdirs dest)
          (.mkdir (io/file target "proto"))
          (doseq [proto protos]
            (println "Compiling" proto "to" dest-path)
-           (extract-dependencies (io/file "proto" proto) target)
+           (extract-dependencies (io/file proto-path proto) target)
            (sh "protoc"
                proto
                (str "--java_out=" dest-path)
                "-I."
                (str "-I" target "/proto")
-               :dir "proto"))
+               :dir proto-path))
          (javac (assoc project :java-source-path dest-path))))))
 
 (defn compile-google-protobuf
@@ -151,7 +152,8 @@
 
 (defn compile
   "Compile protocol buffer files located in proto dir."
-  ([project] (compile project (proto-files (io/file "proto"))))
+  ([project]
+     (compile project (proto-files (io/file (or (:proto-path project) "proto")))))
   ([project files]
      (install project)
      (when (= "protobuf" (:name project))
