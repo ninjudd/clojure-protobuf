@@ -1,4 +1,5 @@
-.lein*
+.lein-deps-sum
+.lein-failures
 .cake
 *~
 lib
@@ -10,3 +11,4 @@ pom.xml
 proto/google/protobuf/descriptor.proto
 docs
 protobuf-*
+protosrc
