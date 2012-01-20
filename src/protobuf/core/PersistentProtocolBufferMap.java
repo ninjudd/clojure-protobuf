@@ -11,6 +11,7 @@
 package protobuf.core;
 
 import clojure.lang.*;
+import ordered_set.core.OrderedSet;
 import java.util.*;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -299,7 +300,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
           Descriptors.FieldDescriptor item_field  = def.fieldDescriptor(k_item);
           Descriptors.FieldDescriptor exists_field = def.fieldDescriptor(k_exists);
 
-          ITransientSet set = (ITransientSet) PersistentOrderedSet.EMPTY.asTransient();
+          ITransientSet set = (ITransientSet) OrderedSet.EMPTY.asTransient();
           while (iterator.hasNext()) {
             DynamicMessage message = (DynamicMessage) iterator.next();
             Object  item   = fromProtoValue(item_field, message.getField(item_field));

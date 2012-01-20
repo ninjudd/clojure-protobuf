@@ -1,7 +1,7 @@
 (defproject protobuf "0.6.0-beta3"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[clojure "1.2.0"]
-                 [ordered-set "0.2.2"]
+                 [ordered-set "0.2.3"]
                  [useful "0.7.4-alpha4"]
                  [fs "1.0.0"]]
   :dev-dependencies [[gloss "0.2.0-rc1"]
