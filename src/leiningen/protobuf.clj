@@ -70,7 +70,7 @@
   "Fetch protocol-buffer source and unzip it."
   [project]
   (let [target (:target-dir project)]
-    (when-not (.exists (io/file target srcdir)) 
+    (when-not (.exists (io/file target srcdir))
       (let [zipped (io/file target zipfile)]
         (println "Downloading" zipfile)
         (with-open [stream (.openStream url)]
@@ -122,14 +122,13 @@
          (.mkdirs dest)
          (.mkdir (io/file target "proto"))
          (doseq [proto protos]
-           (println "Compiling" proto "to" dest-path)
+           (println "Compiling" proto "to" dest-path "... ")
            (extract-dependencies (io/file proto-path proto) target)
-           (sh "protoc"
-               proto
-               (str "--java_out=" dest-path)
-               "-I."
-               (str "-I" target "/proto")
-               :dir proto-path))
+           (let [args ["protoc" proto (str "--java_out=" dest-path) "-I." (str "-I" target proto-path)]]
+             (println (apply str " > " (interpose " " args)))
+             (let [protoc-result (apply sh (concat args [:dir proto-path]))]
+               (if (not (= (:exit protoc-result) 0))
+                 (println " > ERROR: " (:err protoc-result))))))
          (binding [*compile?* false]
            (javac (assoc project :java-source-path dest-path)))))))
 
