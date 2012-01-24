@@ -7,6 +7,9 @@ they are WAY faster to serialize and deserialize than standard Clojure objects.
 Write a `.proto` file:
 
 ```java
+option java_package = "yourpackage.core";
+option java_outer_classname = "Example";
+
 message Person {
   required int32  id    = 1;
   required string name  = 2;
@@ -15,17 +18,17 @@ message Person {
 }
 ```
 
-If you put it in the proto directory of your project, you can compile it with [leiningen](https://github.com/technomancy/leiningen):
+If you put it in project/proto/yourpackage/core/example.proto, you can compile it with [leiningen](https://github.com/technomancy/leiningen):
 
 ```
-lein protobuf compile example.proto
+lein protobuf compile
 ```
 
 Now you can use the protocol buffer in clojure:
 
 ```clojure
-(use 'protobuf)
-(defprotobuf Person Example$Person)
+(use 'protobuf.core)
+(def Person (protodef yourpackage.core.Example$Person))
 
 (def p (protobuf Person :id 4 :name "Bob" :email "bob@example.com"))
 => {:id 4, :name "Bob", :email "bob@example.com"}
@@ -85,9 +88,9 @@ lein protobuf compile example.proto
 Then you can access the maps in clojure:
 
 ```clojure
-(use 'protobuf)
-(defprotobuf Photo Example$Photo)
-(defprotobuf Tag Example$Photo$Tag)
+(use 'protobuf.core)
+(def Photo (protodef Example$Photo))
+(def Tag (protodef Example$Photo$Tag))
 
 (def p (protobuf Photo :id 7  :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}
                        :attrs {"dimensions" "1632x1224", "alpha" "no", "color space" "RGB"}
