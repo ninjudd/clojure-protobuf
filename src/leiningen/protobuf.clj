@@ -151,7 +151,7 @@
   "Compile protocol buffer files located in proto dir."
   ([project]
      (compile project (proto-files (io/file (or (:proto-path project) "proto")))))
-  ([project files]
+  ([project & files]
      (install project)
      (when (= "protobuf" (:name project))
        (fetch project)
