@@ -1,13 +1,13 @@
 (ns leiningen.protobuf
   (:refer-clojure :exclude [compile])
-  (:use [clojure.java.shell :only [sh]]
-        [clojure.string :only [join]]
+  (:use [clojure.string :only [join]]
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
         [leiningen.util.paths :only [get-os]]
         [robert.hooke :only [add-hook]])
   (:require [clojure.java.io :as io]
-            [fs.core :as fs])
+            [fs.core :as fs]
+            [conch.core :as sh])
   (:import java.util.zip.ZipFile))
 
 (def version "2.3.0")
@@ -58,7 +58,7 @@
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
 (defn installed? []
-  (try (.contains (:out (sh "protoc" "--version")) version)
+  (try (.contains (sh/stream-to-string (sh/proc "protoc" "--version") :out) version)
        (catch java.io.IOException e)))
 
 (defn read-pass []
@@ -82,10 +82,11 @@
   "Remove protoc if it is installed."
   [project]
   (when (installed?)
-    (let [password (read-pass)]
-      (sh "sudo" "-S" "make" "uninstall"
-          :dir (io/file (:target-dir project) srcdir)
-          :in (str password "\n")))))
+    (let [password (read-pass)
+          proc (sh/proc "sudo" "-S" "make" "uninstall"
+                        :dir (io/file (:target-dir project) srcdir))]
+      (sh/feed-from-string proc (str password "\n"))
+      (sh/stream-to-out proc :out))))
 
 (defn install
   "Compile and install protoc to /usr/local."
@@ -97,17 +98,19 @@
         (fs/chmod "+x" (io/file source "configure"))
         (fs/chmod "+x" (io/file source "install-sh"))
         (println "Configuring protoc")
-        (sh "./configure" :dir source)
+        (sh/stream-to-out (sh/proc "./configure" :dir source) :out)
         (println "Running 'make'")
-        (sh "make" :dir source))
+        (sh/stream-to-out (sh/proc "make" :dir source) :out))
       (println "Installing")
       (let [password (str (read-pass) "\n")
-            opts     {:dir source :input-string (str password "\n")}]
-        (if (= :linux (get-os))
-          (sh "script" "-q" "-c" "sudo -S make install" "/dev/null"
-              :dir source :in password)
-          (sh "sudo" "-S" "make" "install"
-              :dir source :in password))))))
+            opts     {:dir source :input-string (str password "\n")}
+            proc     (if (= :linux (get-os))
+                       (sh/proc "script" "-q" "-c" "sudo -S make install" "/dev/null"
+                                :dir source)
+                       (sh/proc "sudo" "-S" "make" "install"
+                                :dir source))]
+        (sh/feed-from-string proc password)
+        (sh/stream-to-out proc :out)))))
 
 (defn protoc
   "Create .java and .class files from the provided .proto files."
@@ -126,9 +129,9 @@
            (extract-dependencies (io/file proto-path proto) target)
            (let [args ["protoc" proto (str "--java_out=" dest-path) "-I." (str "-I" target proto-path)]]
              (println (apply str " > " (interpose " " args)))
-             (let [protoc-result (apply sh (concat args [:dir proto-path]))]
-               (if (not (= (:exit protoc-result) 0))
-                 (println " > ERROR: " (:err protoc-result))))))
+             (let [protoc-result (apply sh/proc (concat args [:dir proto-path]))]
+               (if (not (= (sh/exit-code protoc-result) 0))
+                 (println " > ERROR: " (sh/stream-to-string protoc-result :err))))))
          (binding [*compile?* false]
            (javac (assoc project :java-source-path dest-path)))))))
 
