@@ -24,8 +24,10 @@ lein protobuf compile example.proto
 Now you can use the protocol buffer in clojure:
 
 ```clojure
-(use 'protobuf)
-(defprotobuf Person Example$Person)
+(use 'protobuf.core)
+(import Example$Person)
+
+(def Person (protodef Example$Person))
 
 (def p (protobuf Person :id 4 :name "Bob" :email "bob@example.com"))
 => {:id 4, :name "Bob", :email "bob@example.com"}
@@ -41,7 +43,7 @@ Now you can use the protocol buffer in clojure:
 
 (protobuf-load Person b)
 => {:id 4, :name "Bob", :email "bob@example.com"}
-```clojure
+```
 
 A protocol buffer map is immutable just like other clojure objects. It is similar to a
 struct-map, except you cannot insert fields that aren't specified in the `.proto` file.
@@ -53,13 +55,19 @@ repeated fields. You can also provide metadata on protobuf fields using clojure 
 use these, you must import the extension file and include it when compiling. For example:
 
 ```java
-import "clojure/protobuf/extensions.proto";
+import "protobuf/core/extensions.proto";
+
 message Photo {
   required int32  id     = 1;
   required string path   = 2;
-  repeated string labels = 3 [(set)    = true];
+  repeated Label  labels = 3 [(set)    = true];
   repeated Attr   attrs  = 4 [(map)    = true];
   repeated Tag    tags   = 5 [(map_by) = "person_id"];
+
+  message Label {
+    required string item   = 1;
+    required bool   exists = 2;
+  }
 
   message Attr {
     required string key = 1;
@@ -86,8 +94,11 @@ Then you can access the maps in clojure:
 
 ```clojure
 (use 'protobuf)
-(defprotobuf Photo Example$Photo)
-(defprotobuf Tag Example$Photo$Tag)
+(import Example$Photo)
+(import Example$Photo$Tag)
+
+(def Photo (protodef Example$Photo))
+(def Tag (protodef Example$Photo$Tag))
 
 (def p (protobuf Photo :id 7  :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}
                        :attrs {"dimensions" "1632x1224", "alpha" "no", "color space" "RGB"}
