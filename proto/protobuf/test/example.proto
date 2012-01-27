@@ -1,0 +1,25 @@
+import "protobuf/core/extensions.proto";
+
+option java_package = "protobuf.test";
+option java_outer_classname = "Example";
+
+message Photo {
+  required int32  id     = 1;
+  required string path   = 2;
+  repeated string labels = 3 [(set)    = true];
+  repeated Attr   attrs  = 4 [(map)    = true];
+  repeated Tag    tags   = 5 [(map_by) = "person_id"];
+
+  message Attr {
+    required string key = 1;
+    optional string val = 2;
+  }
+
+  message Tag {
+    required int32 person_id = 1;
+    optional int32 x_coord   = 2 [(meta) = "{:max 100.0 :min -100.0}"];
+    optional int32 y_coord   = 3;
+    optional int32 width     = 4;
+    optional int32 height    = 5;
+  }
+}
