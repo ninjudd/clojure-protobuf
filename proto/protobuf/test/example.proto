@@ -6,9 +6,14 @@ option java_outer_classname = "Example";
 message Photo {
   required int32  id     = 1;
   required string path   = 2;
-  repeated string labels = 3 [(set)    = true];
+  repeated Label  labels = 3 [(set)    = true];
   repeated Attr   attrs  = 4 [(map)    = true];
   repeated Tag    tags   = 5 [(map_by) = "person_id"];
+
+  message Label {
+    required string item   = 1;
+    required bool   exists = 2;
+  }
 
   message Attr {
     required string key = 1;

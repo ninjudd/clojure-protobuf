@@ -2,7 +2,6 @@
   (:use protobuf.core clojure.test))
 
 (def Photo (protodef protobuf.test.Example$Photo))
-(def Tag   (protodef protobuf.test.Example$Photo$Tag))
 
 ;; Haven't seen correct output so I have nothing to compare to.
 (deftest example-test
