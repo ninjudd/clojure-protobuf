@@ -125,13 +125,12 @@
          (.mkdirs dest)
          (.mkdir (io/file target "proto"))
          (doseq [proto protos]
-           (println "Compiling" proto "to" dest-path "... ")
            (extract-dependencies (io/file proto-path proto) target)
            (let [args ["protoc" proto (str "--java_out=" dest-path) "-I." (str "-I" target proto-path)]]
-             (println (apply str " > " (interpose " " args)))
+             (println " > " (join " " args))
              (let [protoc-result (apply sh/proc (concat args [:dir proto-path]))]
                (if (not (= (sh/exit-code protoc-result) 0))
-                 (println " > ERROR: " (sh/stream-to-string protoc-result :err))))))
+                 (println "ERROR: " (sh/stream-to-string protoc-result :err))))))
          (binding [*compile?* false]
            (javac (assoc project :java-source-path dest-path)))))))
 
