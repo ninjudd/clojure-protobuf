@@ -129,10 +129,8 @@ be in your dev-dependencies.
 Replace `"x.x.x"` with the actual latest version, which you can find on
 [clojars](http://clojars.org/protobuf) 
 
-**NOTE: clojure-protobuf requires bugfixes introduced in the 1.x branch
-of Leiningen. Until the 1.7.0 release, you'll have to use Leiningen off
-of the latest 1.x branch in order to use the Leiningen tasks provided
-with this library.**
+**NOTE: clojure-protobuf requires at least version 1.7.0 of Leiningen.
+It will not work in earlier versions.**
 
 ## History
 
