@@ -1,5 +1,6 @@
 (ns protobuf.core
-  (:use [clojure.java.io :only [input-stream output-stream]]
+  (:use [useful.fn :only [fix]]
+        [clojure.java.io :only [input-stream output-stream]]
         [clojure.string :only [lower-case]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf GeneratedMessage CodedInputStream
@@ -61,14 +62,16 @@
           (for [^Descriptors$FieldDescriptor field (.getFields ^Descriptors$Descriptor type)]
             (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
                   field-name  (PersistentProtocolBufferMap/intern (.getName field))
-                  field-type  (keyword (lower-case (.name (.getJavaType field))))]
-              [field-name (merge (when (seq meta-string) (read-string meta-string))
-                                 {:type field-type}
-                                 (when (.isRepeated field)
-                                   {:repeated true})
-                                 (when (= :enum field-type)
-                                   {:values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
-                                                      (.. field getEnumType getValues)))}))])))))
+                  field-type  (keyword (lower-case (.name (.getJavaType field))))
+                  descriptor  (merge (when (seq meta-string) (read-string meta-string))
+                                     {:type (fix field-type
+                                                 #{:message} (constantly :map))}
+                                     (when (= :enum field-type)
+                                       {:values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
+                                                          (.. field getEnumType getValues)))}))]
+              [field-name (if (.isRepeated field)
+                            {:type :list :item-type descriptor}
+                            descriptor)])))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

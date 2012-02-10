@@ -36,4 +36,5 @@
                 val
                 (protobuf proto val))))))
         (fix repeated
-             #(gloss/repeated (gloss/finite-frame (length-prefix proto) %) :prefix :none)))))
+             #(gloss/repeated (gloss/finite-frame (length-prefix proto) %) :prefix :none))
+        (with-meta {:schema {:type :map :fields (protofields proto)}}))))
