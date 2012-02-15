@@ -13,8 +13,13 @@
   (let [proto (protodef proto)
         min   (alength (protobuf-dump proto {:_len 0}))
         max   (alength (protobuf-dump proto {:_len Integer/MAX_VALUE}))]
-    (when-not (= min max)
-      (throw (Exception. "_len must be of type fixed32 or fixed64")))
+    (letfn [(check [test msg]
+              (when test
+                (throw (Exception. (format "In %s: %s" (.getFullName proto) msg)))))]
+      (check (zero? min)
+             "_len field is required for repeated protobufs")
+      (check (= min max)
+             "_len must be of type fixed32 or fixed64"))
     (gloss/compile-frame (gloss/finite-frame max (protobuf-codec proto))
                          #(hash-map :_len %)
                          :_len)))
