@@ -9,20 +9,22 @@
 
 (declare protobuf-codec)
 
-(defn length-prefix [proto]
-  (let [proto (protodef proto)
-        min   (alength (protobuf-dump proto {:_len 0}))
-        max   (alength (protobuf-dump proto {:_len Integer/MAX_VALUE}))]
-    (letfn [(check [test msg]
-              (when test
-                (throw (Exception. (format "In %s: %s" (.getFullName proto) msg)))))]
-      (check (zero? min)
-             "_len field is required for repeated protobufs")
-      (check (= min max)
-             "_len must be of type fixed32 or fixed64"))
-    (gloss/compile-frame (gloss/finite-frame max (protobuf-codec proto))
-                         #(hash-map :_len %)
-                         :_len)))
+(let [len-key :proto_length]
+  (defn length-prefix [proto]
+    (let [proto (protodef proto)
+          min   (alength (protobuf-dump proto {len-key 0}))
+          max   (alength (protobuf-dump proto {len-key Integer/MAX_VALUE}))]
+      (letfn [(check [test msg]
+                (when test
+                  (throw (Exception. (format "In %s: %s %s"
+                                             (.getFullName proto) (name len-key) msg)))))]
+        (check (zero? min)
+               "field is required for repeated protobufs")
+        (check (= min max)
+               "must be of type fixed32 or fixed64"))
+      (gloss/compile-frame (gloss/finite-frame max (protobuf-codec proto))
+                           #(hash-map len-key %)
+                           len-key))))
 
 (defn protobuf-codec [proto & {:keys [validator repeated]}]
   (let [proto (protodef proto)]
