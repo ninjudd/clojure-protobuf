@@ -27,7 +27,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 
-public class PersistentProtocolBufferMap extends APersistentMap {
+public class PersistentProtocolBufferMap extends APersistentMap implements IObj {
   public static class Def {
     final Descriptors.Descriptor type;
     ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;

@@ -15,10 +15,10 @@
           min   (alength (protobuf-dump proto {len-key 0}))
           max   (alength (protobuf-dump proto {len-key Integer/MAX_VALUE}))]
       (letfn [(check [test msg]
-                (when test
+                (when-not test
                   (throw (Exception. (format "In %s: %s %s"
                                              (.getFullName proto) (name len-key) msg)))))]
-        (check (zero? min)
+        (check (pos? min)
                "field is required for repeated protobufs")
         (check (= min max)
                "must be of type fixed32 or fixed64"))
