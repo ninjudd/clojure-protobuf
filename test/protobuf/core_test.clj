@@ -188,24 +188,35 @@
           (is (= ["foo" "bar" ""]  (get-raw p :labels))))))))
 
 (deftest test-protofields
-  (let [fields {:floats    {:type :float,   :repeated true},
-                :doubles   {:type :double,  :repeated true},
-                :counts    {:type :message, :repeated true},
-                :time      {:type :message, :repeated true},
-                :attr-map  {:type :message, :repeated true},
-                :tag-set   {:type :message, :repeated true},
-                :item-map  {:type :message, :repeated true},
-                :groups    {:type :message, :repeated true},
-                :responses {:type :enum,    :repeated true, :values #{:yes :no :maybe :not-sure}},
-                :pair-map  {:type :message, :repeated true},
-                :foo-by-id {:type :message, :repeated true},
-                :tags      {:type :string,  :repeated true},
-                :label     {:type :string, :a 1, :b 2, :c 3},
-                :id        {:type :int},
-                :parent    {:type :message},
-                :lat       {:type :double},
-                :long      {:type :float},
-                :deleted   {:type :boolean}}]
+  (let [fields {:type :struct
+                :name "Foo"
+                :fields {:parent    {:type :struct},
+                         :floats    {:type :list, :values {:type :float}},
+                         :doubles   {:type :list, :values {:type :double}},
+                         :tags      {:type :list, :values {:type :string}}
+                         :tag-set   {:type :set,  :values {:type :string}},
+                         :counts    {:type   :map
+                                     :keys   {:type :string}
+                                     :values {:type :struct}},
+                         :foo-by-id {:type   :map
+                                     :keys   {:type :integer}
+                                     :values {:type :struct, :name "Foo"}},
+                         :attr-map  {:type   :map
+                                     :keys   {:type :string}
+                                     :values {:type :string}},
+                         :pair-map  {:type :map,
+                                     :keys   {:type :string}
+                                     :item   {:type :struct, :name "Pair",
+                                              :fields {}}},
+                         :groups    {:type :list, :item {:type :map}},
+                         :responses {:type :list, :item {:type :enum, :values #{:no :yes :maybe :not-sure}}},
+                         :lat       {:type :double},
+                         :time      {:type :list, :item {:type :map}},
+                         :label     {:type :string, :a 1, :b 2, :c 3},
+                         :item-map  {:type :list, :item {:type :map}},
+                         :id        {:type :int},
+                         :long      {:type :float},
+                         :deleted   {:type :boolean},}}]
     (is (= fields (protofields Foo)))
     (is (= fields (protofields protobuf.test.Core$Foo)))))
 

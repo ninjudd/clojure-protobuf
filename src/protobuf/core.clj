@@ -1,10 +1,10 @@
 (ns protobuf.core
-  (:use [useful.fn :only [fix]]
+  (:use [protobuf.schema :only [field-schema]]
+        [useful.fn :only [fix]]
         [clojure.java.io :only [input-stream output-stream]]
         [clojure.string :only [lower-case]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
-           (com.google.protobuf GeneratedMessage CodedInputStream
-                                Descriptors$Descriptor Descriptors$FieldDescriptor)
+           (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
            (clojure.lang Reflector)))
 
@@ -54,24 +54,10 @@
   (let [type ^PersistentProtocolBufferMap$Def (protodef type)]
     (.defaultValue type key)))
 
-(defn protofields
-  "Return a map of the protobuf fields to the clojure.protobuf.Extensions metadata for each field."
+(defn protobuf-schema
+  "Return the schema for the given protodef."
   [& args]
-  (let [type (.getMessageType ^PersistentProtocolBufferMap$Def (apply protodef args))]
-    (into {}
-          (for [^Descriptors$FieldDescriptor field (.getFields ^Descriptors$Descriptor type)]
-            (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-                  field-name  (PersistentProtocolBufferMap/intern (.getName field))
-                  field-type  (keyword (lower-case (.name (.getJavaType field))))
-                  descriptor  (merge (when (seq meta-string) (read-string meta-string))
-                                     {:type (fix field-type
-                                                 #{:message} (constantly :map))}
-                                     (when (= :enum field-type)
-                                       {:values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
-                                                          (.. field getEnumType getValues)))}))]
-              [field-name (if (.isRepeated field)
-                            {:type :list :item-type descriptor}
-                            descriptor)])))))
+  (field-schema (apply protodef args)))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."
