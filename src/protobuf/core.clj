@@ -1,8 +1,7 @@
 (ns protobuf.core
   (:use [protobuf.schema :only [field-schema]]
         [useful.fn :only [fix]]
-        [clojure.java.io :only [input-stream output-stream]]
-        [clojure.string :only [lower-case]])
+        [clojure.java.io :only [input-stream output-stream]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
@@ -48,16 +47,10 @@
   ([^PersistentProtocolBufferMap$Def type k v & kvs]
      (PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
-(defn protodefault
-  "Return the default empty protobuf of the given type."
-  [type key]
-  (let [type ^PersistentProtocolBufferMap$Def (protodef type)]
-    (.defaultValue type key)))
-
 (defn protobuf-schema
   "Return the schema for the given protodef."
   [& args]
-  (field-schema (apply protodef args)))
+  (field-schema (.getMessageType (apply protodef args))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

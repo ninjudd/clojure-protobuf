@@ -103,16 +103,6 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     public Descriptors.Descriptor getMessageType() {
       return type;
     }
-
-    public Object defaultValue(Keyword key) {
-      Descriptors.FieldDescriptor field = fieldDescriptor(key);
-      if (field.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
-        if (!field.isRepeated()) return null;
-        return PersistentProtocolBufferMap.fromProtoValue(field, new ArrayList());
-      } else {
-        return PersistentProtocolBufferMap.fromProtoValue(field, field.getDefaultValue());
-      }
-    }
   }
 
   final Def def;

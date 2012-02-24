@@ -1,11 +1,14 @@
 (ns protobuf.schema
+  (:use [useful.fn :only [fix]]
+        [clojure.string :only [lower-case]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf Descriptors$Descriptor
                                 Descriptors$FieldDescriptor
                                 Descriptors$FieldDescriptor$Type)))
-
 (defn extension [ext field]
-  (-> field .getOptions (.getExtension ext)))
+  (-> (.getOptions field)
+      (.getExtension ext)
+      (fix string? not-empty)))
 
 (defn field-type [field]
   (condp instance? field
@@ -22,6 +25,8 @@
     Descriptors$Descriptor
     :struct))
 
+(defmulti field-schema (fn [field & _] (field-type field)))
+
 (defn struct-schema [struct & [parents]]
   (let [struct-name (.getFullName struct)]
     (into {:type :struct
@@ -35,19 +40,19 @@
 (defn basic-schema [field & [parents]]
   (let [java-type   (keyword (lower-case (.name (.getJavaType field))))
         meta-string (extension (Extensions/meta) field)]
-    (into (case java-type
-            :message (struct-schema (.getMessageType field) parents)
-            :enum    {:type   :enum
-                      :values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
-                                        (.. field getEnumType getValues)))}
-            {:type java-type})
-          (when meta-string
-            (read-string meta-string)))))
+    (merge (case java-type
+             :message (struct-schema (.getMessageType field) parents)
+             :enum    {:type   :enum
+                       :values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
+                                         (.. field getEnumType getValues)))}
+             {:type java-type})
+           (when (.hasDefaultValue field)
+             {:default (.getDefaultValue field)})
+           (when meta-string
+             (read-string meta-string)))))
 
 (defn subfield [field field-name]
-  (.getFieldByName (.getMessageType field) (name field-name)))
-
-(defmulti field-schema (fn [field & _] (field-type field)))
+  (.findFieldByName (.getMessageType field) (name field-name)))
 
 (defmethod field-schema :basic [field & [parents]]
   (basic-schema field parents))
@@ -75,7 +80,7 @@
 
 (defmethod field-schema :map-by [field & [parents]]
   (let [map-by (extension (Extensions/mapBy) field)]
-    {:type   :map-by
+    {:type   :map
      :keys   (field-schema (subfield field map-by) parents)
      :values (basic-schema field parents)}))
 

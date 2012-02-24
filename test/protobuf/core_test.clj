@@ -187,67 +187,71 @@
           (is (= ["foo" "bar" nil] (get     p :labels)))
           (is (= ["foo" "bar" ""]  (get-raw p :labels))))))))
 
-(deftest test-protofields
-  (let [fields {:type :struct
-                :name "Foo"
-                :fields {:parent    {:type :struct},
-                         :floats    {:type :list, :values {:type :float}},
-                         :doubles   {:type :list, :values {:type :double}},
-                         :tags      {:type :list, :values {:type :string}}
-                         :tag-set   {:type :set,  :values {:type :string}},
-                         :counts    {:type   :map
-                                     :keys   {:type :string}
-                                     :values {:type :struct}},
-                         :foo-by-id {:type   :map
-                                     :keys   {:type :integer}
-                                     :values {:type :struct, :name "Foo"}},
-                         :attr-map  {:type   :map
-                                     :keys   {:type :string}
-                                     :values {:type :string}},
-                         :pair-map  {:type :map,
-                                     :keys   {:type :string}
-                                     :item   {:type :struct, :name "Pair",
-                                              :fields {}}},
-                         :groups    {:type :list, :item {:type :map}},
-                         :responses {:type :list, :item {:type :enum, :values #{:no :yes :maybe :not-sure}}},
-                         :lat       {:type :double},
-                         :time      {:type :list, :item {:type :map}},
-                         :label     {:type :string, :a 1, :b 2, :c 3},
-                         :item-map  {:type :list, :item {:type :map}},
-                         :id        {:type :int},
-                         :long      {:type :float},
-                         :deleted   {:type :boolean},}}]
-    (is (= fields (protofields Foo)))
-    (is (= fields (protofields protobuf.test.Core$Foo)))))
+(deftest test-protobuf-schema
+  (let [fields
+        {:type :struct
+         :name "protobuf.test.core.Foo"
+         :fields {:id      {:default 43, :type :int}
+                  :deleted {:default false, :type :boolean}
+                  :lat     {:type :double}
+                  :long    {:type :float}
+                  :parent  {:type :struct, :name "protobuf.test.core.Foo"}
+                  :floats  {:type :list, :values {:type :float}}
+                  :doubles {:type :list, :values {:type :double}}
+                  :label   {:type :string, :c 3, :b 2, :a 1}
+                  :tags    {:type :list, :values {:type :string}}
+                  :tag-set {:type :set,  :values {:type :string}}
+                  :counts  {:type   :map
+                            :keys   {:type :string}
+                            :values {:type :struct, :name "protobuf.test.core.Count"
+                                     :fields {:key {:type :string}
+                                              :i {:counter true, :type :int}
+                                              :d {:counter true, :type :double}}}}
+                  :foo-by-id {:type :map
+                              :keys   {:default 43, :type :int}
+                              :values {:type :struct, :name "protobuf.test.core.Foo"}}
+                  :attr-map {:type :map
+                             :keys   {:type :string}
+                             :values {:type :string}}
+                  :pair-map {:type :map
+                             :keys   {:type :string}
+                             :values {:type :struct, :name "protobuf.test.core.Pair"
+                                      :fields {:key {:type :string}
+                                               :val {:type :string}}}}
+                  :groups {:type :map
+                           :keys   {:type :string}
+                           :values {:type :list
+                                    :values {:type :struct, :name "protobuf.test.core.Foo"}}}
+                  :responses {:type :list
+                              :values {:type :enum, :values #{:no :yes :maybe :not-sure}}}
+                  :time {:type :struct, :name "protobuf.test.core.Time", :succession true
+                         :fields {:year   {:type :int}
+                                  :month  {:type :int}
+                                  :day    {:type :int}
+                                  :hour   {:type :int}
+                                  :minute {:type :int}}}
+                  :item-map {:type :map
+                             :keys   {:type :string}
+                             :values {:type :struct, :name "protobuf.test.core.Item"
+                                      :fields {:item   {:type :string},
+                                               :exists {:default true, :type :boolean}}}}}}]
+    (is (= fields (protobuf-schema Foo)))
+    (is (= fields (protobuf-schema protobuf.test.Core$Foo)))))
 
-(deftest test-nested-protofields
-  (is (= {:year   {:type :int},
-          :month  {:type :int},
-          :day    {:type :int},
-          :hour   {:type :int},
-          :minute {:type :int}}
-         (protofields Foo :time)))
-  (is (= {:year   {:type :int},
-          :month  {:type :int},
-          :day    {:type :int},
-          :hour   {:type :int},
-          :minute {:type :int}}
-         (protofields Foo :parent :foo-by-id :time))))
-
-(deftest test-protodefault
-  (is (= 43    (protodefault Foo :id)))
-  (is (= 0.0   (protodefault Foo :lat)))
-  (is (= 0.0   (protodefault Foo :long)))
-  (is (= ""    (protodefault Foo :label)))
-  (is (= []    (protodefault Foo :tags)))
-  (is (= nil   (protodefault Foo :parent)))
-  (is (= []    (protodefault Foo :responses)))
-  (is (= #{}   (protodefault Foo :tag-set)))
-  (is (= {}    (protodefault Foo :foo-by-id)))
-  (is (= {}    (protodefault Foo :groups)))
-  (is (= {}    (protodefault Foo :item-map)))
-  (is (= false (protodefault Foo :deleted)))
-  (is (= {}    (protodefault protobuf.test.Core$Foo :groups))))
+(comment deftest test-default-protobuf
+  (is (= 43    (default-protobuf Foo :id)))
+  (is (= 0.0   (default-protobuf Foo :lat)))
+  (is (= 0.0   (default-protobuf Foo :long)))
+  (is (= ""    (default-protobuf Foo :label)))
+  (is (= []    (default-protobuf Foo :tags)))
+  (is (= nil   (default-protobuf Foo :parent)))
+  (is (= []    (default-protobuf Foo :responses)))
+  (is (= #{}   (default-protobuf Foo :tag-set)))
+  (is (= {}    (default-protobuf Foo :foo-by-id)))
+  (is (= {}    (default-protobuf Foo :groups)))
+  (is (= {}    (default-protobuf Foo :item-map)))
+  (is (= false (default-protobuf Foo :deleted)))
+  (is (= {}    (default-protobuf protobuf.test.Core$Foo :groups))))
 
 (deftest test-use-underscores
   (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
@@ -260,7 +264,7 @@
 
     (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
              :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
-           (set (keys (protofields Foo)))))
+           (-> (protobuf-schema Foo) :fields keys set)))
 
     (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores false)))
 
@@ -284,7 +288,7 @@
            (protobuf-seq Foo in)))))
 
 (deftest test-encoding-errors
-  (is (thrown-with-msg? IllegalArgumentException #"error setting string field Foo.label to 8"
+  (is (thrown-with-msg? IllegalArgumentException #"error setting string field protobuf.test.core.Foo.label to 8"
         (protobuf Foo :label 8)))
-  (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field Foo.tags"
+  (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field protobuf.test.core.Foo.tags"
         (protobuf Foo :tags [1 2 3]))))
