@@ -475,7 +475,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
   public PersistentProtocolBufferMap withMeta(IPersistentMap meta) {
     if (meta == meta()) return this;
-    return new PersistentProtocolBufferMap(meta(), def, message);
+    return new PersistentProtocolBufferMap(meta, def, message);
   }
 
   public IPersistentMap meta(){
