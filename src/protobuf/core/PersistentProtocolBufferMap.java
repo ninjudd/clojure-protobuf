@@ -489,7 +489,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     } else if (field.isRepeated()) {
       return message().getRepeatedFieldCount(field) > 0;
     } else {
-      return message().hasField(field);
+      return message().hasField(field) || field.hasDefaultValue();
     }
   }
 
@@ -509,10 +509,11 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
   public Object getValAt(Object key, boolean use_extensions) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
-    if (field == null) return null;
-    if (field.isRepeated() && message().getRepeatedFieldCount(field) == 0) return null;
-    if (!field.isRepeated() && !field.hasDefaultValue() && !message().hasField(field)) return null;
-    return fromProtoValue(field, message().getField(field), use_extensions);
+    if (containsKey(key)) {
+      return fromProtoValue(field, message().getField(field), use_extensions);
+    } else {
+      return null;
+    }
   }
 
   public IPersistentMap assoc(Object key, Object value) {
