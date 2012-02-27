@@ -3,6 +3,7 @@
         [gloss.core.protocols :only [Reader Writer]]
         [gloss.core.formats :only [to-buf-seq]]
         [useful.fn :only [fix]]
+        [useful.experimental :only [lift-meta]]
         [clojure.java.io :only [input-stream]])
   (:require io.core
             [gloss.core :as gloss]))
@@ -44,14 +45,9 @@
               (if (protobuf? val)
                 val
                 (protobuf proto val))))))
-        (fix repeated
-             #(gloss/compile-frame (gloss/repeated (gloss/finite-frame (length-prefix proto) %)
-                                                   :prefix :none)
-                                   identity
-                                   (partial dissoc len-key)))
         (gloss/compile-frame identity
-                             (fn [data]
-                               (-> data
-                                   (dissoc reset-key :revisions)
-                                   (with-meta (select-keys data [:revisions])))))
+                             #(dissoc % reset-key))
+        (fix repeated
+             #(gloss/repeated (gloss/finite-frame (length-prefix proto) %)
+                              :prefix :none))
         (with-meta {:schema (protobuf-schema proto)}))))
