@@ -60,6 +60,21 @@
       (is (= nil (:tags p)))
       (is (= nil (:label p))))))
 
+(deftest test-equality
+  (let [m {:id 5 :tags ["fast" "shiny"] :label "nice"}
+        p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
+        q (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")]
+    (is (= m p))
+    (is (= q p))))
+
+(deftest test-meta
+  (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
+        m {:foo :bar}
+        q (with-meta p m)]
+    (is (empty? (meta p)))
+    (is (= p q))
+    (is (= m (meta q)))))
+
 (deftest test-string-keys
   (let [p (protobuf Foo "id" 5 "label" "rad")]
     (is (= 5 (p :id)))
