@@ -8,7 +8,14 @@
 (def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
 
 (defn catbytes [& args]
-  (.getBytes (apply str (map (fn [#^bytes b] (String. b)) args))))
+  (let [out-buf (byte-array (reduce + (map count args)))]
+    (loop [offset 0, args args]
+      (if-let [[^bytes array & more] (seq args)]
+        (let [size (count array)]
+          (System/arraycopy array 0
+                            out-buf offset size)
+          (recur (+ size offset) more))
+        out-buf))))
 
 (deftest test-conj
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2 3.4 5.6] :floats [0.01 0.02 0.03])]
