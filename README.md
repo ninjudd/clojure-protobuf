@@ -111,7 +111,7 @@ Then you can access the maps in clojure:
 (protobuf-load Photo b)
 => {:id 7 :path "/photos/h2k3j4h9h23" :labels #{"hawaii" "family" "surfing"}...}
 
-(:x-coord (protofields Tag))
+(:x-coord (protobuf-schema Tag))
 => {:max 100.0 :min -100.0}
 ```
 
@@ -127,7 +127,7 @@ be in your dev-dependencies.
 ```
 
 Replace `"x.x.x"` with the actual latest version, which you can find on
-[clojars](http://clojars.org/protobuf) 
+[clojars](http://clojars.org/protobuf)
 
 **NOTE: clojure-protobuf requires at least version 1.7.0 of Leiningen.
 It will not work in earlier versions.**

@@ -1,3 +1,4 @@
+package protobuf.test.codec;
 import "protobuf/core/extensions.proto";
 
 option java_package = "protobuf.test";
@@ -14,8 +15,8 @@ message Foo {
 
   optional Foo nested = 7;
 
-  repeated int32 revisions = 8;
-  optional fixed32 _len = 9;
+  repeated int32   revisions    = 14;
+  optional fixed32 proto_length = 15;
 }
 
 message Item {

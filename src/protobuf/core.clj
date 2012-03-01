@@ -1,9 +1,9 @@
 (ns protobuf.core
-  (:use [clojure.java.io :only [input-stream output-stream]]
-        [clojure.string :only [lower-case]])
+  (:use [protobuf.schema :only [field-schema]]
+        [useful.fn :only [fix]]
+        [clojure.java.io :only [input-stream output-stream]])
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
-           (com.google.protobuf GeneratedMessage CodedInputStream
-                                Descriptors$Descriptor Descriptors$FieldDescriptor)
+           (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
            (clojure.lang Reflector)))
 
@@ -47,28 +47,10 @@
   ([^PersistentProtocolBufferMap$Def type k v & kvs]
      (PersistentProtocolBufferMap/construct type (apply array-map k v kvs))))
 
-(defn protodefault
-  "Return the default empty protobuf of the given type."
-  [type key]
-  (let [type ^PersistentProtocolBufferMap$Def (protodef type)]
-    (.defaultValue type key)))
-
-(defn protofields
-  "Return a map of the protobuf fields to the clojure.protobuf.Extensions metadata for each field."
+(defn protobuf-schema
+  "Return the schema for the given protodef."
   [& args]
-  (let [type (.getMessageType ^PersistentProtocolBufferMap$Def (apply protodef args))]
-    (into {}
-          (for [^Descriptors$FieldDescriptor field (.getFields ^Descriptors$Descriptor type)]
-            (let [meta-string (.. field getOptions (getExtension (Extensions/meta)))
-                  field-name  (PersistentProtocolBufferMap/intern (.getName field))
-                  field-type  (keyword (lower-case (.name (.getJavaType field))))]
-              [field-name (merge (when (seq meta-string) (read-string meta-string))
-                                 {:type field-type}
-                                 (when (.isRepeated field)
-                                   {:repeated true})
-                                 (when (= :enum field-type)
-                                   {:values (set (map #(PersistentProtocolBufferMap/enumToKeyword %)
-                                                      (.. field getEnumType getValues)))}))])))))
+  (field-schema (.getMessageType (apply protodef args))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

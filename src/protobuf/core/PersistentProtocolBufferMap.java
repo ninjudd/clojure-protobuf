@@ -27,7 +27,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 
-public class PersistentProtocolBufferMap extends APersistentMap {
+public class PersistentProtocolBufferMap extends APersistentMap implements IObj {
   public static class Def {
     final Descriptors.Descriptor type;
     ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;
@@ -102,16 +102,6 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
     public Descriptors.Descriptor getMessageType() {
       return type;
-    }
-
-    public Object defaultValue(Keyword key) {
-      Descriptors.FieldDescriptor field = fieldDescriptor(key);
-      if (field.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
-        if (!field.isRepeated()) return null;
-        return PersistentProtocolBufferMap.fromProtoValue(field, new ArrayList());
-      } else {
-        return PersistentProtocolBufferMap.fromProtoValue(field, field.getDefaultValue());
-      }
     }
   }
 
@@ -485,7 +475,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   public PersistentProtocolBufferMap withMeta(IPersistentMap meta) {
     if (meta == meta()) return this;
-    return new PersistentProtocolBufferMap(meta(), def, message);
+    return new PersistentProtocolBufferMap(meta, def, message);
   }
 
   public IPersistentMap meta(){
@@ -499,7 +489,7 @@ public class PersistentProtocolBufferMap extends APersistentMap {
     } else if (field.isRepeated()) {
       return message().getRepeatedFieldCount(field) > 0;
     } else {
-      return message().hasField(field);
+      return message().hasField(field) || field.hasDefaultValue();
     }
   }
 
@@ -519,10 +509,11 @@ public class PersistentProtocolBufferMap extends APersistentMap {
 
   public Object getValAt(Object key, boolean use_extensions) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
-    if (field == null) return null;
-    if (field.isRepeated() && message().getRepeatedFieldCount(field) == 0) return null;
-    if (!field.isRepeated() && !field.hasDefaultValue() && !message().hasField(field)) return null;
-    return fromProtoValue(field, message().getField(field), use_extensions);
+    if (containsKey(key)) {
+      return fromProtoValue(field, message().getField(field), use_extensions);
+    } else {
+      return null;
+    }
   }
 
   public IPersistentMap assoc(Object key, Object value) {
