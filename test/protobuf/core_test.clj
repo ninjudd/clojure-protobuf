@@ -72,6 +72,7 @@
         p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
         q (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")]
     (is (= m p))
+    (is (= p m))
     (is (= q p))))
 
 (deftest test-meta
