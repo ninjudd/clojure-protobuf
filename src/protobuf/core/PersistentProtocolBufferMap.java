@@ -610,7 +610,14 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   public int count() {
-    return message().getAllFields().size();
+    DynamicMessage message = message();
+    int count = RT.count(ext);
+    for (Descriptors.FieldDescriptor field : def.type.getFields()) {
+      if (protoContainsKey(field)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   public ISeq seq() {
