@@ -59,7 +59,9 @@
     (let [p (assoc p :tags "aspirin")]
       (is (= ["aspirin"] (:tags p))))
     (let [p (assoc p :foo-by-id {3 {:label "three"} 2 {:label "two"}})]
-      (is (= {3 {:id 3, :label "three"} 2 {:id 2, :label "two"}} (:foo-by-id p))))))
+      (is (= {3 {:id 3, :label "three", :deleted false}
+              2 {:id 2, :label "two", :deleted false}}
+             (:foo-by-id p))))))
 
 (deftest test-dissoc
   (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")]
@@ -68,7 +70,7 @@
       (is (= nil (:label p))))))
 
 (deftest test-equality
-  (let [m {:id 5 :tags ["fast" "shiny"] :label "nice"}
+  (let [m {:id 5 :tags ["fast" "shiny"] :label "nice" :deleted false}
         p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
         q (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")]
     (is (= m p))
@@ -308,7 +310,9 @@
         baz (protobuf Foo :id 3 :label "baz")]
     (protobuf-write out foo bar baz)
     (.close out)
-    (is (= [{:id 1, :label "foo"} {:id 2, :label "bar"} {:id 3, :label "baz"}]
+    (is (= [{:id 1, :label "foo", :deleted false}
+            {:id 2, :label "bar", :deleted false}
+            {:id 3, :label "baz", :deleted false}]
            (protobuf-seq Foo in)))))
 
 (deftest test-encoding-errors
