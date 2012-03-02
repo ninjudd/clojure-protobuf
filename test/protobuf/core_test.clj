@@ -85,6 +85,17 @@
     (is (= p q))
     (is (= m (meta q)))))
 
+(deftest test-extmap
+  (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
+        m {:id 5 :tags ["fast" "shiny"] :label "nice" :deleted false}
+        p2 (assoc p :some-key 10)
+        m2 (assoc m :some-key 10)]
+    (is (= p m))
+    (is (= p2 m2))
+    (is (= m2 p2))
+    (is (= (into {} m2) (into {} p2)))
+    (is (= (set (keys m2)) (set (keys p2))))))
+
 (deftest test-string-keys
   (let [p (protobuf Foo "id" 5 "label" "rad")]
     (is (= 5 (p :id)))
