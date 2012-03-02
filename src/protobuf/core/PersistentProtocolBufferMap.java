@@ -547,15 +547,14 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   public IPersistentMap assoc(Object key, Object value) {
-    DynamicMessage.Builder builder = builder();
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
     if (field != null) {
-      addField(builder, field, value);
-      return new PersistentProtocolBufferMap(meta(), ext, def, builder);
+      return new PersistentProtocolBufferMap(meta(), ext, def,
+                                             addField(builder(), field, value));
     } else {
       return new PersistentProtocolBufferMap(meta(), (IPersistentMap)RT.assoc(ext, key, value),
-                                             def, builder);
+                                             def, builder());
     }
   }
 
