@@ -36,20 +36,20 @@
 
 (defn extract-dependencies
   "extract all files proto is dependent on"
-  [proto-file target]
-  (loop [files (vec (proto-dependencies proto-file))]
-    (when-not (empty? files)
-      (let [proto (peek files)
-            files (pop files)]
-        ;; TODO Somehow check for :proto-path too?
-        (if (or (.exists (io/file "proto" proto))
-                (.exists (io/file target "proto" proto)))
-          (recur files)
-          (let [location (str "proto/" proto)
-                proto-file (io/file target location)]
-            (.mkdirs (.getParentFile proto-file))
-            (io/copy (io/reader (io/resource location)) proto-file)
-            (recur (into files (proto-dependencies proto-file)))))))))
+  [proto-path proto-file target]
+  (let [proto-file (io/file proto-path proto-file)]
+    (loop [files (vec (proto-dependencies proto-file))]
+      (when-not (empty? files)
+        (let [proto (peek files)
+              files (pop files)]
+          (if (or (.exists (io/file proto-path proto))
+                  (.exists (io/file target "proto" proto)))
+            (recur files)
+            (let [location (str "proto/" proto)
+                  proto-file (io/file target location)]
+              (.mkdirs (.getParentFile proto-file))
+              (io/copy (io/reader (io/resource location)) proto-file)
+              (recur (into files (proto-dependencies proto-file))))))))))
 
 (defn modtime [dir]
   (let [files (-> dir io/file file-seq rest)]
@@ -135,7 +135,7 @@
          (.mkdirs dest)
          (.mkdirs proto-path)
          (doseq [proto protos]
-           (extract-dependencies (io/file proto-path proto) target)
+           (extract-dependencies proto-path proto target)
            (let [args ["protoc" proto (str "--java_out=" dest-path) "-I."
                        (str "-I" proto-path)]]
              (println " > " (join " " args))
