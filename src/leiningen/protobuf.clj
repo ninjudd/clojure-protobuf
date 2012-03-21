@@ -137,6 +137,7 @@
          (doseq [proto protos]
            (extract-dependencies proto-path proto target)
            (let [args ["protoc" proto (str "--java_out=" dest-path) "-I."
+                       (str "-I" (.getAbsoluteFile (io/file target "proto")))
                        (str "-I" proto-path)]]
              (println " > " (join " " args))
              (let [protoc-result (apply sh/proc (concat args [:dir proto-path]))]
