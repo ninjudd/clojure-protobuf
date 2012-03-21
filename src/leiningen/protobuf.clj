@@ -176,7 +176,7 @@
 
 (defn ^{:doc "Tasks for installing and uninstalling protobuf libraries."
         :help-arglists '([subtask & args])
-        :subtasks [#'fetch #'install #'uninstall #'compile]}
+        :subtasks [#'install #'uninstall #'compile]}
   protobuf
   ([project] (println (help-for "protobuf")))
   ([project subtask & args]
