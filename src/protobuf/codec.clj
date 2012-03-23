@@ -45,8 +45,6 @@
               (if (protobuf? val)
                 val
                 (protobuf proto val))))))
-        (gloss/compile-frame identity
-                             #(dissoc % reset-key))
         (fix repeated
              #(gloss/repeated (gloss/finite-frame (length-prefix proto) %)
                               :prefix :none))
