@@ -17,7 +17,7 @@
   [obj]
   (instance? PersistentProtocolBufferMap$Def obj))
 
-(defn protodef
+(defn ^PersistentProtocolBufferMap$Def protodef
   "Create a protodef from a string or protobuf class."
   ([def]
      (if (or (protodef? def) (nil? def))
@@ -69,7 +69,7 @@
     (let [^CodedInputStream in (CodedInputStream/newInstance stream)]
       (PersistentProtocolBufferMap/parseFrom type in))))
 
-(defn protobuf-dump
+(defn ^"[B" protobuf-dump
   "Return the byte representation of the given protobuf."
   ([^PersistentProtocolBufferMap p]
      (.toByteArray p))
