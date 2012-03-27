@@ -22,11 +22,11 @@
   ([def]
      (if (or (protodef? def) (nil? def))
        def
-       (PersistentProtocolBufferMap$Def/create
-        ^Descriptors.Descriptor
-        (if (instance? Descriptors$Descriptor def)
-          def
-          (Reflector/invokeStaticMethod ^Class def "getDescriptor" (to-array nil))))))
+       (let [^Descriptors$Descriptor descriptor
+             (if (instance? Descriptors$Descriptor def)
+               def
+               (Reflector/invokeStaticMethod ^Class def "getDescriptor" (to-array nil)))]
+         (PersistentProtocolBufferMap$Def/create descriptor))))
   ([def & fields]
      (loop [^PersistentProtocolBufferMap$Def def (protodef def)
             fields fields]
@@ -50,7 +50,7 @@
 (defn protobuf-schema
   "Return the schema for the given protodef."
   [& args]
-  (field-schema (.getMessageType (apply protodef args))))
+  (field-schema (.getMessageType ^PersistentProtocolBufferMap$Def (apply protodef args))))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."

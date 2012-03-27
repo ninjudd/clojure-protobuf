@@ -5,7 +5,7 @@
            (com.google.protobuf Descriptors$Descriptor
                                 Descriptors$FieldDescriptor
                                 Descriptors$FieldDescriptor$Type)))
-(defn extension [ext field]
+(defn extension [ext ^Descriptors$FieldDescriptor field]
   (-> (.getOptions field)
       (.getExtension ext)
       (fix string? not-empty)))
@@ -13,7 +13,7 @@
 (defn field-type [field]
   (condp instance? field
     Descriptors$FieldDescriptor
-    (if (.isRepeated field)
+    (if (.isRepeated ^Descriptors$FieldDescriptor field)
       (condp extension field
         (Extensions/counter)    :counter
         (Extensions/succession) :succession
@@ -27,17 +27,17 @@
 
 (defmulti field-schema (fn [field & _] (field-type field)))
 
-(defn struct-schema [struct & [parents]]
+(defn struct-schema [^Descriptors$Descriptor struct & [parents]]
   (let [struct-name (.getFullName struct)]
     (into {:type :struct
            :name struct-name}
           (when (not-any? (partial = struct-name) parents)
             {:fields (into {}
-                           (for [field (.getFields struct)]
+                           (for [^Descriptors$FieldDescriptor field (.getFields struct)]
                              [(PersistentProtocolBufferMap/intern (.getName field))
                               (field-schema field (conj parents struct-name))]))}))))
 
-(defn basic-schema [field & [parents]]
+(defn basic-schema [^Descriptors$FieldDescriptor field & [parents]]
   (let [java-type   (keyword (lower-case (.name (.getJavaType field))))
         meta-string (extension (Extensions/meta) field)]
     (merge (case java-type
@@ -51,7 +51,7 @@
            (when meta-string
              (read-string meta-string)))))
 
-(defn subfield [field field-name]
+(defn subfield [^Descriptors$FieldDescriptor field field-name]
   (.findFieldByName (.getMessageType field) (name field-name)))
 
 (defmethod field-schema :basic [field & [parents]]
