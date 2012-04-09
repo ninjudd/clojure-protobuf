@@ -296,7 +296,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             Object k = fromProtoValue(key_field, message.getField(key_field));
             Object v = fromProtoValue(val_field, message.getField(val_field));
             Object existing = map.valAt(k);
-            if (existing != null && existing instanceof IPersistentCollection) {
+            if (existing instanceof IPersistentCollection) {
               map = map.assoc(k, ((IPersistentCollection) existing).cons(v));
             } else {
               map = map.assoc(k, v);
