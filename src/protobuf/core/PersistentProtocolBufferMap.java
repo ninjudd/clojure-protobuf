@@ -336,7 +336,13 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       switch (field.getJavaType()) {
       case ENUM:
         Descriptors.EnumValueDescriptor e = (Descriptors.EnumValueDescriptor) value;
-        return enumToKeyword(e);
+        if (use_extensions &&
+            field.getOptions().getExtension(Extensions.nullable) &&
+            field.getOptions().getExtension(nullExtension(field)).equals(e.getNumber())) {
+          return null;
+        } else {
+          return enumToKeyword(e);
+        }
       case MESSAGE:
         Def def = PersistentProtocolBufferMap.Def.create(field.getMessageType());
         DynamicMessage message = (DynamicMessage) value;
@@ -348,16 +354,29 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       default:
         if (use_extensions &&
             field.getOptions().getExtension(Extensions.nullable) &&
-            field.getOptions().getExtension(nullExtension(field)).equals(value))
+            field.getOptions().getExtension(nullExtension(field)).equals(value)) {
           return null;
-        return value;
+        } else {
+          return value;
+        }
       }
     }
   }
 
   static protected Object toProtoValue(Descriptors.FieldDescriptor field, Object value) {
-    if (value == null && field.getOptions().getExtension(Extensions.nullable))
+    if (value == null && field.getOptions().getExtension(Extensions.nullable)) {
       value = field.getOptions().getExtension(nullExtension(field));
+
+      if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.ENUM) {
+        Descriptors.EnumDescriptor      enum_type  = field.getEnumType();
+        Descriptors.EnumValueDescriptor enum_value = enum_type.findValueByNumber((Integer) value);
+        if (enum_value == null) {
+          PrintWriter err = (PrintWriter) RT.ERR.deref();
+          err.format("invalid enum number %s for enum type %s\n", value, enum_type.getFullName());
+        }
+        return enum_value;
+      }
+    }
 
     switch (field.getJavaType()) {
     case LONG:
@@ -405,6 +424,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     case FLOAT:  return Extensions.nullFloat;
     case DOUBLE: return Extensions.nullDouble;
     case STRING: return Extensions.nullString;
+    case ENUM:   return Extensions.nullEnum;
     }
     return null;
   }

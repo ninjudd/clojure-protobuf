@@ -44,9 +44,17 @@ message Bar {
   optional float  flt  = 3 [(nullable) = true, (null_float)  = -0.0001];
   optional double dbl  = 4 [(nullable) = true, (null_double) = -0.00000001];
   optional string str  = 5 [(nullable) = true, (null_string) = "NULL"];
+  optional Enu    enu  = 6 [(nullable) = true, (null_enum)   = 3];
 
-  repeated string label  = 6 [(nullable) = true, (null_string) = "", (succession) = true];
-  repeated string labels = 7 [(nullable) = true, (null_string) = ""];
+  enum Enu {
+    A    = 0;
+    B    = 1;
+    C    = 2;
+    NULL = 3;
+  }
+
+  repeated string label  = 10 [(nullable) = true, (null_string) = "", (succession) = true];
+  repeated string labels = 11 [(nullable) = true, (null_string) = ""];
 }
 
 message Time {

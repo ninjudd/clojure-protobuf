@@ -196,20 +196,22 @@
              (get-raw p :time))))))
 
 (deftest test-nullable
-  (let [p (protobuf Bar :int 1 :long 330000000000 :flt 1.23 :dbl 9.87654321 :str "foo")
-        keyset #{:int :long :flt :dbl :str}]
+  (let [p (protobuf Bar :int 1 :long 330000000000 :flt 1.23 :dbl 9.87654321 :str "foo" :enu :a)
+        keyset #{:int :long :flt :dbl :str :enu}]
     (is (= 1            (get p :int)))
     (is (= 330000000000 (get p :long)))
     (is (= (float 1.23) (get p :flt)))
     (is (= 9.87654321   (get p :dbl)))
     (is (= "foo"        (get p :str)))
+    (is (= :a           (get p :enu)))
     (is (= keyset (set (keys p))))
-    (let [p (append p {:int nil :long nil :flt nil :dbl nil :str nil})]
+    (let [p (append p {:int nil :long nil :flt nil :dbl nil :str nil :enu nil})]
       (is (= nil (get p :int)))
       (is (= nil (get p :long)))
       (is (= nil (get p :flt)))
       (is (= nil (get p :dbl)))
       (is (= nil (get p :str)))
+      (is (= nil (get p :enu)))
       (is (= keyset (set (keys p)))))
     (testing "nullable successions"
       (let [p (protobuf Bar :label "foo")]
