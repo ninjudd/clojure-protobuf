@@ -271,9 +271,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             Object k = v.valAt(map_field_by);
             PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap) map.valAt(k);
             if (existing != null) {
-              map.assoc(k, existing.append(v));
+              map = map.assoc(k, existing.append(v));
             } else {
-              map.assoc(k, v);
+              map = map.assoc(k, v);
             }
           }
           return map.persistent();
@@ -297,9 +297,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             Object v = fromProtoValue(val_field, message.getField(val_field));
             Object existing = map.valAt(k);
             if (existing != null && existing instanceof IPersistentCollection) {
-              map.assoc(k, ((IPersistentCollection) existing).cons(v));
+              map = map.assoc(k, ((IPersistentCollection) existing).cons(v));
             } else {
-              map.assoc(k, v);
+              map = map.assoc(k, v);
             }
           }
           return map.persistent();
@@ -315,10 +315,10 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             Boolean exists = (Boolean) message.getField(exists_field);
 
             if (exists) {
-              set.conj(item);
+              set = (ITransientSet)set.conj(item);
             } else {
               try {
-                set.disjoin(item);
+                set = set.disjoin(item);
               } catch (Exception e) {
                 e.printStackTrace();
               }
