@@ -6,6 +6,7 @@
         [useful.experimental :only [lift-meta]]
         [clojure.java.io :only [input-stream]])
   (:require io.core
+            [schematic.core :as schema]
             [gloss.core :as gloss]))
 
 (declare protobuf-codec)
@@ -48,4 +49,5 @@
         (fix repeated
              #(gloss/repeated (gloss/finite-frame (length-prefix proto) %)
                               :prefix :none))
-        (with-meta {:schema (protobuf-schema proto)}))))
+        (with-meta {:schema (schema/dissoc-fields (protobuf-schema proto)
+                                                  len-key reset-key)}))))
