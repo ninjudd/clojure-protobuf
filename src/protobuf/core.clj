@@ -2,7 +2,7 @@
   (:use [protobuf.schema :only [field-schema]]
         [useful.fn :only [fix]]
         [clojure.java.io :only [input-stream output-stream]])
-  (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
+  (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def PersistentProtocolBufferMap$Def$NamingStrategy Extensions)
            (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
            (clojure.lang Reflector)))
@@ -22,21 +22,15 @@
   ([def]
      (if (or (protodef? def) (nil? def))
        def
+       (protodef def PersistentProtocolBufferMap$Def/convertUnderscores)))
+  ([def ^PersistentProtocolBufferMap$Def$NamingStrategy naming-strategy]
+     (if (or (protodef? def) (nil? def))
+       def
        (let [^Descriptors$Descriptor descriptor
              (if (instance? Descriptors$Descriptor def)
                def
                (Reflector/invokeStaticMethod ^Class def "getDescriptor" (to-array nil)))]
-         (PersistentProtocolBufferMap$Def/create descriptor))))
-  ([def & fields]
-     (loop [^PersistentProtocolBufferMap$Def def (protodef def)
-            fields fields]
-       (if (empty? fields)
-         def
-         (recur (-> def
-                    (.fieldDescriptor (first fields))
-                    .getMessageType
-                    protodef)
-                (rest fields))))))
+         (PersistentProtocolBufferMap$Def/create descriptor naming-strategy)))))
 
 (defn protobuf
   "Construct a protobuf of the given type."
@@ -50,7 +44,8 @@
 (defn protobuf-schema
   "Return the schema for the given protodef."
   [& args]
-  (field-schema (.getMessageType ^PersistentProtocolBufferMap$Def (apply protodef args))))
+  (let [^PersistentProtocolBufferMap$Def def (apply protodef args)]
+    (field-schema (.getMessageType def) def)))
 
 (defn protobuf-load
   "Load a protobuf of the given type from an array of bytes."
@@ -95,6 +90,7 @@
        (.writeDelimitedTo p out))
      (.flush out))))
 
+;; TODO make these functions nil-safe
 (defn append
   "Merge the given map into the protobuf. Equivalent to appending the byte representations."
   [^PersistentProtocolBufferMap p map]

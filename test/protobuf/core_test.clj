@@ -3,6 +3,8 @@
   (:import (java.io PipedInputStream PipedOutputStream)))
 
 (def Foo      (protodef protobuf.test.Core$Foo))
+(def FooUnder (protodef protobuf.test.Core$Foo
+                        protobuf.core.PersistentProtocolBufferMap$Def/protobufNames))
 (def Bar      (protodef protobuf.test.Core$Bar))
 (def Response (protodef protobuf.test.Core$Response))
 (def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
@@ -54,7 +56,7 @@
     (let [p (assoc p :label "baz" :tags ["nuprin"])]
       (is (= ["nuprin"] (:tags p)))
       (is (= "baz"      (:label p))))
-    (let [p (assoc p "responses" [:yes :no :maybe :no "yes"])]
+    (let [p (assoc p :responses [:yes :no :maybe :no "yes"])]
       (is (= [:yes :no :maybe :no :yes] (:responses p))))
     (let [p (assoc p :tags "aspirin")]
       (is (= ["aspirin"] (:tags p))))
@@ -96,15 +98,13 @@
     (is (= (into {} m2) (into {} p2)))
     (is (= (set (keys m2)) (set (keys p2))))))
 
-(deftest test-string-keys
-  (let [p (protobuf Foo "id" 5 "label" "rad")]
+(deftest test-string-keys-in-extmap
+  (let [p (protobuf Foo :id 5 :label "red")
+        q (assoc p "label" "blue")]
     (is (= 5 (p :id)))
-    (is (= 5 (p "id")))
-    (is (= "rad" (p :label)))
-    (is (= "rad" (p "label")))
-    (let [p (conj p {"tags" ["check" "it" "out"]})]
-      (is (= ["check" "it" "out"] (p :tags)))
-      (is (= ["check" "it" "out"] (p "tags"))))))
+    (is (not (contains? p "id")))
+    (is (= "red" (q :label)))
+    (is (= "blue" (q "label")))))
 
 (deftest test-append-bytes
   (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
@@ -150,9 +150,6 @@
     (is (= "bar" (get-in p [:item-map "bar" :item])))))
 
 (deftest test-map-by-with-inconsistent-keys
-  (let [p (protobuf Foo :pair-map {"foo" {"key" "bar" "val" "hmm"}})]
-    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
-    (is (= nil   (get-in p [:pair-map "bar" :val]))))
   (let [p (protobuf Foo :pair-map {"foo" {:key "bar" :val "hmm"}})]
     (is (= "hmm" (get-in p [:pair-map "foo" :val])))
     (is (= nil   (get-in p [:pair-map "bar" :val])))))
@@ -293,19 +290,17 @@
   (is (= {}    (default-protobuf protobuf.test.Core$Foo :groups))))
 
 (deftest test-use-underscores
-  (let [p (protobuf Foo {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]})]
-    (is (= '(:id :responses :tag-set :deleted)   (keys p)))
-    (is (= [:yes :not-sure :maybe :not-sure :no] (:responses p)))
+  (let [[dashes underscores] (for [proto [Foo FooUnder]]
+                               (protobuf proto {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]}))]
+    (is (= '(:id :responses :tag-set :deleted)   (keys dashes)))
+    (is (= [:yes :not-sure :maybe :not-sure :no] (:responses dashes)))
 
-    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores true)
-    (is (= '(:id :responses :tag_set :deleted)   (keys p)))
-    (is (= [:yes :not_sure :maybe :not_sure :no] (:responses p)))
+    (is (= '(:id :responses :tag_set :deleted)   (keys underscores)))
+    (is (= [:yes :not_sure :maybe :not_sure :no] (:responses underscores)))
 
     (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
              :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
-           (-> (protobuf-schema Foo) :fields keys set)))
-
-    (protobuf.core.PersistentProtocolBufferMap/setUseUnderscores false)))
+           (-> (protobuf-schema FooUnder) :fields keys set)))))
 
 (deftest test-protobuf-nested-message
   (let [p (protobuf Response :ok false :error (protobuf ErrorMsg :code -10 :data "abc"))]
