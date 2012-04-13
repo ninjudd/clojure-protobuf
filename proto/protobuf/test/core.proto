@@ -23,10 +23,10 @@ message Foo {
   repeated Time time = 11 [(succession) = true];
 
   enum Response {
-    YES      = 0;
-    NO       = 1;
-    MAYBE    = 2;
-    NOT_SURE = 3;
+    yes      = 0;
+    no       = 1;
+    maybe    = 2;
+    not_sure = 3;
   }
 
   repeated Item  tag_set   = 20 [(set)    = true];
@@ -47,10 +47,10 @@ message Bar {
   optional Enu    enu  = 6 [(nullable) = true, (null_enum)   = 3];
 
   enum Enu {
-    A    = 0;
-    B    = 1;
-    C    = 2;
-    NULL = 3;
+    a    = 0;
+    b    = 1;
+    c    = 2;
+    nil  = 3;
   }
 
   repeated string label  = 10 [(nullable) = true, (null_string) = "", (succession) = true];

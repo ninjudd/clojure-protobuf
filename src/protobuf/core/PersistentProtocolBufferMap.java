@@ -30,24 +30,45 @@ import com.google.protobuf.GeneratedMessage;
 public class PersistentProtocolBufferMap extends APersistentMap implements IObj {
   public static class Def {
     public static interface NamingStrategy {
-      String protoName(Keyword name);
-      Keyword clojureName(String name);
+      /**
+       * Given a Clojure map key, return the string to be used as the protobuf message field name.
+       */
+      String protoName(Object clojureName);
+      
+      /**
+       * Given a protobuf message field name, return a Clojure object suitable for use as a map key.
+       */
+      Object clojureName(String protoName);
+    }
+
+    // we want this to work for anything Named, so use clojure.core/name
+    public static final Var NAME_VAR = Var.intern(RT.CLOJURE_NS, Symbol.intern("name"));
+    public static final String nameStr(Object named) {
+      try {
+        return (String)((IFn)NAME_VAR.deref()).invoke(named);
+      } catch (Exception e) {
+        return null;
+      }
     }
 
     public static final NamingStrategy protobufNames = new NamingStrategy() {
-        public String protoName(Keyword name) {return name.getName();}
-        public Keyword clojureName(String name) {return Keyword.intern(name.toLowerCase());}
+        public String protoName(Object name) {return nameStr(name);}
+        public Object clojureName(String name) {return Keyword.intern(name.toLowerCase());}
         public String toString() {return "[protobuf names]";}
       };
     public static final NamingStrategy convertUnderscores = new NamingStrategy() {
-        public String protoName(Keyword name) {return name.getName().replaceAll("-", "_");}
-        public Keyword clojureName(String name) {return Keyword.intern(name.replaceAll("_", "-").toLowerCase());}
+        public String protoName(Object name) {return nameStr(name).replaceAll("-", "_");}
+        public Object clojureName(String name) {return Keyword.intern(name.replaceAll("_", "-").toLowerCase());}
         public String toString() {return "[convert underscores]";}
       };
 
     final Descriptors.Descriptor type;
     public final NamingStrategy namingStrategy;
-    ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor> keyword_to_field;
+
+    public static final Object NULL = new Object();
+    // keys should be FieldDescriptors, except that NULL is used as a replacement for real null
+    ConcurrentHashMap<Object, Object> key_to_field;
+    
     static ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<Descriptors.Descriptor, Def>> type_to_def = new ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<Descriptors.Descriptor, Def>>();
 
     public static Def create(Class<?> c, NamingStrategy strat) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -72,9 +93,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     protected Def(Descriptors.Descriptor type, NamingStrategy strat) {
-      this.type             = type;
-      this.keyword_to_field = new ConcurrentHashMap<Keyword, Descriptors.FieldDescriptor>();
-      this.namingStrategy   = strat;
+      this.type           = type;
+      this.key_to_field   = new ConcurrentHashMap<Object, Object>();
+      this.namingStrategy = strat;
     }
 
     public DynamicMessage parseFrom(byte[] bytes) throws InvalidProtocolBufferException {
@@ -102,17 +123,20 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       if (key == null) return null;
 
       if (key instanceof Descriptors.FieldDescriptor) {
-        return (Descriptors.FieldDescriptor) key;
-      } else if (key instanceof Keyword) {
-        Keyword keyword = (Keyword) key;
-        Descriptors.FieldDescriptor field = keyword_to_field.get(keyword);
-        if (field == null) {
-          field = type.findFieldByName(namingStrategy.protoName(keyword));
-          if (field != null) keyword_to_field.putIfAbsent(keyword, field);
-        }
-        return field;
+        return (Descriptors.FieldDescriptor)key;
       } else {
-        return null;
+        Object field = key_to_field.get(key);
+        if (field != null) {
+          if (field == NULL) {
+            return null;
+          }
+          return (Descriptors.FieldDescriptor)field;
+        }
+        else {
+          field = type.findFieldByName(namingStrategy.protoName(key));
+          key_to_field.putIfAbsent(key, field == null ? NULL : field);
+        }
+        return (Descriptors.FieldDescriptor)field;
       }
     }
 
@@ -127,32 +151,32 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     public Descriptors.Descriptor getMessageType() {
       return type;
     }
-    static final ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Keyword>> caches =
-      new ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Keyword>>();
-    public Keyword intern(String name) {
-      ConcurrentHashMap<String, Keyword> nameCache = caches.get(namingStrategy);
+    static final ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Object>> caches =
+      new ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Object>>();
+    public Object intern(String name) {
+      ConcurrentHashMap<String, Object> nameCache = caches.get(namingStrategy);
       if (nameCache == null) {
-        nameCache = new ConcurrentHashMap<String, Keyword>();
-        ConcurrentHashMap<String, Keyword> existing = caches.putIfAbsent(namingStrategy, nameCache);
+        nameCache = new ConcurrentHashMap<String, Object>();
+        ConcurrentHashMap<String, Object> existing = caches.putIfAbsent(namingStrategy, nameCache);
         if (existing != null) nameCache = existing;
       }
-      Keyword keyword = nameCache.get(name);
-      if (keyword == null) {
-        keyword = namingStrategy.clojureName(name);
-        Keyword existing = nameCache.putIfAbsent(name, keyword);
-        if (existing != null) keyword = existing;
+      Object clojureName = nameCache.get(name);
+      if (clojureName == null) {
+        clojureName = namingStrategy.clojureName(name);
+        Object existing = nameCache.putIfAbsent(name, clojureName);
+        if (existing != null) clojureName = existing;
       }
-      return keyword;
+      return clojureName;
     }
 
-    public Keyword enumToKeyword(Descriptors.EnumValueDescriptor enum_value) {
+    public Object clojureEnumValue(Descriptors.EnumValueDescriptor enum_value) {
       return intern(enum_value.getName());
     }
 
-    static final Keyword k_null = Keyword.intern(Symbol.intern(""));
-    protected Keyword mapFieldBy(Descriptors.FieldDescriptor field) {
-      Keyword keyword = intern(field.getOptions().getExtension(Extensions.mapBy));
-      return keyword == k_null ? null : keyword;
+    static final Object k_null = Keyword.intern(Symbol.intern(""));
+    protected Object mapFieldBy(Descriptors.FieldDescriptor field) {
+      Object key = intern(field.getOptions().getExtension(Extensions.mapBy));
+      return key == k_null ? null : key;
     }
   }
 
@@ -268,7 +292,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       Iterator iterator = values.iterator();
 
       if (use_extensions) {
-        Keyword map_field_by = def.mapFieldBy(field);
+        Object map_field_by = def.mapFieldBy(field);
         DescriptorProtos.FieldOptions options = field.getOptions();
         if (map_field_by != null) {
           ITransientMap map = PersistentHashMap.EMPTY.asTransient();
@@ -347,7 +371,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             field.getOptions().getExtension(nullExtension(field)).equals(e.getNumber())) {
           return null;
         } else {
-          return def.enumToKeyword(e);
+          return def.clojureEnumValue(e);
         }
       case MESSAGE:
         Def fieldDef = PersistentProtocolBufferMap.Def.create(field.getMessageType(), this.def.namingStrategy);
@@ -400,8 +424,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       if (value instanceof Float)   return new Double((Float) value);
       return value;
     case ENUM:
-      String name = (value instanceof Keyword) ? ((Keyword) value).getName() : (String) value;
-      name = name.toUpperCase().replaceAll("-","_");
+      String name = def.namingStrategy.protoName(value);
       Descriptors.EnumDescriptor      enum_type  = field.getEnumType();
       Descriptors.EnumValueDescriptor enum_value = enum_type.findValueByName(name);
       if (enum_value == null) {
@@ -438,7 +461,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   protected void addRepeatedField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object value) {
     try {
       builder.addRepeatedField(field, value);
-    } catch (IllegalArgumentException e) {
+    } catch (Exception e) {
       String msg = String.format("error adding %s to %s field %s",
                                  value, field.getJavaType().toString().toLowerCase(),
                                  field.getFullName());
@@ -469,10 +492,10 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       if (value instanceof Sequential && !set) {
         for (ISeq s = RT.seq(value); s != null; s = s.next()) {
           Object v = toProtoValue(field, s.first());
-          addRepeatedField(builder,field, v);
+          addRepeatedField(builder, field, v);
         }
       } else {
-        Keyword map_field_by = def.mapFieldBy(field);
+        Object map_field_by = def.mapFieldBy(field);
         if (map_field_by != null) {
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             Map.Entry e = (Map.Entry) s.first();
@@ -658,7 +681,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     public static ISeq create(IPersistentMap meta, PersistentProtocolBufferMap proto, ISeq fields){
       for (ISeq s = fields; s != null; s = s.next()) {
         Descriptors.FieldDescriptor field = (Descriptors.FieldDescriptor) s.first();
-        Keyword k = proto.def.intern(field.getName());
+        Object k = proto.def.intern(field.getName());
         Object  v = proto.valAt(k, sentinel);
         if (v != sentinel) return new Seq(meta, proto, new MapEntry(k, v), s);
       }

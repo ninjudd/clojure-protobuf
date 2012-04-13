@@ -98,13 +98,15 @@
     (is (= (into {} m2) (into {} p2)))
     (is (= (set (keys m2)) (set (keys p2))))))
 
-(deftest test-string-keys-in-extmap
-  (let [p (protobuf Foo :id 5 :label "red")
-        q (assoc p "label" "blue")]
+(deftest test-string-keys
+  (let [p (protobuf Foo "id" 5 "label" "rad")]
     (is (= 5 (p :id)))
-    (is (not (contains? p "id")))
-    (is (= "red" (q :label)))
-    (is (= "blue" (q "label")))))
+    (is (= 5 (p "id")))
+    (is (= "rad" (p :label)))
+    (is (= "rad" (p "label")))
+    (let [p (conj p {"tags" ["check" "it" "out"]})]
+      (is (= ["check" "it" "out"] (p :tags)))
+      (is (= ["check" "it" "out"] (p "tags"))))))
 
 (deftest test-append-bytes
   (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
@@ -150,6 +152,9 @@
     (is (= "bar" (get-in p [:item-map "bar" :item])))))
 
 (deftest test-map-by-with-inconsistent-keys
+  (let [p (protobuf Foo :pair-map {"foo" {"key" "bar" "val" "hmm"}})]
+    (is (= "hmm" (get-in p [:pair-map "foo" :val])))
+    (is (= nil   (get-in p [:pair-map "bar" :val]))))
   (let [p (protobuf Foo :pair-map {"foo" {:key "bar" :val "hmm"}})]
     (is (= "hmm" (get-in p [:pair-map "foo" :val])))
     (is (= nil   (get-in p [:pair-map "bar" :val])))))
@@ -290,8 +295,10 @@
   (is (= {}    (default-protobuf protobuf.test.Core$Foo :groups))))
 
 (deftest test-use-underscores
-  (let [[dashes underscores] (for [proto [Foo FooUnder]]
-                               (protobuf proto {:tag_set ["odd"] :responses [:yes :not-sure :maybe :not-sure :no]}))]
+  (let [dashes      (protobuf Foo      {:tag_set ["odd"]
+                                        :responses [:yes :not-sure :maybe :not-sure :no]})
+        underscores (protobuf FooUnder {:tag_set ["odd"]
+                                        :responses [:yes :not_sure :maybe :not_sure :no]})]
     (is (= '(:id :responses :tag-set :deleted)   (keys dashes)))
     (is (= [:yes :not-sure :maybe :not-sure :no] (:responses dashes)))
 

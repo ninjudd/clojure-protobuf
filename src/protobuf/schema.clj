@@ -47,7 +47,7 @@
     (merge (case java-type
              :message (struct-schema (.getMessageType field) def parents)
              :enum    {:type   :enum
-                       :values (set (map #(.enumToKeyword def %)
+                       :values (set (map #(.clojureEnumValue def %)
                                          (.. field getEnumType getValues)))}
              {:type java-type})
            (when (.hasDefaultValue field)
