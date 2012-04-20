@@ -55,27 +55,33 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     public static final NamingStrategy protobufNames = new NamingStrategy() {
+      @Override
       public String protoName(Object name) {
         return nameStr(name);
       }
 
+      @Override
       public Object clojureName(String name) {
         return Keyword.intern(name.toLowerCase());
       }
 
+      @Override
       public String toString() {
         return "[protobuf names]";
       }
     };
     public static final NamingStrategy convertUnderscores = new NamingStrategy() {
+      @Override
       public String protoName(Object name) {
         return nameStr(name).replaceAll("-", "_");
       }
 
+      @Override
       public Object clojureName(String name) {
         return Keyword.intern(name.replaceAll("_", "-").toLowerCase());
       }
 
+      @Override
       public String toString() {
         return "[convert underscores]";
       }
@@ -103,8 +109,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         defCache = new ConcurrentHashMap<Descriptors.Descriptor, Def>();
         ConcurrentHashMap<Descriptors.Descriptor, Def> previous = type_to_def.putIfAbsent(strat,
           defCache);
-        if (previous != null)
+        if (previous != null) {
           defCache = previous;
+        }
       }
 
       Def def = defCache.get(type);
@@ -143,8 +150,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     public Descriptors.FieldDescriptor fieldDescriptor(Object key) {
-      if (key == null)
+      if (key == null) {
         return null;
+      }
 
       if (key instanceof Descriptors.FieldDescriptor) {
         return (Descriptors.FieldDescriptor)key;
@@ -182,15 +190,17 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       if (nameCache == null) {
         nameCache = new ConcurrentHashMap<String, Object>();
         ConcurrentHashMap<String, Object> existing = caches.putIfAbsent(namingStrategy, nameCache);
-        if (existing != null)
+        if (existing != null) {
           nameCache = existing;
+        }
       }
       Object clojureName = nameCache.get(name);
       if (clojureName == null) {
         clojureName = namingStrategy.clojureName(name);
         Object existing = nameCache.putIfAbsent(name, clojureName);
-        if (existing != null)
+        if (existing != null) {
           clojureName = existing;
+        }
       }
       return clojureName;
     }
@@ -411,8 +421,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           DynamicMessage message = (DynamicMessage)value;
 
           // Total hack because getField() doesn't return an empty array for repeated messages.
-          if (field.isRepeated() && !message.isInitialized())
+          if (field.isRepeated() && !message.isInitialized()) {
             return fromProtoValue(field, new ArrayList<Object>(), use_extensions);
+          }
 
           return new PersistentProtocolBufferMap(null, fieldDef, message);
         default:
@@ -443,24 +454,30 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
     switch (field.getJavaType()) {
       case LONG:
-        if (value instanceof Long)
+        if (value instanceof Long) {
           return value;
+        }
         return new Long(((Integer)value).longValue());
       case INT:
-        if (value instanceof Integer)
+        if (value instanceof Integer) {
           return value;
+        }
         return new Integer(((Long)value).intValue());
       case FLOAT:
-        if (value instanceof Integer)
+        if (value instanceof Integer) {
           return new Float((Integer)value * 1.0);
-        if (value instanceof Double)
+        }
+        if (value instanceof Double) {
           return new Float((Double)value);
+        }
         return value;
       case DOUBLE:
-        if (value instanceof Integer)
+        if (value instanceof Integer) {
           return new Double((Integer)value * 1.0);
-        if (value instanceof Float)
+        }
+        if (value instanceof Float) {
           return new Double((Float)value);
+        }
         return value;
       case ENUM:
         String name = def.namingStrategy.protoName(value);
@@ -478,7 +495,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         } else {
           Def fieldDef = PersistentProtocolBufferMap.Def.create(field.getMessageType(),
             this.def.namingStrategy);
-          protobuf = PersistentProtocolBufferMap.construct(fieldDef, (IPersistentMap)value);
+          protobuf = PersistentProtocolBufferMap.construct(fieldDef, value);
         }
         return protobuf.message();
       default:
@@ -529,13 +546,16 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   protected DynamicMessage.Builder addField(DynamicMessage.Builder builder, Object key, Object value) {
-    if (key == null)
+    if (key == null) {
       return builder;
+    }
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
-    if (field == null)
+    if (field == null) {
       return builder;
-    if (value == null && !(field.getOptions().getExtension(Extensions.nullable)))
+    }
+    if (value == null && !(field.getOptions().getExtension(Extensions.nullable))) {
       return builder;
+    }
     boolean set = field.getOptions().getExtension(Extensions.set);
 
     if (field.isRepeated()) {
@@ -591,16 +611,20 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return builder;
   }
 
+  @Override
   public PersistentProtocolBufferMap withMeta(IPersistentMap meta) {
-    if (meta == meta())
+    if (meta == meta()) {
       return this;
+    }
     return new PersistentProtocolBufferMap(meta, ext, def, message);
   }
 
+  @Override
   public IPersistentMap meta() {
     return _meta;
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return protoContainsKey(key) || RT.booleanCast(RT.contains(ext, key));
   }
@@ -618,15 +642,18 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
   private static final Object sentinel = new Object();
 
+  @Override
   public IMapEntry entryAt(Object key) {
     Object value = valAt(key, sentinel);
     return (value == sentinel) ? null : new MapEntry(key, value);
   }
 
+  @Override
   public Object valAt(Object key) {
     return getValAt(key, true);
   }
 
+  @Override
   public Object valAt(Object key, Object notFound) {
     return getValAt(key, notFound, true);
   }
@@ -645,6 +672,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
+  @Override
   public IPersistentMap assoc(Object key, Object value) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
 
@@ -655,12 +683,15 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
+  @Override
   public IPersistentMap assocEx(Object key, Object value) throws Exception {
-    if (containsKey(key))
+    if (containsKey(key)) {
       throw new Exception("Key already present");
+    }
     return assoc(key, value);
   }
 
+  @Override
   public IPersistentCollection cons(Object o) {
     DynamicMessage.Builder builder = builder();
     if (o instanceof Map.Entry) {
@@ -668,8 +699,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       addField(builder, e.getKey(), e.getValue());
     } else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector)o;
-      if (v.count() != 2)
+      if (v.count() != 2) {
         throw new IllegalArgumentException("Vector arg to map conj must be a pair");
+      }
       addField(builder, v.nth(0), v.nth(1));
     } else {
       for (ISeq s = RT.seq(o); s != null; s = s.next()) {
@@ -690,6 +722,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return new PersistentProtocolBufferMap(meta(), ext, def, builder().mergeFrom(proto.message()));
   }
 
+  @Override
   public IPersistentMap without(Object key) throws Exception {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) {
@@ -699,16 +732,19 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       }
       return new PersistentProtocolBufferMap(meta(), newExt, def, builder());
     }
-    if (field.isRequired())
+    if (field.isRequired()) {
       throw new Exception("Can't remove required field");
+    }
 
     return new PersistentProtocolBufferMap(meta(), ext, def, builder().clearField(field));
   }
 
+  @Override
   public Iterator<?> iterator() {
     return new SeqIterator(seq());
   }
 
+  @Override
   public int count() {
     int count = RT.count(ext);
     for (Descriptors.FieldDescriptor field : def.type.getFields()) {
@@ -719,10 +755,12 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return count;
   }
 
+  @Override
   public ISeq seq() {
     return Seq.create(null, this, RT.seq(def.type.getFields()));
   }
 
+  @Override
   public IPersistentCollection empty() {
     return new PersistentProtocolBufferMap(meta(), null, def, builder().clear());
   }
@@ -737,8 +775,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         Descriptors.FieldDescriptor field = (Descriptors.FieldDescriptor)s.first();
         Object k = proto.def.intern(field.getName());
         Object v = proto.valAt(k, sentinel);
-        if (v != sentinel)
+        if (v != sentinel) {
           return new Seq(meta, proto, new MapEntry(k, v), s);
+        }
       }
       return RT.seq(proto.ext);
     }
@@ -751,16 +790,20 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       this.fields = fields;
     }
 
+    @Override
     public Obj withMeta(IPersistentMap meta) {
-      if (meta != meta())
+      if (meta != meta()) {
         return new Seq(meta, proto, first, fields);
+      }
       return this;
     }
 
+    @Override
     public Object first() {
       return first;
     }
 
+    @Override
     public ISeq next() {
       return create(meta(), proto, fields.next());
     }
