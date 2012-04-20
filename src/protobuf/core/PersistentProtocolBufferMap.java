@@ -186,8 +186,6 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   private final IPersistentMap _meta;
   private final IPersistentMap ext;
 
-  private DynamicMessage built_message;
-
   static public PersistentProtocolBufferMap create(Def def, byte[] bytes) throws InvalidProtocolBufferException {
     DynamicMessage message = def.parseFrom(bytes);
     return new PersistentProtocolBufferMap(null, def, message);
@@ -656,7 +654,6 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   public int count() {
-    DynamicMessage message = message();
     int count = RT.count(ext);
     for (Descriptors.FieldDescriptor field : def.type.getFields()) {
       if (protoContainsKey(field)) {
