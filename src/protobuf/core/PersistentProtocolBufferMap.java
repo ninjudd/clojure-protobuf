@@ -453,8 +453,8 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     case DOUBLE: return Extensions.nullDouble;
     case STRING: return Extensions.nullString;
     case ENUM:   return Extensions.nullEnum;
+    default:     return null;
     }
-    return null;
   }
 
   protected void addRepeatedField(DynamicMessage.Builder builder, Descriptors.FieldDescriptor field, Object value) {
