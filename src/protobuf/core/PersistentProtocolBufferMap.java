@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.InvocationTargetException;
+import com.google.protobuf.DescriptorProtos.FieldOptions;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Descriptors;
@@ -288,8 +289,8 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   static Keyword k_exists = Keyword.intern("exists");
   protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value, boolean use_extensions) {
     if (value instanceof List) {
-      List values = (List) value;
-      Iterator iterator = values.iterator();
+      List<?> values = (List<?>) value;
+      Iterator<?> iterator = values.iterator();
 
       if (use_extensions) {
         Object map_field_by = def.mapFieldBy(field);
@@ -378,7 +379,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         DynamicMessage message = (DynamicMessage) value;
 
         // Total hack because getField() doesn't return an empty array for repeated messages.
-        if (field.isRepeated() && !message.isInitialized()) return fromProtoValue(field, new ArrayList(), use_extensions);
+        if (field.isRepeated() && !message.isInitialized()) return fromProtoValue(field, new ArrayList<Object>(), use_extensions);
 
         return new PersistentProtocolBufferMap(null, fieldDef, message);
       default:
@@ -446,7 +447,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
-  static protected GeneratedMessage.GeneratedExtension nullExtension(Descriptors.FieldDescriptor field) {
+  static protected GeneratedMessage.GeneratedExtension<FieldOptions, ?> nullExtension(Descriptors.FieldDescriptor field) {
     switch (field.getJavaType()) {
     case LONG:   return Extensions.nullLong;
     case INT:    return Extensions.nullInt;
@@ -498,7 +499,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         Object map_field_by = def.mapFieldBy(field);
         if (map_field_by != null) {
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
-            Map.Entry e = (Map.Entry) s.first();
+            Map.Entry<?, ?> e = (Map.Entry<?, ?>) s.first();
             IPersistentMap map = (IPersistentMap) e.getValue();
             Object k = e.getKey();
             Object v = toProtoValue(field, map.assoc(map_field_by, k));
@@ -506,7 +507,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           }
         } else if (field.getOptions().getExtension(Extensions.map)) {
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
-            Map.Entry e = (Map.Entry) s.first();
+            Map.Entry<?, ?> e = (Map.Entry<?, ?>) s.first();
             Object[] map = {k_key, e.getKey(), k_val, e.getValue()};
             addRepeatedField(builder, field, toProtoValue(field, new PersistentArrayMap(map)));
           }
@@ -515,7 +516,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           boolean isMap = (value instanceof IPersistentMap);
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             if (isMap) {
-              Map.Entry e = (Map.Entry) s.first();
+              Map.Entry<?, ?> e = (Map.Entry<?, ?>) s.first();
               k = e.getKey(); v = e.getValue();
             } else {
               k = s.first(); v = true;
@@ -611,7 +612,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   public IPersistentCollection cons(Object o) {
     DynamicMessage.Builder builder = builder();
     if (o instanceof Map.Entry) {
-      Map.Entry e = (Map.Entry) o;
+      Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
       addField(builder, e.getKey(), e.getValue());
     } else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector) o;
@@ -619,7 +620,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       addField(builder, v.nth(0), v.nth(1));
     } else {
       for (ISeq s = RT.seq(o); s != null; s = s.next()) {
-        Map.Entry e = (Map.Entry) s.first();
+        Map.Entry<?, ?> e = (Map.Entry<?, ?>) s.first();
         addField(builder, e.getKey(), e.getValue());
       }
     }
@@ -650,7 +651,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return new PersistentProtocolBufferMap(meta(), ext, def, builder().clearField(field));
   }
 
-  public Iterator iterator() {
+  public Iterator<?> iterator() {
     return new SeqIterator(seq());
   }
 
