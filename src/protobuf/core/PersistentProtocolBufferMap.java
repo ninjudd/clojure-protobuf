@@ -10,23 +10,50 @@
 
 package protobuf.core;
 
-import clojure.lang.*;
-import ordered_set.core.OrderedSet;
-import java.util.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.InvocationTargetException;
-import com.google.protobuf.DescriptorProtos.FieldOptions;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.DescriptorProtos;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import ordered_set.core.OrderedSet;
+import clojure.lang.APersistentMap;
+import clojure.lang.ASeq;
+import clojure.lang.IFn;
+import clojure.lang.IMapEntry;
+import clojure.lang.IObj;
+import clojure.lang.IPersistentCollection;
+import clojure.lang.IPersistentMap;
+import clojure.lang.IPersistentVector;
+import clojure.lang.ISeq;
+import clojure.lang.ITransientMap;
+import clojure.lang.ITransientSet;
+import clojure.lang.Keyword;
+import clojure.lang.MapEntry;
+import clojure.lang.Numbers;
+import clojure.lang.Obj;
+import clojure.lang.PersistentArrayMap;
+import clojure.lang.PersistentHashMap;
+import clojure.lang.PersistentVector;
+import clojure.lang.RT;
+import clojure.lang.SeqIterator;
+import clojure.lang.Sequential;
+import clojure.lang.Symbol;
+import clojure.lang.Var;
+
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.DescriptorProtos.FieldOptions;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 
 public class PersistentProtocolBufferMap extends APersistentMap implements IObj {
