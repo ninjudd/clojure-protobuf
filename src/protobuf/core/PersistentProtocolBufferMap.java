@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ordered_map.core.OrderedMap;
 import ordered_set.core.OrderedSet;
 import clojure.lang.APersistentMap;
 import clojure.lang.ASeq;
@@ -38,7 +39,6 @@ import clojure.lang.MapEntry;
 import clojure.lang.Numbers;
 import clojure.lang.Obj;
 import clojure.lang.PersistentArrayMap;
-import clojure.lang.PersistentHashMap;
 import clojure.lang.PersistentVector;
 import clojure.lang.RT;
 import clojure.lang.SeqIterator;
@@ -364,7 +364,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         Object map_field_by = def.mapFieldBy(field);
         DescriptorProtos.FieldOptions options = field.getOptions();
         if (map_field_by != null) {
-          ITransientMap map = PersistentHashMap.EMPTY.asTransient();
+          ITransientMap map = (ITransientMap)OrderedMap.EMPTY.asTransient();
           while (iterator.hasNext()) {
             PersistentProtocolBufferMap v = (PersistentProtocolBufferMap)fromProtoValue(field,
               iterator.next());
@@ -390,7 +390,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           Descriptors.FieldDescriptor key_field = type.findFieldByName("key");
           Descriptors.FieldDescriptor val_field = type.findFieldByName("val");
 
-          ITransientMap map = PersistentHashMap.EMPTY.asTransient();
+          ITransientMap map = (ITransientMap)OrderedMap.EMPTY.asTransient();
           while (iterator.hasNext()) {
             DynamicMessage message = (DynamicMessage)iterator.next();
             Object k = fromProtoValue(key_field, message.getField(key_field));
