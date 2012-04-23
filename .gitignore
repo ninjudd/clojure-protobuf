@@ -12,3 +12,6 @@ proto/google/protobuf/descriptor.proto
 docs
 protobuf-*
 protosrc
+.classpath
+.project
+.settings
