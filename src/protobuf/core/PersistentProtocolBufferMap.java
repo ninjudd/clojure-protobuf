@@ -595,11 +595,12 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       } else {
         Object map_field_by = def.mapFieldBy(field);
         if (map_field_by != null) {
+          String field_name = def.namingStrategy.protoName(map_field_by);
           for (ISeq s = RT.seq(value); s != null; s = s.next()) {
             Map.Entry<?, ?> e = (Map.Entry<?, ?>)s.first();
             IPersistentMap map = (IPersistentMap)e.getValue();
             Object k = e.getKey();
-            Object v = toProtoValue(field, map.assoc(map_field_by, k));
+            Object v = toProtoValue(field, map.assoc(map_field_by, k).assoc(field_name, k));
             addRepeatedField(builder, field, v);
           }
         } else if (field.getOptions().getExtension(Extensions.map)) {
