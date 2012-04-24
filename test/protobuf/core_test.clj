@@ -1,5 +1,6 @@
 (ns protobuf.core-test
-  (:use protobuf.core clojure.test)
+  (:use protobuf.core clojure.test
+        ordered-map.core)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
 (def Foo      (protodef protobuf.test.Core$Foo))
@@ -50,6 +51,16 @@
     (let [p (append p {:doubles [3.4] :floats [0.02]})]
       (is (= [1.2 3.4] (:doubles p)))
       (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
+
+(deftest test-ordered-append
+  (let [inputs (apply ordered-map (for [x (range 26)
+                                        entry [(str x) (str (char (+ (int \a) x)))]]
+                                    entry))]
+    (= (seq inputs)
+       (seq (reduce (fn [m [k v]]
+                      (append m {:attr_map {k v}}))
+                    (protobuf Foo)
+                    inputs)))))
 
 (deftest test-assoc
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :foo-by-id {1 {:label "one"} 2 {:label "two"}})]
