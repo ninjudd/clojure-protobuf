@@ -1,6 +1,6 @@
 (defproject protobuf "0.6.0-beta14"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
-  :dependencies [[clojure "1.2.0"]
+  :dependencies [[org.clojure/clojure "1.2.0"]
                  [ordered-set "0.3.0"]
                  [useful "0.8.0-alpha1"]
                  [fs "1.0.0"]
