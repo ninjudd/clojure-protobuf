@@ -24,8 +24,7 @@
        def
        (protodef def PersistentProtocolBufferMap$Def/convertUnderscores)))
   ([def ^PersistentProtocolBufferMap$Def$NamingStrategy naming-strategy]
-     (if (nil? def)
-       def
+     (when def
        (let [^Descriptors$Descriptor descriptor
              (if (instance? Descriptors$Descriptor def)
                def
