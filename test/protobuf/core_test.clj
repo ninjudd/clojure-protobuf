@@ -1,5 +1,6 @@
 (ns protobuf.core-test
   (:use protobuf.core clojure.test
+        [useful.utils :only [adjoin]]
         ordered-map.core)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
@@ -34,31 +35,31 @@
       (is (= ["little" "yellow" "different"] (:tags p)))
       (is (= "very" (:label p))))))
 
-(deftest test-append
+(deftest test-adjoin
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2] :floats [0.01])]
-    (let [p (append p {:label "bar"})]
+    (let [p (adjoin p {:label "bar"})]
       (is (= 5     (:id p)))
       (is (= "bar" (:label p)))
       (is (= false (:deleted p)))
       (is (= ["little" "yellow"] (:tags p))))
-    (let [p (append (assoc p :deleted true) p)]
+    (let [p (adjoin (assoc p :deleted true) p)]
       (is (= true (:deleted p))))
-    (let [p (append p {:tags ["different"]})]
+    (let [p (adjoin p {:tags ["different"]})]
       (is (= ["little" "yellow" "different"] (:tags p))))
-    (let [p (append p {:tags ["different"] :label "very"})]
+    (let [p (adjoin p {:tags ["different"] :label "very"})]
       (is (= ["little" "yellow" "different"] (:tags p)))
       (is (= "very" (:label p))))
-    (let [p (append p {:doubles [3.4] :floats [0.02]})]
+    (let [p (adjoin p {:doubles [3.4] :floats [0.02]})]
       (is (= [1.2 3.4] (:doubles p)))
       (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
 
-(deftest test-ordered-append
+(deftest test-ordered-adjoin
   (let [inputs (apply ordered-map (for [x (range 26)
                                         entry [(str x) (str (char (+ (int \a) x)))]]
                                     entry))]
     (= (seq inputs)
        (seq (reduce (fn [m [k v]]
-                      (append m {:attr_map {k v}}))
+                      (adjoin m {:attr_map {k v}}))
                     (protobuf Foo)
                     inputs)))))
 
@@ -181,11 +182,11 @@
   (let [p (protobuf Foo :counts {"foo" {:i 5 :d 5.0}})]
     (is (= 5   (get-in p [:counts "foo" :i])))
     (is (= 5.0 (get-in p [:counts "foo" :d])))
-    (let [p (append p {:counts {"foo" {:i 2 :d -2.4} "bar" {:i 99}}})]
+    (let [p (adjoin p {:counts {"foo" {:i 2 :d -2.4} "bar" {:i 99}}})]
       (is (= 7   (get-in p [:counts "foo" :i])))
       (is (= 2.6 (get-in p [:counts "foo" :d])))
       (is (= 99  (get-in p [:counts "bar" :i])))
-      (let [p (append p {:counts {"foo" {:i -8 :d 4.06} "bar" {:i -66}}})]
+      (let [p (adjoin p {:counts {"foo" {:i -8 :d 4.06} "bar" {:i -66}}})]
         (is (= -1   (get-in p [:counts "foo" :i])))
         (is (= 6.66 (get-in p [:counts "foo" :d])))
         (is (= 33   (get-in p [:counts "bar" :i])))
@@ -201,7 +202,7 @@
     (is (= 1978 (get-in p [:time :year])))
     (is (= 11   (get-in p [:time :month])))
     (is (= 24   (get-in p [:time :day])))
-    (let [p (append p {:time {:year 1974 :month 1}})]
+    (let [p (adjoin p {:time {:year 1974 :month 1}})]
       (is (= 1974 (get-in p [:time :year])))
       (is (= 1    (get-in p [:time :month])))
       (is (= nil  (get-in p [:time :day])))
@@ -218,7 +219,7 @@
     (is (= "foo"        (get p :str)))
     (is (= :a           (get p :enu)))
     (is (= keyset (set (keys p))))
-    (let [p (append p {:int nil :long nil :flt nil :dbl nil :str nil :enu nil})]
+    (let [p (adjoin p {:int nil :long nil :flt nil :dbl nil :str nil :enu nil})]
       (is (= nil (get p :int)))
       (is (= nil (get p :long)))
       (is (= nil (get p :flt)))
@@ -229,13 +230,13 @@
     (testing "nullable successions"
       (let [p (protobuf Bar :label "foo")]
         (is (= "foo" (get p :label)))
-        (let [p (append p {:label nil})]
+        (let [p (adjoin p {:label nil})]
           (is (= nil        (get     p :label)))
           (is (= ["foo" ""] (get-raw p :label))))))
     (testing "repeated nullable"
       (let [p (protobuf Bar :labels ["foo" "bar"])]
         (is (= ["foo" "bar"] (get p :labels)))
-        (let [p (append p {:labels [nil]})]
+        (let [p (adjoin p {:labels [nil]})]
           (is (= ["foo" "bar" nil] (get     p :labels)))
           (is (= ["foo" "bar" ""]  (get-raw p :labels))))))))
 

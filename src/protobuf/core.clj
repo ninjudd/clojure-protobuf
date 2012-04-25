@@ -2,6 +2,7 @@
   (:use [protobuf.schema :only [field-schema]]
         [useful.fn :only [fix]]
         [clojure.java.io :only [input-stream output-stream]])
+  (:require useful.utils)
   (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def PersistentProtocolBufferMap$Def$NamingStrategy Extensions)
            (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
@@ -89,12 +90,12 @@
        (.writeDelimitedTo p out))
      (.flush out))))
 
-;; TODO make these functions nil-safe
-(defn append
-  "Merge the given map into the protobuf. Equivalent to appending the byte representations."
-  [^PersistentProtocolBufferMap p map]
-  (.append p map))
+(extend-protocol useful.utils/Adjoin
+  PersistentProtocolBufferMap
+  (adjoin [^PersistentProtocolBufferMap this other]
+    (.append this other)))
 
+;; TODO make this nil-safe? Or just delete it?
 (defn get-raw
   "Get value at key ignoring extension fields."
   [^PersistentProtocolBufferMap p key]
