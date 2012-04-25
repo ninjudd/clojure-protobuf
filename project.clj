@@ -2,7 +2,7 @@
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [ordered-set "0.3.0"]
-                 [useful "0.8.0-alpha1"]
+                 [useful "0.8.0-alpha4"]
                  [fs "1.0.0"]
                  [conch "0.2.0"]
                  [schematic "0.0.5"]]
