@@ -14,4 +14,5 @@
   ;; jar to implicitly clean no matter what, wiping stuff.
   ;; This prevents that.
   :disable-implicit-clean true
+  :checksum-deps true
   :java-source-path "src")
