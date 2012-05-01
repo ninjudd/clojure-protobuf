@@ -48,6 +48,8 @@
                 (protobuf proto val))))))
         (fix repeated
              #(gloss/repeated (gloss/finite-frame (length-prefix proto) %)
-                              :prefix :none))
-        (with-meta {:schema (schema/dissoc-fields (protobuf-schema proto)
-                                                  len-key reset-key)}))))
+                              :prefix :none)))))
+
+(defn codec-schema [proto]
+  (schema/dissoc-fields (protobuf-schema proto)
+                        len-key reset-key))
