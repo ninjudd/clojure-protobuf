@@ -1,5 +1,6 @@
 (ns protobuf.core-test
   (:use protobuf.core clojure.test
+        [io.core :only [catbytes]]
         [useful.utils :only [adjoin]]
         ordered-map.core)
   (:import (java.io PipedInputStream PipedOutputStream)))
@@ -10,16 +11,6 @@
 (def Bar      (protodef protobuf.test.Core$Bar))
 (def Response (protodef protobuf.test.Core$Response))
 (def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
-
-(defn catbytes [& args]
-  (let [out-buf (byte-array (reduce + (map count args)))]
-    (loop [offset 0, args args]
-      (if-let [[^bytes array & more] (seq args)]
-        (let [size (count array)]
-          (System/arraycopy array 0
-                            out-buf offset size)
-          (recur (+ size offset) more))
-        out-buf))))
 
 (deftest test-conj
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2 3.4 5.6] :floats [0.01 0.02 0.03])]
