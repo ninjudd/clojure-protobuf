@@ -42,7 +42,24 @@
       (is (= "very" (:label p))))
     (let [p (adjoin p {:doubles [3.4] :floats [0.02]})]
       (is (= [1.2 3.4] (:doubles p)))
-      (is (= [(float 0.01) (float 0.02)] (:floats  p))))))
+      (is (= [(float 0.01) (float 0.02)] (:floats  p)))))
+  (testing "adjoining works with set extension"
+    (let [p (protobuf Foo :tag-set #{"foo" "bar" "baz"})
+          q (protobuf Foo :tag-set {"bar" false "foo" false "bap" true})
+          r (adjoin p q)]
+      (is (= #{"foo" "bar" "baz"} (p :tag-set)))
+      (is (= #{"bap"}             (q :tag-set)))
+      (is (= #{"bap" "baz"}       (r :tag-set)))))
+  (testing "adjoining works with counters"
+    (let [p (protobuf Foo :counts {"foo" {:i 5 :d  5.0}})
+          q (protobuf Foo :counts {"foo" {:i 8 :d -3.0}})
+          r (adjoin p q)]
+      (is (=  5   (get-in p [:counts "foo" :i])))
+      (is (=  5.0 (get-in p [:counts "foo" :d])))
+      (is (=  8   (get-in q [:counts "foo" :i])))
+      (is (= -3.0 (get-in q [:counts "foo" :d])))
+      (is (=  13  (get-in r [:counts "foo" :i])))
+      (is (=  2.0 (get-in r [:counts "foo" :d]))))))
 
 (deftest test-ordered-adjoin
   (let [inputs (apply ordered-map (for [x (range 26)
