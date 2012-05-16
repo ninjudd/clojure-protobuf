@@ -92,7 +92,7 @@
 
 (extend-protocol useful.utils/Adjoin
   PersistentProtocolBufferMap
-  (adjoin [^PersistentProtocolBufferMap this other]
+  (adjoin-onto [^PersistentProtocolBufferMap this other]
     (.append this other)))
 
 ;; TODO make this nil-safe? Or just delete it?
