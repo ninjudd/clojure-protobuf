@@ -712,9 +712,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   @Override
-  public IPersistentMap assocEx(Object key, Object value) throws Exception {
+  public IPersistentMap assocEx(Object key, Object value) {
     if (containsKey(key)) {
-      throw new Exception("Key already present");
+      throw new RuntimeException("Key already present");
     }
     return assoc(key, value);
   }
@@ -751,7 +751,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   @Override
-  public IPersistentMap without(Object key) throws Exception {
+  public IPersistentMap without(Object key) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) {
       IPersistentMap newExt = (IPersistentMap)RT.dissoc(ext, key);
@@ -761,7 +761,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       return new PersistentProtocolBufferMap(meta(), newExt, def, builder());
     }
     if (field.isRequired()) {
-      throw new Exception("Can't remove required field");
+      throw new RuntimeException("Can't remove required field");
     }
 
     return new PersistentProtocolBufferMap(meta(), ext, def, builder().clearField(field));
