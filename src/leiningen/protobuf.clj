@@ -3,7 +3,7 @@
   (:use [clojure.string :only [join]]
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
-        [leiningen.util.paths :only [get-os]]
+        [leiningen.core.eval :only [get-os]]
         [robert.hooke :only [add-hook]])
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
@@ -144,7 +144,7 @@
                (if (not (= (sh/exit-code protoc-result) 0))
                  (println "ERROR: " (sh/stream-to-string protoc-result :err))))))
          (binding [*compile?* false]
-           (javac (assoc project :java-source-path dest-path)))))))
+           (javac (assoc project :java-source-paths [dest-path])))))))
 
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"

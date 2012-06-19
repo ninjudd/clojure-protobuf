@@ -1,6 +1,6 @@
 (defproject protobuf "0.6.0-beta18"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
-  :dependencies [[org.clojure/clojure "1.2.0"]
+  :dependencies [[org.clojure/clojure "1.3.0"]
                  [ordered-collections "0.4.0"]
                  [useful "0.8.2-alpha1"]
                  [fs "1.0.0"]
@@ -15,4 +15,4 @@
   ;; This prevents that.
   :disable-implicit-clean true
   :checksum-deps true
-  :java-source-path "src")
+  :java-source-paths ["src"])
