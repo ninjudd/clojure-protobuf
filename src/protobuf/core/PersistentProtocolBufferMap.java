@@ -481,31 +481,13 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
     switch (field.getJavaType()) {
       case LONG:
-        if (value instanceof Long) {
-          return value;
-        }
-        return new Long(((Integer)value).longValue());
+        return ((Number)value).longValue();
       case INT:
-        if (value instanceof Integer) {
-          return value;
-        }
-        return new Integer(((Long)value).intValue());
+        return ((Number)value).intValue();
       case FLOAT:
-        if (value instanceof Integer) {
-          return new Float((Integer)value * 1.0);
-        }
-        if (value instanceof Double) {
-          return new Float((Double)value);
-        }
-        return value;
+        return ((Number)value).floatValue();
       case DOUBLE:
-        if (value instanceof Integer) {
-          return new Double((Integer)value * 1.0);
-        }
-        if (value instanceof Float) {
-          return new Double((Float)value);
-        }
-        return value;
+        return ((Number)value).doubleValue();
       case ENUM:
         String name = def.namingStrategy.protoName(value);
         Descriptors.EnumDescriptor enum_type = field.getEnumType();
