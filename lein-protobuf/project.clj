@@ -1,4 +1,4 @@
-(defproject lein-protobuf "0.1.0-alpha1"
+(defproject lein-protobuf "0.1.0"
   :description "Leiningen plugin for clojure-protobuf."
   :dependencies [[fs "1.0.0"]
                  [conch "0.2.0"]]
