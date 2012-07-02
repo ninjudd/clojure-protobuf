@@ -48,7 +48,7 @@
               (recur (into files (proto-dependencies proto-file))))))))))
 
 (defn modtime [dir]
-  (let [files (-> dir io/file file-seq rest)]
+  (let [files (->> dir io/file file-seq rest)]
     (if (empty? files)
       0
       (apply max (map fs/mod-time files)))))
@@ -127,7 +127,7 @@
            dest-path (.getPath dest)
            proto-path (.getAbsoluteFile (io/file (or (:proto-path project) "proto")))]
        (when (or (> (modtime proto-path) (modtime dest))
-                 (> (modtime proto-path) (modtime "classes")))
+                 (> (modtime proto-path) (modtime (str target "/classes"))))
          (.mkdirs dest)
          (.mkdirs proto-path)
          (doseq [proto protos]
@@ -145,14 +145,17 @@
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"
   [project]
-  (let [proto-files (io/file "proto/google/protobuf")
-        target (target project)]
-    (.mkdirs proto-files)
-    (io/copy (io/file target srcdir "src/google/protobuf/descriptor.proto")
-             (io/file proto-files "descriptor.proto"))
-    (protoc project
-            ["google/protobuf/descriptor.proto"]
-            (io/file target srcdir "java/src/main/java"))))
+  (let [proto-files (io/file (get project :proto-path "proto") "google/protobuf")
+        target (target project)
+        descriptor (io/file proto-files "descriptor.proto")]
+    (when-not (.exists descriptor)
+      (fetch project)
+      (.mkdirs proto-files)
+      (io/copy (io/file target srcdir "src/google/protobuf/descriptor.proto")
+               descriptor)
+      (protoc project
+              ["google/protobuf/descriptor.proto"]
+              (io/file target srcdir "java/src/main/java")))))
 
 (defn compile
   "Compile protocol buffer files located in proto dir."
@@ -160,8 +163,7 @@
      (apply compile project (proto-files (io/file (or (:proto-path project) "proto")))))
   ([project & files]
      (install project)
-     (when (= "protobuf" (:name project))
-       (fetch project)
+     (when (and (= "protobuf" (:name project)))
        (compile-google-protobuf project))
      (protoc project files)))
 
