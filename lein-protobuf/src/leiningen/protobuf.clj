@@ -10,15 +10,18 @@
             [conch.core :as sh])
   (:import java.util.zip.ZipFile))
 
-(def version "2.3.0")
-(def srcdir  (str "protobuf-" version))
-(def zipfile (format "protobuf-%s.zip" version))
+(def default-version "2.3.0")
+(defn version
+  [project]
+  (or (:protobuf-version project) "default-version"))
+(defn srcdir [project] (str "protobuf-" (version project)))
+(defn zipfile [project] (format "protobuf-%s.zip" (version project)))
 
 (def ^{:dynamic true} *compile?* true)
 
-(def url
+(defn url [project]
   (java.net.URL.
-   (format "http://protobuf.googlecode.com/files/protobuf-%s.zip"  version)))
+   (format "http://protobuf.googlecode.com/files/protobuf-%s.zip" (version project))))
 
 (defn target [project]
   (doto (io/file (:target-path project))
@@ -62,8 +65,8 @@
   (for [file (rest (file-seq dir)) :when (proto-file? file)]
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
-(defn installed? []
-  (try (.contains (sh/stream-to-string (sh/proc "protoc" "--version") :out) version)
+(defn installed? [project]
+  (try (.contains (sh/stream-to-string (sh/proc "protoc" "--version") :out) (version project))
        (catch java.io.IOException e)))
 
 (defn read-pass []
@@ -75,30 +78,30 @@
   "Fetch protocol-buffer source and unzip it."
   [project]
   (let [target (target project)]
-    (when-not (.exists (io/file target srcdir))
-      (let [zipped (io/file target zipfile)]
-        (println "Downloading" zipfile)
-        (with-open [stream (.openStream url)]
+    (when-not (.exists (io/file target (srcdir project)))
+      (let [zipped (io/file target (zipfile project))]
+        (println "Downloading" (zipfile project))
+        (with-open [stream (.openStream (url project))]
           (io/copy stream (io/file zipped)))
-        (println "Unzipping" zipfile "to" target)
+        (println "Unzipping" (zipfile project) "to" target)
         (fs/unzip zipped target)))))
 
 (defn uninstall
   "Remove protoc if it is installed."
   [project]
-  (when (installed?)
+  (when (installed? project)
     (let [password (read-pass)
           proc (sh/proc "sudo" "-S" "make" "uninstall"
-                        :dir (io/file (target project) srcdir))]
+                        :dir (io/file (target project) (srcdir project)))]
       (sh/feed-from-string proc (str password "\n"))
       (sh/stream-to-out proc :out))))
 
 (defn install
   "Compile and install protoc to /usr/local."
   [project]
-  (when-not (installed?)
+  (when-not (installed? project)
     (fetch project)
-    (let [source (io/file (target project) srcdir)]
+    (let [source (io/file (target project) (srcdir project))]
       (when-not (.exists (io/file source "src" "protoc"))
         (fs/chmod "+x" (io/file source "configure"))
         (fs/chmod "+x" (io/file source "install-sh"))
@@ -155,7 +158,7 @@
                descriptor)
       (protoc project
               ["google/protobuf/descriptor.proto"]
-              (io/file target srcdir "java/src/main/java")))))
+              (io/file target (srcdir project) "java/src/main/java")))))
 
 (defn compile
   "Compile protocol buffer files located in proto dir."
