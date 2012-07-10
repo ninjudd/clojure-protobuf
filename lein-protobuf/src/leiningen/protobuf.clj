@@ -7,6 +7,7 @@
         [robert.hooke :only [add-hook]])
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
+            [fs.compression :as fs-zip]
             [conch.core :as sh])
   (:import java.util.zip.ZipFile))
 
@@ -81,7 +82,7 @@
         (with-open [stream (.openStream url)]
           (io/copy stream (io/file zipped)))
         (println "Unzipping" zipfile "to" target)
-        (fs/unzip zipped target)))))
+        (fs-zip/unzip zipped target)))))
 
 (defn uninstall
   "Remove protoc if it is installed."

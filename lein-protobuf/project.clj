@@ -3,7 +3,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :url "https://github.com/flatland/protobuf"
-  :dependencies [[fs "1.0.0"]
+  :dependencies [[fs "1.2.0"]
                  [conch "0.2.0"]]
   :eval-in-leiningen true
   ;; Bug in the current 1.x branch of Leiningen causes
