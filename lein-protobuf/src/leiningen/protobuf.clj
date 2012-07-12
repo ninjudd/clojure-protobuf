@@ -148,15 +148,17 @@
   [project]
   (let [proto-files (io/file (get project :proto-path "proto") "google/protobuf")
         target (target project)
-        descriptor (io/file proto-files "descriptor.proto")]
-    (when-not (.exists descriptor)
+        descriptor (io/file proto-files "descriptor.proto")
+        out (io/file target srcdir "java/src/main/java")]
+    (when-not (and (.exists descriptor)
+                   (.exists (io/file out "com/google/protobuf/DescriptorProtos.java")))
       (fetch project)
       (.mkdirs proto-files)
       (io/copy (io/file target srcdir "src/google/protobuf/descriptor.proto")
                descriptor)
       (protoc project
               ["google/protobuf/descriptor.proto"]
-              (io/file target srcdir "java/src/main/java")))))
+              out))))
 
 (defn compile
   "Compile protocol buffer files located in proto dir."
