@@ -7,7 +7,7 @@
                  [ordered-collections "0.4.0"]
                  [useful "0.8.2-alpha1"]
                  [schematic "0.0.5"]]
-  :plugins [[lein-protobuf "0.1.0"]]
+  :plugins [[lein-protobuf "0.1.1"]]
   :profiles {:dev {:dependencies [[gloss "0.2.1"]
                                   [io "0.2.0-beta2"]]}}
   :hooks [leiningen.protobuf]

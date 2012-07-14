@@ -1,4 +1,4 @@
-(defproject lein-protobuf "0.1.0"
+(defproject lein-protobuf "0.1.1"
   :description "Leiningen plugin for clojure-protobuf."
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
