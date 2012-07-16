@@ -9,47 +9,58 @@
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
             [fs.compression :as fs-zip]
-            [conch.core :as sh])
-  (:import java.util.zip.ZipFile))
+            [conch.core :as sh]))
 
-(def version "2.3.0")
-(def cache   (str (leiningen-home) "/cache/lein-protobuf"))
-(def zipfile (format "protobuf-%s.zip" version))
-(def srcdir  (format "%s/protobuf-%s" cache version))
-(def protoc  (format "%s/src/protoc" srcdir))
+(def cache (io/file (leiningen-home) "cache" "lein-protobuf"))
+(def default-version "2.3.0")
+
+(defn version [project]
+  (or (:protobuf-version project) default-version))
+
+(defn zipfile [project]
+  (io/file cache (format "protobuf-%s.zip" (version project))))
+
+(defn srcdir [project]
+  (io/file cache (str "protobuf-" (version project))))
+
+(defn protoc [project]
+  (io/file (srcdir project) "src" "protoc"))
+
+(defn url [project]
+  (java.net.URL.
+   (format "http://protobuf.googlecode.com/files/protobuf-%s.zip" (version project))))
+
+(defn proto-path [project]
+  (io/file (get project :proto-path "resources/proto")))
 
 (def ^{:dynamic true} *compile?* true)
 
-(def url
-  (java.net.URL.
-   (format "http://protobuf.googlecode.com/files/%s" zipfile)))
+
 
 (defn target [project]
   (doto (io/file (:target-path project))
     .mkdirs))
 
 (defn- proto-dependencies
-  "look for lines starting with import in proto-file"
+  "Look for lines starting with import in proto-file."
   [proto-file]
-  (for [line (line-seq (io/reader proto-file)) :when (.startsWith line "import")]
-    (second (re-matches #".*\"(.*)\".*" line))))
+  (when (.exists proto-file)
+    (for [line (line-seq (io/reader proto-file)) :when (.startsWith line "import")]
+      (second (re-matches #".*\"(.*)\".*" line)))))
 
 (defn extract-dependencies
-  "extract all files proto is dependent on"
-  [proto-path proto-file target]
-  (let [proto-file (io/file proto-path proto-file)]
-    (loop [files (vec (proto-dependencies proto-file))]
-      (when-not (empty? files)
-        (let [proto (peek files)
-              files (pop files)]
-          (if (or (.exists (io/file proto-path proto))
-                  (.exists (io/file target "proto" proto)))
-            (recur files)
-            (let [location (str "proto/" proto)
-                  proto-file (io/file target location)]
-              (.mkdirs (.getParentFile proto-file))
-              (io/copy (io/reader (io/resource location)) proto-file)
-              (recur (into files (proto-dependencies proto-file))))))))))
+  "Extract all files proto is dependent on into dest."
+  [proto-path proto dest]
+  (loop [deps (proto-dependencies (io/file proto-path proto))]
+    (when-let [[dep & deps] (seq deps)]
+      (let [proto-file (io/file dest dep)]
+        (if (or (.exists (io/file proto-path dep))
+                (.exists proto-file))
+          (recur deps)
+          (do (.mkdirs (.getParentFile proto-file))
+              (io/copy (io/reader (io/resource "proto" proto))
+                       proto-file)
+              (recur (concat deps (proto-dependencies proto-file)))))))))
 
 (defn modtime [dir]
   (let [files (->> dir io/file file-seq rest)]
@@ -66,85 +77,77 @@
   (for [file (rest (file-seq dir)) :when (proto-file? file)]
     (.substring (.getPath file) (inc (count (.getPath dir))))))
 
-(defn read-pass []
-  (print "Password: ")
-  (flush)
-  (join (.readPassword (System/console))))
-
 (defn fetch
   "Fetch protocol-buffer source and unzip it."
   [project]
-  (let [srcdir (io/file srcdir)]
+  (let [zipfile (zipfile project)
+        srcdir  (srcdir project)]
+    (when-not (.exists zipfile)
+      (.mkdirs cache)
+      (println (format "Downloading %s to %s" (.getName zipfile) zipfile))
+      (with-open [stream (.openStream (url project))]
+        (io/copy stream zipfile)))
     (when-not (.exists srcdir)
-      (.mkdirs srcdir)
-      (let [zipped (io/file cache zipfile)]
-        (println "Downloading" zipfile)
-        (with-open [stream (.openStream url)]
-          (io/copy stream (io/file zipped)))
-        (println "Unzipping" zipfile "to" target)
-        (fs-zip/unzip zipped cache)))))
+      (println (format "Unzipping %s to %s" zipfile srcdir))
+      (fs-zip/unzip zipfile cache))))
 
 (defn build-protoc
   "Compile protoc from source."
   [project]
-  (let [srcdir (io/file srcdir)
-        protoc (io/file protoc)]
+  (let [srcdir (srcdir project)
+        protoc (protoc project)]
     (when-not (.exists protoc)
       (fetch project)
-      (when-not (.exists (io/file srcdir "src" "protoc"))
-        (fs/chmod "+x" (io/file srcdir "configure"))
-        (fs/chmod "+x" (io/file srcdir "install-sh"))
-        (println "Configuring protoc")
-        (sh/stream-to-out (sh/proc "./configure" :dir srcdir) :out)
-        (println "Running 'make'")
-        (sh/stream-to-out (sh/proc "make" :dir srcdir) :out)))))
+      (fs/chmod "+x" (io/file srcdir "configure"))
+      (fs/chmod "+x" (io/file srcdir "install-sh"))
+      (println "Configuring protoc")
+      (sh/stream-to-out (sh/proc "./configure" :dir srcdir) :out)
+      (println "Running 'make'")
+      (sh/stream-to-out (sh/proc "make" :dir srcdir) :out))))
 
 (defn compile-protobuf
   "Create .java and .class files from the provided .proto files."
   ([project protos]
      (compile-protobuf project protos (io/file (target project) "protosrc")))
   ([project protos dest]
-     (let [target (target project)
-           dest (.getAbsoluteFile dest)
-           dest-path (.getPath dest)
-           proto-path (.getAbsoluteFile (io/file (or (:proto-path project) "proto")))]
+     (let [target     (target project)
+           class-dest (io/file target "classes")
+           proto-dest (io/file target "proto")
+           proto-path (proto-path project)]
        (when (or (> (modtime proto-path) (modtime dest))
-                 (> (modtime proto-path) (modtime (str target "/classes"))))
+                 (> (modtime proto-path) (modtime class-dest)))
          (.mkdirs dest)
-         (.mkdirs proto-path)
          (doseq [proto protos]
-           (extract-dependencies proto-path proto target)
-           (let [args [protoc proto (str "--java_out=" dest-path) "-I."
-                       (str "-I" (.getAbsoluteFile (io/file target "proto")))
-                       (str "-I" proto-path)]]
+           (extract-dependencies proto-path proto proto-dest)
+           (let [args (into [(.getPath (protoc project)) proto
+                             (str "--java_out=" (.getAbsoluteFile dest)) "-I."]
+                            (map #(str "-I" (.getAbsoluteFile %))
+                                 [proto-dest proto-path]))]
              (println " > " (join " " args))
-             (let [protoc-result (apply sh/proc (concat args [:dir proto-path]))]
-               (if (not (= (sh/exit-code protoc-result) 0))
-                 (println "ERROR: " (sh/stream-to-string protoc-result :err))))))
+             (let [result (apply sh/proc (concat args [:dir proto-path]))]
+               (when-not (= (sh/exit-code result) 0)
+                 (println "ERROR: " (sh/stream-to-string result :err))))))
          (binding [*compile?* false]
-           (javac (assoc project :java-source-paths [dest-path])))))))
+           (javac (assoc project :java-source-paths [(.getPath dest)])))))))
 
 (defn compile-google-protobuf
   "Compile com.google.protobuf.*"
   [project]
-  (let [proto-files (io/file (get project :proto-path "proto") "google/protobuf")
-        target (target project)
-        descriptor (io/file proto-files "descriptor.proto")
-        out (io/file srcdir "java/src/main/java")]
-    (when-not (and (.exists descriptor)
-                   (.exists (io/file out "com/google/protobuf/DescriptorProtos.java")))
-      (fetch project)
-      (.mkdirs proto-files)
+  (fetch project)
+  (let [descriptor (io/file (proto-path project) "google" "protobuf" "descriptor.proto")
+        srcdir     (srcdir project)]
+    (when-not (.exists descriptor)
+      (.mkdirs (.getParentFile descriptor))
       (io/copy (io/file srcdir "src/google/protobuf/descriptor.proto")
-               descriptor)
-      (compile-protobuf project
-                        ["google/protobuf/descriptor.proto"]
-                        out))))
+               descriptor))
+    (compile-protobuf project
+                      ["google/protobuf/descriptor.proto"]
+                      (io/file srcdir "java" "src" "main" "java"))))
 
 (defn compile
   "Compile protocol buffer files located in proto dir."
   ([project]
-     (apply compile project (proto-files (io/file (or (:proto-path project) "proto")))))
+     (apply compile project (proto-files (proto-path project))))
   ([project & files]
      (build-protoc project)
      (when (and (= "protobuf" (:name project)))

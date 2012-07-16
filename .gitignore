@@ -8,7 +8,7 @@ build
 pom.xml
 *.jar
 *.class
-proto/google/protobuf/descriptor.proto
+resources/proto/google/protobuf/descriptor.proto
 docs
 protobuf-*
 protosrc
