@@ -4,6 +4,7 @@
         [leiningen.help :only [help-for]]
         [leiningen.javac :only [javac]]
         [leiningen.core.eval :only [get-os]]
+        [leiningen.core.user :only [leiningen-home]]
         [robert.hooke :only [add-hook]])
   (:require [clojure.java.io :as io]
             [fs.core :as fs]
@@ -12,7 +13,7 @@
   (:import java.util.zip.ZipFile))
 
 (def version "2.3.0")
-(def cache   (format "%s/.m2/src/com/google/protobuf/%s" (System/getProperty "user.home") version))
+(def cache   (str (leiningen-home) "/cache/lein-protobuf"))
 (def zipfile (format "protobuf-%s.zip" version))
 (def srcdir  (format "%s/protobuf-%s" cache version))
 (def protoc  (format "%s/src/protoc" srcdir))
