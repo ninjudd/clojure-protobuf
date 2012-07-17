@@ -49,7 +49,7 @@
       (second (re-matches #".*\"(.*)\".*" line)))))
 
 (defn extract-dependencies
-  "Extract all files proto is dependent on into dest."
+  "Extract all files proto depends on into dest."
   [proto-path proto dest]
   (loop [deps (proto-dependencies (io/file proto-path proto))]
     (when-let [[dep & deps] (seq deps)]
