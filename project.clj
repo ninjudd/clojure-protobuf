@@ -10,6 +10,7 @@
   :plugins [[lein-protobuf "0.2.0-beta1"]]
   :profiles {:dev {:dependencies [[gloss "0.2.1"]
                                   [io "0.2.0-beta2"]]}}
+  :protobuf-version "2.4.1"
   :hooks [leiningen.protobuf]
   :checksum-deps true
   :java-source-paths ["src"])
