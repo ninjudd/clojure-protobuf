@@ -1,12 +1,26 @@
-Clojure-protobuf provides a clojure interface to Google's [protocol buffers](http://code.google.com/p/protobuf).
+clojure-protobuf provides a Clojure interface to Google's [protocol buffers](http://code.google.com/p/protobuf).
 Protocol buffers can be used to communicate with other languages over the network, and
 they are WAY faster to serialize and deserialize than standard Clojure objects.
 
+## Getting started
+
+You'll probably want to use [Leiningen](https://github.com/technomancy/leiningen) with the
+[lein-protobuf](https://github.com/flatland/lein-protobuf) plugin for compiling `.proto` files. Add
+the following to your `project.clj` file:
+
+    :dependencies [[protobuf "0.6.0"]]
+    :plugins [[lein-protobuf "0.1.1"]]
+
+Be sure to replace `"0.6.0"` and `"0.1.1"` with the latest versions listed at
+http://clojars.org/protobuf and http://clojars.org/lein-protobuf.
+
+*Note: lein-protobuf requires at least version 2.0 of Leiningen.*
+
 ## Usage
 
-Write a `.proto` file:
+Assuming you have the following in `resources/proto/person.proto`:
 
-```java
+```proto
 message Person {
   required int32  id    = 1;
   required string name  = 2;
@@ -15,13 +29,11 @@ message Person {
 }
 ```
 
-If you put it in the proto directory of your project, you can compile it with [leiningen](https://github.com/technomancy/leiningen):
+You can run the following to compile the `.proto` file:
 
-```
-lein protobuf compile example.proto
-```
+    lein protobuf
 
-Now you can use the protocol buffer in clojure:
+Now you can use the protocol buffer in Clojure:
 
 ```clojure
 (use 'protobuf.core)
@@ -54,7 +66,7 @@ Clojure-protobuf supports extensions to protocol buffers which provide sets and 
 repeated fields. You can also provide metadata on protobuf fields using clojure syntax. To
 use these, you must import the extension file and include it when compiling. For example:
 
-```java
+```proto
 import "protobuf/core/extensions.proto";
 
 message Photo {
@@ -83,14 +95,7 @@ message Photo {
   }
 }
 ```
-
-Compile the file:
-
-```
-lein protobuf compile example.proto
-```
-
-Then you can access the maps in clojure:
+Then you can access the extension fields in Clojure:
 
 ```clojure
 (use 'protobuf)
@@ -114,33 +119,6 @@ Then you can access the maps in clojure:
 (:x-coord (protobuf-schema Tag))
 => {:max 100.0 :min -100.0}
 ```
-
-## Installation
-
-You'll want to use this with the Leiningen build tool. You can get it by
-putting it in your `:dependencies` and/or `:dev-dependencies`. If you
-want to use the Leiningen plugin portion of clojure-protobuf, it has to
-be in your dev-dependencies.
-
-```clojure
-:dev-dependencies [[protobuf "x.x.x"]]
-```
-
-Replace `"x.x.x"` with the actual latest version, which you can find on
-[clojars](http://clojars.org/protobuf)
-
-**NOTE: clojure-protobuf requires at least version 1.7.0 of Leiningen.
-It will not work in earlier versions.**
-
-## History
-
-The build tool tasks provided with this library were originally for the
-cake build tool. In 2011, the authors of that tool decided that their
-time would be better spent working on a single, canonical build tool.
-Leiningen was already the standard for Clojure, so that's where we are
-now. As of version 0.6.0 (which has yet to see an final release, but is
-usable), all of the cake-specific functionality has been rewritten for
-Leiningen. Any version before that will not work with Leiningen.
 
 ## Getting Help
 
