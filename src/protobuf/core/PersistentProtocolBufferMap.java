@@ -114,7 +114,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       }
     };
 
-    final Descriptors.Descriptor type;
+    public final Descriptors.Descriptor type;
     public final NamingStrategy namingStrategy;
 
     public static final Object NULL = new Object();
