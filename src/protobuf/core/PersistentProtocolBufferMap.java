@@ -273,7 +273,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
   static public PersistentProtocolBufferMap construct(Def def, Object keyvals) {
     PersistentProtocolBufferMap protobuf = new PersistentProtocolBufferMap(null, def);
-    return (PersistentProtocolBufferMap)protobuf.cons(keyvals);
+    return protobuf.cons(keyvals);
   }
 
   protected PersistentProtocolBufferMap(IPersistentMap meta, Def def) {
@@ -557,16 +557,17 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
-  protected DynamicMessage.Builder addField(DynamicMessage.Builder builder, Object key, Object value) {
+  // returns true if the protobuf can store this key
+  protected boolean addField(DynamicMessage.Builder builder, Object key, Object value) {
     if (key == null) {
-      return builder;
+      return false;
     }
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (field == null) {
-      return builder;
+      return false;
     }
     if (value == null && !(field.getOptions().getExtension(Extensions.nullable))) {
-      return builder;
+      return true;
     }
     boolean set = field.getOptions().getExtension(Extensions.set);
 
@@ -621,7 +622,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       setField(builder, field, v);
     }
 
-    return builder;
+    return true;
   }
 
   @Override
@@ -686,18 +687,18 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   @Override
-  public IPersistentMap assoc(Object key, Object value) {
-    Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
+  public PersistentProtocolBufferMap assoc(Object key, Object value) {
+    DynamicMessage.Builder builder = builder();
 
-    if (field != null) {
-      return new PersistentProtocolBufferMap(meta(), ext, def, addField(builder(), field, value));
+    if (addField(builder, key, value)) {
+      return new PersistentProtocolBufferMap(meta(), ext, def, builder);
     } else {
-      return new PersistentProtocolBufferMap(meta(), (IPersistentMap)RT.assoc(ext, key, value), def, builder());
+      return new PersistentProtocolBufferMap(meta(), (IPersistentMap)RT.assoc(ext, key, value), def, builder);
     }
   }
 
   @Override
-  public IPersistentMap assocEx(Object key, Object value) {
+  public PersistentProtocolBufferMap assocEx(Object key, Object value) {
     if (containsKey(key)) {
       throw new RuntimeException("Key already present");
     }
@@ -705,24 +706,29 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   @Override
-  public IPersistentCollection cons(Object o) {
-    DynamicMessage.Builder builder = builder();
+  public PersistentProtocolBufferMap cons(Object o) {
     if (o instanceof Map.Entry) {
       Map.Entry<?, ?> e = (Map.Entry<?, ?>)o;
-      addField(builder, e.getKey(), e.getValue());
+      return assoc(e.getKey(), e.getValue());
     } else if (o instanceof IPersistentVector) {
       IPersistentVector v = (IPersistentVector)o;
       if (v.count() != 2) {
         throw new IllegalArgumentException("Vector arg to map conj must be a pair");
       }
-      addField(builder, v.nth(0), v.nth(1));
+      return assoc(v.nth(0), v.nth(1));
     } else {
+      DynamicMessage.Builder builder = builder();
+      IPersistentMap ext = this.ext;
       for (ISeq s = RT.seq(o); s != null; s = s.next()) {
         Map.Entry<?, ?> e = (Map.Entry<?, ?>)s.first();
-        addField(builder, e.getKey(), e.getValue());
+
+        Object k = e.getKey(), v = e.getValue();
+        if (!addField(builder, k, v)) {
+          ext = (IPersistentMap)RT.assoc(ext, k, v);
+        }
       }
+      return new PersistentProtocolBufferMap(meta(), ext, def, builder);
     }
-    return new PersistentProtocolBufferMap(meta(), def, builder);
   }
 
   public PersistentProtocolBufferMap append(IPersistentMap map) {
