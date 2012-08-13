@@ -6,6 +6,7 @@ lib
 classes
 build
 pom.xml
+pom.xml.asc
 *.jar
 *.class
 resources/proto/google/protobuf/descriptor.proto
