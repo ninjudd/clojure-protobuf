@@ -7,7 +7,7 @@
                  [ordered-collections "0.4.0"]
                  [useful "0.8.2-alpha1"]
                  [schematic "0.0.5"]]
-  :plugins [[lein-protobuf "0.2.0-beta3"]]
+  :plugins [[lein-protobuf "0.2.0-beta5"]]
   :aliases {"testall" ["with-profile" "dev,default:dev,1.3,default:dev,1.5,default" "test"]}
   :profiles {:1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.0-master-SNAPSHOT"]]}
@@ -17,6 +17,5 @@
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
   :protobuf-version "2.4.1"
-  :hooks [leiningen.protobuf]
   :checksum-deps true
   :java-source-paths ["src"])
