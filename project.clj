@@ -16,6 +16,5 @@
   :repositories {"sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
-  :protobuf-version "2.4.1"
   :checksum-deps true
   :java-source-paths ["src"])
