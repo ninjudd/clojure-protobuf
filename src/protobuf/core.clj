@@ -24,13 +24,17 @@
      (if (or (protodef? def) (nil? def))
        def
        (protodef def PersistentProtocolBufferMap$Def/convertUnderscores)))
-  ([def ^PersistentProtocolBufferMap$Def$NamingStrategy naming-strategy]
+  ([def opts]
      (when def
-       (let [^Descriptors$Descriptor descriptor
+       (let [{:keys [^PersistentProtocolBufferMap$Def$NamingStrategy naming-strategy
+                     size-limit]
+              :or {naming-strategy PersistentProtocolBufferMap$Def/convertUnderscores
+                   size-limit 67108864}} opts ;; 64MiB
+             ^Descriptors$Descriptor descriptor
              (if (instance? Descriptors$Descriptor def)
                def
                (Reflector/invokeStaticMethod ^Class def "getDescriptor" (to-array nil)))]
-         (PersistentProtocolBufferMap$Def/create descriptor naming-strategy)))))
+         (PersistentProtocolBufferMap$Def/create descriptor naming-strategy size-limit)))))
 
 (defn protobuf
   "Construct a protobuf of the given type."
