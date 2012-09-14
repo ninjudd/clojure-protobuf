@@ -18,7 +18,7 @@ http://clojars.org/protobuf and http://clojars.org/lein-protobuf.
 
 ## Usage
 
-Assuming you have the following in `resources/proto/person.proto`:
+Assuming you have the following in `resources/proto/Example.proto`:
 
 ```proto
 message Person {
