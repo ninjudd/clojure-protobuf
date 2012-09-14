@@ -7,7 +7,7 @@
 
 (def Foo      (protodef protobuf.test.Core$Foo))
 (def FooUnder (protodef protobuf.test.Core$Foo
-                        protobuf.core.PersistentProtocolBufferMap$Def/protobufNames))
+                        {:naming-strategy protobuf.core.PersistentProtocolBufferMap$Def/protobufNames}))
 (def Bar      (protodef protobuf.test.Core$Bar))
 (def Response (protodef protobuf.test.Core$Response))
 (def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))

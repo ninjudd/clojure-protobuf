@@ -116,43 +116,52 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
     public final Descriptors.Descriptor type;
     public final NamingStrategy namingStrategy;
+    public final int sizeLimit;
 
     public static final Object NULL = new Object();
     // keys should be FieldDescriptors, except that NULL is used as a replacement for real null
     ConcurrentHashMap<Object, Object> key_to_field;
 
-    static ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<Descriptors.Descriptor, Def>> type_to_def = new ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<Descriptors.Descriptor, Def>>();
+    private static final class DefOptions {
+      public final Descriptors.Descriptor type;
+      public final NamingStrategy strat;
+      public final int sizeLimit;
+      public DefOptions(Descriptors.Descriptor type, NamingStrategy strat, int sizeLimit) {
+        this.type = type;
+        this.strat = strat;
+        this.sizeLimit = sizeLimit;
+      }
 
-    public static Def create(Class<?> c, NamingStrategy strat) throws NoSuchMethodException,
-            IllegalAccessException, InvocationTargetException {
-      Descriptors.Descriptor type = (Descriptors.Descriptor)c.getMethod("getDescriptor").invoke(
-        null);
-      return create(type, strat);
+      public boolean equals(Object other) {
+        if (this.getClass() != other.getClass())
+          return false;
+        DefOptions od = (DefOptions)other;
+        return type.equals(od.type) && strat.equals(od.strat) && sizeLimit == od.sizeLimit;
+      }
+
+      public int hashCode() {
+        return type.hashCode() + strat.hashCode() + sizeLimit;
+      }
     }
 
-    public static Def create(Descriptors.Descriptor type, NamingStrategy strat) {
-      ConcurrentHashMap<Descriptors.Descriptor, Def> defCache = type_to_def.get(strat);
-      if (defCache == null) {
-        defCache = new ConcurrentHashMap<Descriptors.Descriptor, Def>();
-        ConcurrentHashMap<Descriptors.Descriptor, Def> previous = type_to_def.putIfAbsent(strat,
-          defCache);
-        if (previous != null) {
-          defCache = previous;
-        }
-      }
+    static ConcurrentHashMap<DefOptions, Def> defCache = new ConcurrentHashMap<DefOptions, Def>();
+
+    public static Def create(Descriptors.Descriptor type, NamingStrategy strat, int sizeLimit) {
+      DefOptions opts = new DefOptions(type, strat, sizeLimit);
 
       Def def = defCache.get(type);
       if (def == null) {
-        def = new Def(type, strat);
-        defCache.putIfAbsent(type, def);
+        def = new Def(type, strat, sizeLimit);
+        defCache.putIfAbsent(opts, def);
       }
       return def;
     }
 
-    protected Def(Descriptors.Descriptor type, NamingStrategy strat) {
+    protected Def(Descriptors.Descriptor type, NamingStrategy strat, int sizeLimit) {
       this.type = type;
       this.key_to_field = new ConcurrentHashMap<Object, Object>();
       this.namingStrategy = strat;
+      this.sizeLimit = sizeLimit;
     }
 
     public DynamicMessage parseFrom(byte[] bytes) throws InvalidProtocolBufferException {
@@ -160,6 +169,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     public DynamicMessage parseFrom(CodedInputStream input) throws IOException {
+      input.setSizeLimit(sizeLimit);
       return DynamicMessage.parseFrom(type, input);
     }
 
@@ -447,7 +457,8 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           }
         case MESSAGE:
           Def fieldDef = PersistentProtocolBufferMap.Def.create(field.getMessageType(),
-            this.def.namingStrategy);
+                                                                this.def.namingStrategy,
+                                                                this.def.sizeLimit);
           DynamicMessage message = (DynamicMessage)value;
 
           // Total hack because getField() doesn't return an empty array for repeated messages.
@@ -506,7 +517,8 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
           protobuf = (PersistentProtocolBufferMap)value;
         } else {
           Def fieldDef = PersistentProtocolBufferMap.Def.create(field.getMessageType(),
-            this.def.namingStrategy);
+                                                                this.def.namingStrategy,
+                                                                this.def.sizeLimit);
           protobuf = PersistentProtocolBufferMap.construct(fieldDef, value);
         }
         return protobuf.message();
