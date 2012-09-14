@@ -7,7 +7,7 @@
                  [ordered-collections "0.4.0"]
                  [useful "0.8.4"]
                  [schematic "0.0.5"]]
-  :plugins [[lein-protobuf "0.2.0"]]
+  :plugins [[lein-protobuf "0.2.1"]]
   :aliases {"testall" ["with-profile" "dev,default:dev,1.3,default:dev,1.5,default" "test"]}
   :profiles {:1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.0-master-SNAPSHOT"]]}
