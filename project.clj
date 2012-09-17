@@ -1,4 +1,4 @@
-(defproject protobuf "0.6.0-cake"
+(defproject protobuf "0.6.1-cake"
   :description "Clojure-protobuf provides a clojure interface to Google's protocol buffers."
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [ordered-collections "0.4.0"]
