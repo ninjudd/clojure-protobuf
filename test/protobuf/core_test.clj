@@ -143,6 +143,16 @@
     (is (= #{"foo" "bar" "baz"} (p :tag-set)))
     (is (= #{"bap" "baz"} (s :tag-set)))))
 
+(deftest size-limit
+  (let [p (protobuf Foo :id 5 :label "rad")
+        bytes (protobuf-dump p)
+        len (count bytes)
+        [too-small just-right plenty-big] (for [size [(dec len) len (* 10 len)]]
+                                            (protodef protobuf.test.Core$Foo {:size-limit size}))]
+    (is (thrown? Exception (protobuf-load too-small bytes)))
+    (are [d] (= p (protobuf-load d bytes))
+         just-right plenty-big)))
+
 (deftest test-coercing
   (let [p (protobuf Foo :lat 5 :long 6)]
     (is (= 5.0 (p :lat)))
