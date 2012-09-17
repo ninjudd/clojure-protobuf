@@ -6,7 +6,7 @@
 (defn build-protobuf []
   (protoc ["protobuf/core/extensions.proto" "clojure/protobuf/test.proto"]))
 
-(deftask protobuf.google
+(deftask protobuf.google #{protobuf.fetch}
   (mkdir "proto/google/protobuf")
   (cp (str srcdir "/src/google/protobuf/descriptor.proto") "proto/google/protobuf")
   (protoc ["google/protobuf/descriptor.proto"] (str srcdir "/java/src/main/java")))
