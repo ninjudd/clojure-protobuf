@@ -8,11 +8,5 @@
                  [schematic "0.0.5"]]
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.2.0-beta2"]]
-  :hooks [leiningen.protobuf]
-  :eval-in-leiningen true
-  ;; Bug in the current 1.x branch of Leiningen causes
-  ;; jar to implicitly clean no matter what, wiping stuff.
-  ;; This prevents that.
-  :disable-implicit-clean true
-  :checksum-deps true
+  :cake-plugins [[cake-protobuf "0.5.0"]]
   :java-source-path "src")
