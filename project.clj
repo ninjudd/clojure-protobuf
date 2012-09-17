@@ -6,8 +6,8 @@
                  [fs "1.0.0"]
                  [conch "0.2.0"]
                  [schematic "0.0.5"]]
-  :dev-dependencies [[gloss "0.2.0-rc1"]
-                     [io "0.2.0-beta2"]]
+  :dev-dependencies [[gloss "0.2.1"]
+                     [io "0.2.1"]]
   :cake-plugins [[cake-protobuf "0.5.0"]]
   :java-compile {:target "5"
                  :source "5"}
