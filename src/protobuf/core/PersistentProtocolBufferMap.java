@@ -165,6 +165,11 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     public DynamicMessage parseFrom(byte[] bytes) throws InvalidProtocolBufferException {
+      if (bytes.length > sizeLimit) {
+        throw new InvalidProtocolBufferException(
+          String.format("Size limit reached: %d bytes is larger than %d, the maximum size expected. If you want to process such a large byte array, set a larger sizeLimit on your protodef.",
+                        bytes.length, sizeLimit));
+          }
       return DynamicMessage.parseFrom(type, bytes);
     }
 
