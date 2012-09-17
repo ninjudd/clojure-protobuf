@@ -9,4 +9,6 @@
   :dev-dependencies [[gloss "0.2.0-rc1"]
                      [io "0.2.0-beta2"]]
   :cake-plugins [[cake-protobuf "0.5.0"]]
+  :java-compile {:target "5"
+                 :source "5"}
   :java-source-path "src")
