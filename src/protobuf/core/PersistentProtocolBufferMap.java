@@ -324,9 +324,6 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   }
 
   public byte[] toByteArray() {
-    if (RT.count(ext) != 0) {
-      throw new IllegalStateException("Can't serialize unexpected keys: " + RT.printString(RT.keys(ext)));
-    }
     return message().toByteArray();
   }
 
