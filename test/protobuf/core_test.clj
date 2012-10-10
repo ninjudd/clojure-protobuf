@@ -7,7 +7,7 @@
 
 (def Foo      (protodef protobuf.test.Core$Foo))
 (def FooUnder (protodef protobuf.test.Core$Foo
-                        protobuf.core.PersistentProtocolBufferMap$Def/protobufNames))
+                        {:naming-strategy protobuf.core.PersistentProtocolBufferMap$Def/protobufNames}))
 (def Bar      (protodef protobuf.test.Core$Bar))
 (def Response (protodef protobuf.test.Core$Response))
 (def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
@@ -116,7 +116,19 @@
     (is (= p2 m2))
     (is (= m2 p2))
     (is (= (into {} m2) (into {} p2)))
-    (is (= (set (keys m2)) (set (keys p2))))))
+    (is (= (set (keys m2)) (set (keys p2)))))
+
+  (let [m {:id 5 :wat 10}
+        p (protobuf Foo m)]
+    (testing "protobuf function uses extmap"
+      (is (= (:wat m) (:wat p)))
+      (let [p (conj p {:stuff 15})]
+        (is (= 15 (:stuff p)))))
+
+    ;; TODO add test back once we re-enable this check
+    (comment
+      (is (thrown? Exception (protobuf-dump p))
+          "Should refuse to serialize with stuff in extmap"))))
 
 (deftest test-string-keys
   (let [p (protobuf Foo "id" 5 "label" "rad")]
