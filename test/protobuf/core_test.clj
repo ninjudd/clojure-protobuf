@@ -125,8 +125,10 @@
       (let [p (conj p {:stuff 15})]
         (is (= 15 (:stuff p)))))
 
-    (is (thrown? Exception (protobuf-dump p))
-        "Should refuse to serialize with stuff in extmap")))
+    ;; TODO add test back once we re-enable this check
+    (comment
+      (is (thrown? Exception (protobuf-dump p))
+          "Should refuse to serialize with stuff in extmap"))))
 
 (deftest test-string-keys
   (let [p (protobuf Foo "id" 5 "label" "rad")]
