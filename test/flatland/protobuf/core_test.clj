@@ -1,16 +1,16 @@
-(ns protobuf.core-test
-  (:use protobuf.core clojure.test
-        [io.core :only [catbytes]]
-        [useful.utils :only [adjoin]]
+(ns flatland.protobuf.core-test
+  (:use flatland.protobuf.core clojure.test
+        [flatland.io.core :only [catbytes]]
+        [flatland.useful.utils :only [adjoin]]
         ordered-map.core)
   (:import (java.io PipedInputStream PipedOutputStream)))
 
-(def Foo      (protodef protobuf.test.Core$Foo))
-(def FooUnder (protodef protobuf.test.Core$Foo
-                        {:naming-strategy protobuf.core.PersistentProtocolBufferMap$Def/protobufNames}))
-(def Bar      (protodef protobuf.test.Core$Bar))
-(def Response (protodef protobuf.test.Core$Response))
-(def ErrorMsg (protodef protobuf.test.Core$ErrorMsg))
+(def Foo      (protodef flatland.protobuf.test.Core$Foo))
+(def FooUnder (protodef flatland.protobuf.test.Core$Foo
+                        {:naming-strategy flatland.protobuf.PersistentProtocolBufferMap$Def/protobufNames}))
+(def Bar      (protodef flatland.protobuf.test.Core$Bar))
+(def Response (protodef flatland.protobuf.test.Core$Response))
+(def ErrorMsg (protodef flatland.protobuf.test.Core$ErrorMsg))
 
 (deftest test-conj
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2 3.4 5.6] :floats [0.01 0.02 0.03])]
@@ -263,12 +263,12 @@
 (deftest test-protobuf-schema
   (let [fields
         {:type :struct
-         :name "protobuf.test.core.Foo"
+         :name "flatland.protobuf.test.core.Foo"
          :fields {:id      {:default 43, :type :int}
                   :deleted {:default false, :type :boolean}
                   :lat     {:type :double}
                   :long    {:type :float}
-                  :parent  {:type :struct, :name "protobuf.test.core.Foo"}
+                  :parent  {:type :struct, :name "flatland.protobuf.test.core.Foo"}
                   :floats  {:type :list, :values {:type :float}}
                   :doubles {:type :list, :values {:type :double}}
                   :label   {:type :string, :c 3, :b 2, :a 1}
@@ -276,28 +276,28 @@
                   :tag-set {:type :set,  :values {:type :string}}
                   :counts  {:type   :map
                             :keys   {:type :string}
-                            :values {:type :struct, :name "protobuf.test.core.Count"
+                            :values {:type :struct, :name "flatland.protobuf.test.core.Count"
                                      :fields {:key {:type :string}
                                               :i {:counter true, :type :int}
                                               :d {:counter true, :type :double}}}}
                   :foo-by-id {:type :map
                               :keys   {:default 43, :type :int}
-                              :values {:type :struct, :name "protobuf.test.core.Foo"}}
+                              :values {:type :struct, :name "flatland.protobuf.test.core.Foo"}}
                   :attr-map {:type :map
                              :keys   {:type :string}
                              :values {:type :string}}
                   :pair-map {:type :map
                              :keys   {:type :string}
-                             :values {:type :struct, :name "protobuf.test.core.Pair"
+                             :values {:type :struct, :name "flatland.protobuf.test.core.Pair"
                                       :fields {:key {:type :string}
                                                :val {:type :string}}}}
                   :groups {:type :map
                            :keys   {:type :string}
                            :values {:type :list
-                                    :values {:type :struct, :name "protobuf.test.core.Foo"}}}
+                                    :values {:type :struct, :name "flatland.protobuf.test.core.Foo"}}}
                   :responses {:type :list
                               :values {:type :enum, :values #{:no :yes :maybe :not-sure}}}
-                  :time {:type :struct, :name "protobuf.test.core.Time", :succession true
+                  :time {:type :struct, :name "flatland.protobuf.test.core.Time", :succession true
                          :fields {:year   {:type :int}
                                   :month  {:type :int}
                                   :day    {:type :int}
@@ -305,11 +305,11 @@
                                   :minute {:type :int}}}
                   :item-map {:type :map
                              :keys   {:type :string}
-                             :values {:type :struct, :name "protobuf.test.core.Item"
+                             :values {:type :struct, :name "flatland.protobuf.test.core.Item"
                                       :fields {:item   {:type :string},
                                                :exists {:default true, :type :boolean}}}}}}]
     (is (= fields (protobuf-schema Foo)))
-    (is (= fields (protobuf-schema protobuf.test.Core$Foo)))))
+    (is (= fields (protobuf-schema flatland.protobuf.test.Core$Foo)))))
 
 (comment deftest test-default-protobuf
   (is (= 43    (default-protobuf Foo :id)))
@@ -324,7 +324,7 @@
   (is (= {}    (default-protobuf Foo :groups)))
   (is (= {}    (default-protobuf Foo :item-map)))
   (is (= false (default-protobuf Foo :deleted)))
-  (is (= {}    (default-protobuf protobuf.test.Core$Foo :groups))))
+  (is (= {}    (default-protobuf flatland.protobuf.test.Core$Foo :groups))))
 
 (deftest test-use-underscores
   (let [dashes      (protobuf Foo      {:tag_set ["odd"]
@@ -363,7 +363,7 @@
            (protobuf-seq Foo in)))))
 
 (deftest test-encoding-errors
-  (is (thrown-with-msg? IllegalArgumentException #"error setting string field protobuf.test.core.Foo.label to 8"
+  (is (thrown-with-msg? IllegalArgumentException #"error setting string field flatland.protobuf.test.core.Foo.label to 8"
         (protobuf Foo :label 8)))
-  (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field protobuf.test.core.Foo.tags"
+  (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field flatland.protobuf.test.core.Foo.tags"
         (protobuf Foo :tags [1 2 3]))))

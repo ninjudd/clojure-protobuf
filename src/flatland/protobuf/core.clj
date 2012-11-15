@@ -1,9 +1,9 @@
-(ns protobuf.core
-  (:use [protobuf.schema :only [field-schema]]
-        [useful.fn :only [fix]]
+(ns flatland.protobuf.core
+  (:use [flatland.protobuf.schema :only [field-schema]]
+        [flatland.useful.fn :only [fix]]
         [clojure.java.io :only [input-stream output-stream]])
-  (:require useful.utils)
-  (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def PersistentProtocolBufferMap$Def$NamingStrategy Extensions)
+  (:require flatland.useful.utils)
+  (:import (flatland.protobuf PersistentProtocolBufferMap PersistentProtocolBufferMap$Def PersistentProtocolBufferMap$Def$NamingStrategy Extensions)
            (com.google.protobuf GeneratedMessage CodedInputStream Descriptors$Descriptor)
            (java.io InputStream OutputStream)
            (clojure.lang Reflector)))
@@ -69,7 +69,7 @@
       (PersistentProtocolBufferMap/parseFrom type in))))
 
 (defn ^"[B" protobuf-dump
-  "Return the byte representation of the given protobuf."
+  "Return the byte representation of the given flatland.protobuf."
   ([^PersistentProtocolBufferMap p]
      (.toByteArray p))
   ([^PersistentProtocolBufferMap$Def type m]
@@ -94,7 +94,7 @@
        (.writeDelimitedTo p out))
      (.flush out))))
 
-(extend-protocol useful.utils/Adjoin
+(extend-protocol flatland.useful.utils/Adjoin
   PersistentProtocolBufferMap
   (adjoin-onto [^PersistentProtocolBufferMap this other]
     (.append this other)))

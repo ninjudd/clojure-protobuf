@@ -1,6 +1,6 @@
 import "google/protobuf/descriptor.proto";
 
-option java_package = "protobuf.core";
+option java_package = "flatland.protobuf";
 option java_outer_classname = "Extensions";
 
 extend google.protobuf.FieldOptions {

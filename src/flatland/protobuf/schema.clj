@@ -1,10 +1,12 @@
-(ns protobuf.schema
-  (:use [useful.fn :only [fix]]
+(ns flatland.protobuf.schema
+  (:use [flatland.useful.fn :only [fix]]
         [clojure.string :only [lower-case]])
-  (:import (protobuf.core PersistentProtocolBufferMap PersistentProtocolBufferMap$Def Extensions)
+  (:import (flatland.protobuf PersistentProtocolBufferMap
+                              PersistentProtocolBufferMap$Def Extensions)
            (com.google.protobuf Descriptors$Descriptor
                                 Descriptors$FieldDescriptor
                                 Descriptors$FieldDescriptor$Type)))
+
 (defn extension [ext ^Descriptors$FieldDescriptor field]
   (-> (.getOptions field)
       (.getExtension ext)

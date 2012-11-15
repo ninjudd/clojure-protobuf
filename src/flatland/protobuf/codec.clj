@@ -1,12 +1,12 @@
-(ns protobuf.codec
-  (:use protobuf.core
+(ns flatland.protobuf.codec
+  (:use flatland.protobuf.core
         [gloss.core.protocols :only [Reader Writer]]
         [gloss.core.formats :only [to-buf-seq]]
-        [useful.fn :only [fix]]
-        [useful.experimental :only [lift-meta]]
+        [flatland.useful.fn :only [fix]]
+        [flatland.useful.experimental :only [lift-meta]]
         [clojure.java.io :only [input-stream]])
-  (:require io.core
-            [schematic.core :as schema]
+  (:require flatland.io.core
+            [flatland.schematic.core :as schema]
             [gloss.core :as gloss]))
 
 (declare protobuf-codec)

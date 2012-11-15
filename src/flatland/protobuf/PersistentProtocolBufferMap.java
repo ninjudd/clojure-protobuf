@@ -8,7 +8,7 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-package protobuf.core;
+package flatland.protobuf;
 
 import java.io.IOException;
 import java.io.InputStream;
