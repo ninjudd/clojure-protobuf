@@ -8,7 +8,7 @@ You'll probably want to use [Leiningen](https://github.com/technomancy/leiningen
 [lein-protobuf](https://github.com/flatland/lein-protobuf) plugin for compiling `.proto` files. Add
 the following to your `project.clj` file:
 
-    :dependencies [[protobuf "0.6.0"]]
+    :dependencies [[org.flatland/protobuf "0.7.1"]]
     :plugins [[lein-protobuf "0.1.1"]]
 
 Be sure to replace `"0.6.0"` and `"0.1.1"` with the latest versions listed at
@@ -67,7 +67,7 @@ repeated fields. You can also provide metadata on protobuf fields using clojure 
 use these, you must import the extension file and include it when compiling. For example:
 
 ```proto
-import "protobuf/core/extensions.proto";
+import "flatland/protobuf/core/extensions.proto";
 
 message Photo {
   required int32  id     = 1;
@@ -98,7 +98,7 @@ message Photo {
 Then you can access the extension fields in Clojure:
 
 ```clojure
-(use 'protobuf)
+(use 'flatland.protobuf.core)
 (import Example$Photo)
 (import Example$Photo$Tag)
 
