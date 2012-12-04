@@ -221,6 +221,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
 
     static final ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Object>> caches = new ConcurrentHashMap<NamingStrategy, ConcurrentHashMap<String, Object>>();
+    static final Object nullv = new Object();
 
     public Object intern(String name) {
       ConcurrentHashMap<String, Object> nameCache = caches.get(namingStrategy);
@@ -233,24 +234,28 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       }
       Object clojureName = nameCache.get(name);
       if (clojureName == null) {
-        clojureName = namingStrategy.clojureName(name);
+        if (name == "") {
+          clojureName = nullv;
+        } else {
+          clojureName = namingStrategy.clojureName(name);
+          if (clojureName == null) {
+            clojureName = nullv;
+          }
+        }
         Object existing = nameCache.putIfAbsent(name, clojureName);
         if (existing != null) {
           clojureName = existing;
         }
       }
-      return clojureName;
+      return clojureName == nullv ? null : clojureName;
     }
 
     public Object clojureEnumValue(Descriptors.EnumValueDescriptor enum_value) {
       return intern(enum_value.getName());
     }
 
-    static final Object k_null = Keyword.intern(Symbol.intern(""));
-
     protected Object mapFieldBy(Descriptors.FieldDescriptor field) {
-      Object key = intern(field.getOptions().getExtension(Extensions.mapBy));
-      return key == k_null ? null : key;
+      return intern(field.getOptions().getExtension(Extensions.mapBy));
     }
   }
 
