@@ -1,0 +1,29 @@
+package flatland.protobuf.test.maps;
+
+import "flatland/protobuf/extensions.proto";
+
+option java_package = "flatland.protobuf.test";
+option java_outer_classname = "Maps";
+
+message Element {
+  optional string id      = 1;
+  optional int32  foo     = 2;
+  optional int32  bar     = 3;
+  optional bool   deleted = 4;
+  optional bool   exists  = 5;
+}
+
+message Pair {
+  required string  key = 1;
+  required Element val = 2;
+}
+
+message Struct {
+  repeated Pair element_map   = 1 [(map) = true];
+  repeated Pair element_map_e = 2 [(map) = true, (map_exists) = "exists"];
+  repeated Pair element_map_d = 3 [(map) = true, (map_deleted) = "deleted"];
+
+  repeated Element element_by_id   = 4 [(map_by) = "id"];
+  repeated Element element_by_id_e = 5 [(map_by) = "id", (map_exists) = "exists"];
+  repeated Element element_by_id_d = 6 [(map_by) = "id", (map_deleted) = "deleted"];
+}

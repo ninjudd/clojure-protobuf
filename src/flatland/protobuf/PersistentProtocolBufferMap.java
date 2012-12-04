@@ -370,7 +370,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
   static Keyword k_exists = Keyword.intern("exists");
 
   protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value,
-          boolean use_extensions) {
+                                  boolean use_extensions) {
     if (value instanceof List) {
       List<?> values = (List<?>)value;
       Iterator<?> iterator = values.iterator();
@@ -381,8 +381,8 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
         if (map_field_by != null) {
           ITransientMap map = (ITransientMap)OrderedMap.EMPTY.asTransient();
           while (iterator.hasNext()) {
-            PersistentProtocolBufferMap v = (PersistentProtocolBufferMap)fromProtoValue(field,
-              iterator.next());
+            PersistentProtocolBufferMap v =
+              (PersistentProtocolBufferMap)fromProtoValue(field, iterator.next());
             Object k = v.valAt(map_field_by);
             PersistentProtocolBufferMap existing = (PersistentProtocolBufferMap)map.valAt(k);
             if (existing != null) {
@@ -451,8 +451,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       switch (field.getJavaType()) {
         case ENUM:
           Descriptors.EnumValueDescriptor e = (Descriptors.EnumValueDescriptor)value;
-          if (use_extensions && field.getOptions().getExtension(Extensions.nullable)
-                  && field.getOptions().getExtension(nullExtension(field)).equals(e.getNumber())) {
+          if (use_extensions &&
+              field.getOptions().getExtension(Extensions.nullable) &&
+              field.getOptions().getExtension(nullExtension(field)).equals(e.getNumber())) {
             return null;
           } else {
             return def.clojureEnumValue(e);
@@ -470,8 +471,9 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
           return new PersistentProtocolBufferMap(null, fieldDef, message);
         default:
-          if (use_extensions && field.getOptions().getExtension(Extensions.nullable)
-                  && field.getOptions().getExtension(nullExtension(field)).equals(value)) {
+          if (use_extensions &&
+              field.getOptions().getExtension(Extensions.nullable) &&
+              field.getOptions().getExtension(nullExtension(field)).equals(value)) {
             return null;
           } else {
             return value;
