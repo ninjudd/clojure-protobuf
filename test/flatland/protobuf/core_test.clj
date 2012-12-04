@@ -11,6 +11,7 @@
 (def Bar      (protodef flatland.protobuf.test.Core$Bar))
 (def Response (protodef flatland.protobuf.test.Core$Response))
 (def ErrorMsg (protodef flatland.protobuf.test.Core$ErrorMsg))
+(def Maps     (protodef flatland.protobuf.test.Maps$Struct))
 
 (deftest test-conj
   (let [p (protobuf Foo :id 5 :tags ["little" "yellow"] :doubles [1.2 3.4 5.6] :floats [0.01 0.02 0.03])]
@@ -141,19 +142,106 @@
       (is (= ["check" "it" "out"] (p "tags"))))))
 
 (deftest test-append-bytes
-  (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
-        q (protobuf Foo :id 43 :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
+  (let [p (protobuf Foo :id 5 :label "rad" :deleted true
+                    :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
+        q (protobuf Foo :id 43 :deleted false
+                    :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
         r (protobuf Foo :label "bad")
         s (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump q)))
         t (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump r)))]
-    (is (= 43 (s :id)))                 ; make sure an explicit default overwrites on append
-    (is (= 5  (t :id)))                 ; make sure a missing default doesn't overwrite on append
+    (is (= 43 (s :id))) ; make sure an explicit default overwrites on append
+    (is (= 5  (t :id))) ; make sure a missing default doesn't overwrite on append
     (is (= "rad" (s :label)))
     (is (= "bad" (t :label)))
     (is (= ["sweet"] (t :tags)))
     (is (= ["sweet" "savory"] (s :tags)))
     (is (= #{"foo" "bar" "baz"} (p :tag-set)))
-    (is (= #{"bap" "baz"} (s :tag-set)))))
+    (is (= #{"bap" "baz"} (s :tag-set)))
+    (is (= false (r :deleted)))))
+
+(deftest test-manual-append
+  (let [p (protobuf Foo :id 5 :label "rad" :deleted true
+                    :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
+        q (protobuf Foo :id 43 :deleted false
+                    :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
+        r (protobuf Foo :label "bad")
+        s (.append p q)
+        t (.append p r)]
+    (is (= 43 (s :id))) ; make sure an explicit default overwrites on append
+    (is (= 5  (t :id))) ; make sure a missing default doesn't overwrite on append
+    (is (= "rad" (s :label)))
+    (is (= "bad" (t :label)))
+    (is (= ["sweet"] (t :tags)))
+    (is (= ["sweet" "savory"] (s :tags)))
+    (is (= #{"foo" "bar" "baz"} (p :tag-set)))
+    (is (= #{"bap" "baz"} (s :tag-set)))
+    (is (= false (r :deleted)))))
+
+(deftest test-map-exists
+  (doseq [map-key [:element-map-e :element-by-id-e]]
+    (let [p (protobuf Maps map-key {"A" {:foo 1}
+                                    "B" {:foo 2}
+                                    "C" {:foo 3}
+                                    "D" {:foo 4 :exists true}
+                                    "E" {:foo 5 :exists true}
+                                    "F" {:foo 6 :exists true}
+                                    "G" {:foo 7 :exists false}
+                                    "H" {:foo 8 :exists false}
+                                    "I" {:foo 9 :exists false}})
+          q (protobuf Maps map-key {"A" {:bar 1}
+                                    "B" {:bar 2 :exists true}
+                                    "C" {:bar 3 :exists false}
+                                    "D" {:bar 4}
+                                    "E" {:bar 5 :exists true}
+                                    "F" {:bar 6 :exists false}
+                                    "G" {:bar 7}
+                                    "H" {:bar 8 :exists true}
+                                    "I" {:bar 9 :exists false}})
+          r (protobuf-load Maps (catbytes (protobuf-dump p) (protobuf-dump q)))]
+      (are [key vals] (= vals (map (get-in r [map-key key])
+                                   [:foo :bar :exists]))
+           "A" [1   1 nil  ]
+           "B" [2   2 true ]
+           "C" [3   3 false]
+           "D" [4   4 true ]
+           "E" [5   5 true ]
+           "F" [6   6 false]
+           "G" [7   7 false]
+           "H" [nil 8 true ]
+           "I" [9   9 false]))))
+
+(deftest test-map-deleted
+  (doseq [map-key [:element-map-d :element-by-id-d]]
+    (let [p (protobuf Maps map-key {"A" {:foo 1}
+                                    "B" {:foo 2}
+                                    "C" {:foo 3}
+                                    "D" {:foo 4 :deleted true}
+                                    "E" {:foo 5 :deleted true}
+                                    "F" {:foo 6 :deleted true}
+                                    "G" {:foo 7 :deleted false}
+                                    "H" {:foo 8 :deleted false}
+                                    "I" {:foo 9 :deleted false}})
+          q (protobuf Maps map-key {"A" {:bar 1}
+                                    "B" {:bar 2 :deleted true}
+                                    "C" {:bar 3 :deleted false}
+                                    "D" {:bar 4}
+                                    "E" {:bar 5 :deleted true}
+                                    "F" {:bar 6 :deleted false}
+                                    "G" {:bar 7}
+                                    "H" {:bar 8 :deleted true}
+                                    "I" {:bar 9 :deleted false}})
+          r (protobuf-load Maps (catbytes (protobuf-dump p) (protobuf-dump q)))]
+      (are [key vals] (= vals (map (get-in r [map-key key])
+                                   [:foo :bar :deleted]))
+           "A" [1   1 nil  ]
+           "B" [2   2 true ]
+           "C" [3   3 false]
+           "D" [4   4 true ]
+           "E" [5   5 true ]
+           "F" [nil 6 false]
+           "G" [7   7 false]
+           "H" [8   8 true ]
+           "I" [9   9 false]))))
 
 (deftest test-coercing
   (let [p (protobuf Foo :lat 5 :long 6)]

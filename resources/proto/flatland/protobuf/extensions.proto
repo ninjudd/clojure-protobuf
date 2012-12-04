@@ -9,6 +9,8 @@ extend google.protobuf.FieldOptions {
   optional string map_by      = 52003;
   optional bool   counter     = 52004;
   optional bool   succession  = 52005;
+  optional string map_deleted = 52006;
+  optional string map_exists  = 52007;
   optional string meta        = 52010;
   optional bool   nullable    = 52020;
   optional string null_string = 52021;
