@@ -339,7 +339,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return def.getMessageType();
   }
 
-  protected DynamicMessage message() {
+  public DynamicMessage message() {
     if (message == null) {
       return def.newBuilder().build(); // This will only work if an empty message is valid.
     } else {
@@ -347,7 +347,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
-  protected DynamicMessage.Builder builder() {
+  public DynamicMessage.Builder builder() {
     if (message == null) {
       return def.newBuilder();
     } else {
