@@ -141,8 +141,10 @@
       (is (= ["check" "it" "out"] (p "tags"))))))
 
 (deftest test-append-bytes
-  (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"})
-        q (protobuf Foo :id 43 :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true})
+  (let [p (protobuf Foo :id 5  :label "rad" :tags ["sweet"] :tag-set #{"foo" "bar" "baz"}
+                    :deletions {"first" {:deleted false} "second" {:deleted false}})
+        q (protobuf Foo :id 43 :tags ["savory"] :tag-set {"bar" false "foo" false "bap" true}
+                    :deletions {"first" {:deleted true}})
         r (protobuf Foo :label "bad")
         s (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump q)))
         t (protobuf-load Foo (catbytes (protobuf-dump p) (protobuf-dump r)))]
@@ -153,7 +155,9 @@
     (is (= ["sweet"] (t :tags)))
     (is (= ["sweet" "savory"] (s :tags)))
     (is (= #{"foo" "bar" "baz"} (p :tag-set)))
-    (is (= #{"bap" "baz"} (s :tag-set)))))
+    (is (= #{"bap" "baz"} (s :tag-set)))
+    (is (= (s :deletions) {"first" {:id "first" :deleted true}
+                           "second" {:id "second" :deleted false}}))))
 
 (deftest test-coercing
   (let [p (protobuf Foo :lat 5 :long 6)]
@@ -307,7 +311,12 @@
                              :keys   {:type :string}
                              :values {:type :struct, :name "flatland.protobuf.test.core.Item"
                                       :fields {:item   {:type :string},
-                                               :exists {:default true, :type :boolean}}}}}}]
+                                               :exists {:default true, :type :boolean}}}}
+                  :deletions {:type :map
+                              :keys {:type :string}
+                              :values {:type :struct, :name "flatland.protobuf.test.core.Deletable"
+                                       :fields {:id {:type :string}
+                                                :deleted {:type :boolean}}}}}}]
     (is (= fields (protobuf-schema Foo)))
     (is (= fields (protobuf-schema flatland.protobuf.test.Core$Foo)))))
 
@@ -338,7 +347,7 @@
     (is (= [:yes :not_sure :maybe :not_sure :no] (:responses underscores)))
 
     (is (= #{:id :label :tags :parent :responses :tag_set :deleted :attr_map :foo_by_id
-             :pair_map :groups :doubles :floats :item_map :counts :time :lat :long}
+             :pair_map :groups :doubles :floats :item_map :counts :time :lat :long :deletions}
            (-> (protobuf-schema FooUnder) :fields keys set)))))
 
 (deftest test-protobuf-nested-message
