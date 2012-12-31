@@ -36,6 +36,7 @@ message Foo {
   repeated Item  item_map  = 24 [(map_by) = "item"];
   repeated Pair  pair_map  = 25 [(map_by) = "key"];
   optional bool  deleted   = 26 [default  = false];
+  repeated Deletable deletions = 27 [(map_by) = "id"];
 }
 
 message Bar {
@@ -94,4 +95,9 @@ message ErrorMsg {
 message Response {
   required bool ok = 1;
   optional ErrorMsg error = 2;
+}
+
+message Deletable {
+  optional string id = 1;
+  optional bool deleted = 2;
 }
