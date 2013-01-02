@@ -283,7 +283,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
             return left.append(right);
           }
         }
-        return right.append(left);
+        return left.append(right);
       }
     }
   }
