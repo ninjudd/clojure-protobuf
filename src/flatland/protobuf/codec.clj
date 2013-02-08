@@ -5,8 +5,7 @@
         [flatland.useful.fn :only [fix]]
         [flatland.useful.experimental :only [lift-meta]]
         [clojure.java.io :only [input-stream]])
-  (:require flatland.io.core
-            [flatland.schematic.core :as schema]
+  (:require [flatland.schematic.core :as schema]
             [gloss.core :as gloss]))
 
 (declare protobuf-codec)
