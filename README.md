@@ -120,6 +120,23 @@ Then you can access the extension fields in Clojure:
 => {:max 100.0 :min -100.0}
 ```
 
+Note that you do not have to specify the _key_ in a map which uses `map_by`; clojure-protobuf will just fill it out for you:
+
+```clojure
+(protobuf Photo :id 7 :path "/example/path" :tags {4 {:x_coord 100}})
+=> {:id 7, :path "/example/path", :tags {4 {:person-id 4, :x-coord 100}}}
+```
+
+Specifying different values will cause clojure-protobuf to override the outer one:
+
+```clojure
+(protobuf Photo :id 7 :path "/example/path" :tags {4 {:person_id 50 :x_coord 100}})
+=> {:id 7, :path "/example/path", :tags {50 {:person-id 50, :x-coord 100}}}
+```
+
+Because of this behaviour, valid input to `(protobuf-dump (protobuf P ...))` can be different from the output of `(protobuf-load P ...)`.
+
+
 ## Getting Help
 
 If you have any questions or need help, you can find us on IRC in [#flatland](irc://irc.freenode.net/#flatland).
