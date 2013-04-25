@@ -23,7 +23,7 @@
   ([def]
      (if (or (protodef? def) (nil? def))
        def
-       (protodef def PersistentProtocolBufferMap$Def/convertUnderscores)))
+       (protodef def {})))
   ([def opts]
      (when def
        (let [{:keys [^PersistentProtocolBufferMap$Def$NamingStrategy naming-strategy
