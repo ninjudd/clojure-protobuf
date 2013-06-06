@@ -36,7 +36,7 @@ You can run the following to compile the `.proto` file:
 Now you can use the protocol buffer in Clojure:
 
 ```clojure
-(use 'protobuf.core)
+(use 'flatland.protobuf.core)
 (import Example$Person)
 
 (def Person (protodef Example$Person))
