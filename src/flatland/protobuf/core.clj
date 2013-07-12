@@ -104,3 +104,18 @@
   "Get value at key ignoring extension fields."
   [^PersistentProtocolBufferMap p key]
   (.getValAt p key false))
+
+(defn serialized-size
+  "Get the number of bytes required to encode this message.  The result is only
+  computed on the first call and memoized after that."
+  [^PersistentProtocolBufferMap p]
+  (when p
+    (.getSerializedSize p)))
+
+(defn delimited-size
+  "Get the number of bytes required to encode this message with a length
+   delimiter.  The result is only computed on the first call and memoized after
+   that."
+  [^PersistentProtocolBufferMap p]
+  (when p
+    (.getDelimitedSize p)))

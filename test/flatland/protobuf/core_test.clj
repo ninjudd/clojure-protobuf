@@ -3,7 +3,7 @@
         [flatland.io.core :only [catbytes]]
         [flatland.useful.utils :only [adjoin]]
         ordered-map.core)
-  (:import (java.io PipedInputStream PipedOutputStream)))
+  (:import (java.io PipedInputStream PipedOutputStream ByteArrayOutputStream)))
 
 (def Foo      (protodef flatland.protobuf.test.Core$Foo))
 (def FooUnder (protodef flatland.protobuf.test.Core$Foo
@@ -464,3 +464,19 @@
         (protobuf Foo :label 8)))
   (is (thrown-with-msg? IllegalArgumentException #"error adding 1 to string field flatland.protobuf.test.core.Foo.tags"
         (protobuf Foo :tags [1 2 3]))))
+
+(deftest test-serialized-size
+  (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
+        q (protobuf Foo :id 5 :tags ["fast"])]
+    (is (= (serialized-size p) (alength (protobuf-dump p))))
+    (is (= (serialized-size q) (alength (protobuf-dump q))))))
+
+(deftest test-delimited-size
+  (let [p (protobuf Foo :id 5 :tags ["fast" "shiny"] :label "nice")
+        q (protobuf Foo :id 5 :tags ["fast"])
+        p-out (ByteArrayOutputStream.)
+        q-out (ByteArrayOutputStream.)]
+    (protobuf-write p-out p)
+    (protobuf-write q-out q)
+    (is (= (delimited-size p) (alength (.toByteArray p-out))))
+    (is (= (delimited-size q) (alength (.toByteArray q-out))))))

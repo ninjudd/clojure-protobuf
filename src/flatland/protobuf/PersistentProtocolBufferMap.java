@@ -173,6 +173,10 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       return DynamicMessage.parseFrom(type, input);
     }
 
+    public DynamicMessage parseFrom(InputStream input) throws IOException {
+        return DynamicMessage.parseFrom(type, input);
+    }
+
     public DynamicMessage.Builder parseDelimitedFrom(InputStream input) throws IOException {
       DynamicMessage.Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -305,6 +309,18 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return new PersistentProtocolBufferMap(null, def, message);
   }
 
+  static public PersistentProtocolBufferMap parseFrom(Def def, InputStream input)
+          throws IOException {
+    DynamicMessage message = def.parseFrom(input);
+    return new PersistentProtocolBufferMap(null, def, message);
+  }
+
+  static public PersistentProtocolBufferMap parseFrom(Def def, byte[] input)
+          throws IOException {
+    DynamicMessage message = def.parseFrom(input);
+    return new PersistentProtocolBufferMap(null, def, message);
+  }
+
   static public PersistentProtocolBufferMap parseDelimitedFrom(Def def, InputStream input)
           throws IOException {
     DynamicMessage.Builder builder = def.parseDelimitedFrom(input);
@@ -361,12 +377,25 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     return message().toByteArray();
   }
 
+  public void writeTo(OutputStream output) throws IOException {
+    message().writeTo(output);
+  }
+
   public void writeTo(CodedOutputStream output) throws IOException {
     message().writeTo(output);
   }
 
   public void writeDelimitedTo(OutputStream output) throws IOException {
     message().writeDelimitedTo(output);
+  }
+
+  public int getSerializedSize() {
+    return message().getSerializedSize();
+  }
+
+  public int getDelimitedSize() {
+      int serializedSize = getSerializedSize();
+      return CodedOutputStream.computeRawVarint32Size(serializedSize) + serializedSize;
   }
 
   public Descriptors.Descriptor getMessageType() {
