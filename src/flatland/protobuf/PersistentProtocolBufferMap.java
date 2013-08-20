@@ -732,11 +732,6 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
-  protected boolean getBoolean (Object key) {
-    Object val = valAt(key);
-    return val != null && val != Boolean.FALSE;
-  }
-
   @Override
   public PersistentProtocolBufferMap assoc(Object key, Object value) {
     DynamicMessage.Builder builder = builder();
