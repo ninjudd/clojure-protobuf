@@ -8,11 +8,11 @@ You'll probably want to use [Leiningen](https://github.com/technomancy/leiningen
 [lein-protobuf](https://github.com/flatland/lein-protobuf) plugin for compiling `.proto` files. Add
 the following to your `project.clj` file:
 
-    :dependencies [[org.flatland/protobuf "0.7.1"]]
-    :plugins [[lein-protobuf "0.1.1"]]
+    :dependencies [[org.flatland/protobuf "0.7.2"]]
+    :plugins [[lein-protobuf "0.3.1"]]
 
-Be sure to replace `"0.6.0"` and `"0.1.1"` with the latest versions listed at
-http://clojars.org/protobuf and http://clojars.org/lein-protobuf.
+Be sure to replace `"0.7.2"` and `"0.3.1"` with the latest versions listed at
+https://clojars.org/org.flatland/protobuf and https://clojars.org/lein-protobuf.
 
 *Note: lein-protobuf requires at least version 2.0 of Leiningen.*
 
