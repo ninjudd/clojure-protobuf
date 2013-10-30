@@ -11,6 +11,7 @@ message Photo {
   repeated Label  labels = 3 [(set)    = true];
   repeated Attr   attrs  = 4 [(map)    = true];
   repeated Tag    tags   = 5 [(map_by) = "person_id"];
+  optional bytes  image  = 6;
 
   message Label {
     required string item   = 1;
