@@ -122,4 +122,4 @@ Then you can access the extension fields in Clojure:
 
 ## Getting Help
 
-If you have any questions or need help, you can find us on IRC in [#flatland](irc://irc.freenode.net/#flatland).
+If you have any questions or need help, you can find us on IRC in [#flatland](irc://irc.freenode.net/#flatland) on Freenode.
