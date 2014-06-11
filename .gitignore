@@ -17,3 +17,4 @@ protosrc
 .project
 .settings
 target/
+.lein-repl-history
