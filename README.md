@@ -5,7 +5,7 @@ they are WAY faster to serialize and deserialize than standard Clojure objects.
 ## Getting started
 
 You'll probably want to use [Leiningen](https://github.com/technomancy/leiningen) with the
-[lein-protobuf](https://github.com/flatland/lein-protobuf) plugin for compiling `.proto` files. Add
+[lein-protobuf](https://github.com/ninjudd/lein-protobuf) plugin for compiling `.proto` files. Add
 the following to your `project.clj` file:
 
     :dependencies [[org.flatland/protobuf "0.7.1"]]
