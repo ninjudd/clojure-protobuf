@@ -3,6 +3,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :url "https://github.com/ghaskins/clojure-protobuf"
+  :javac-options ["-target" "1.7" "-source" "1.7"]
+  :java-source-paths ["src"]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
                  [org.flatland/useful "0.11.5"]
@@ -11,5 +13,4 @@
                  [ordered-collections "0.4.2"]
                  [gloss "0.2.1"]]
   :aliases {"testall" ["with-profile" "dev,default:dev,1.3,default:dev,1.5,default" "test"]}
-  :checksum-deps true
-  :java-source-paths ["src"])
+  :checksum-deps true)
