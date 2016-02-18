@@ -6,6 +6,8 @@
   :javac-options ["-target" "1.7" "-source" "1.7"]
   :java-source-paths ["src"]
   :lein-release {:deploy-via :clojars}
+  :repositories [["releases" {:url "https://clojars.org/repo"
+                              :creds :gpg}]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
                  [org.flatland/useful "0.11.5"]
