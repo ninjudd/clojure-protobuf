@@ -3,11 +3,11 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :url "https://github.com/flatland/clojure-protobuf"
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [org.flatland/useful "0.9.0"]
-                 [org.flatland/schematic "0.1.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.flatland/useful "0.11.5"]
+                 [org.flatland/schematic "0.1.5"]
                  [org.flatland/io "0.3.0"]
-                 [ordered-collections "0.4.0"]]
+                 [ordered-collections "0.4.2"]]
   :plugins [[lein-protobuf "0.4.1"]]
   :aliases {"testall" ["with-profile" "dev,default:dev,1.3,default:dev,1.5,default" "test"]}
   :profiles {:1.3 {:dependencies [[org.clojure/clojure "1.3.0"]]}
