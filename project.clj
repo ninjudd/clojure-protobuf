@@ -7,7 +7,7 @@
   :java-source-paths ["src"]
   :lein-release {:deploy-via :clojars}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [com.google.protobuf/protobuf-java "2.6.1"]
+                 [com.google.protobuf/protobuf-java "3.0.0-beta-2"]
                  [org.flatland/useful "0.11.5"]
                  [org.flatland/schematic "0.1.5"]
                  [org.flatland/io "0.3.0"]
