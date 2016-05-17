@@ -389,17 +389,14 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
     }
   }
 
-  protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
-    return fromProtoValue(field, value, true);
-  }
-
   static Keyword k_key = Keyword.intern("key");
   static Keyword k_val = Keyword.intern("val");
   static Keyword k_item = Keyword.intern("item");
   static Keyword k_exists = Keyword.intern("exists");
 
-  protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value,
-                                  boolean use_extensions) {
+  protected Object fromProtoValue(Descriptors.FieldDescriptor field, Object value) {
+    boolean use_extensions = field.toProto().hasExtendee();
+
     if (value instanceof List) {
       List<?> values = (List<?>)value;
       Iterator<?> iterator = values.iterator();
@@ -474,7 +471,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
       }
       List<Object> list = new ArrayList<Object>(values.size());
       while (iterator.hasNext()) {
-        list.add(fromProtoValue(field, iterator.next(), use_extensions));
+        list.add(fromProtoValue(field, iterator.next()));
       }
       return PersistentVector.create(list);
     } else {
@@ -496,7 +493,7 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
           // Total hack because getField() doesn't return an empty array for repeated messages.
           if (field.isRepeated() && !message.isInitialized()) {
-            return fromProtoValue(field, new ArrayList<Object>(), use_extensions);
+            return fromProtoValue(field, new ArrayList<Object>());
           }
 
           return new PersistentProtocolBufferMap(null, fieldDef, message);
@@ -710,23 +707,23 @@ public class PersistentProtocolBufferMap extends APersistentMap implements IObj 
 
   @Override
   public Object valAt(Object key) {
-    return getValAt(key, true);
+    return getValAt(key);
   }
 
   @Override
   public Object valAt(Object key, Object notFound) {
-    return getValAt(key, notFound, true);
+    return getValAt(key, notFound);
   }
 
-  public Object getValAt(Object key, boolean use_extensions) {
-    Object val = getValAt(key, sentinel, use_extensions);
+  public Object getValAt(Object key) {
+    Object val = getValAt(key, sentinel);
     return (val == sentinel) ? null : val;
   }
 
-  public Object getValAt(Object key, Object notFound, boolean use_extensions) {
+  public Object getValAt(Object key, Object notFound) {
     Descriptors.FieldDescriptor field = def.fieldDescriptor(key);
     if (protoContainsKey(key)) {
-      return fromProtoValue(field, message().getField(field), use_extensions);
+      return fromProtoValue(field, message().getField(field));
     } else {
       return RT.get(ext, key, notFound);
     }
