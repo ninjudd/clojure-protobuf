@@ -3,7 +3,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :url "https://github.com/ghaskins/clojure-protobuf"
-  :javac-options ["-target" "1.7" "-source" "1.7"]
+  :javac-options ["-target" "1.8" "-source" "1.8"]
   :java-source-paths ["src"]
   :lein-release {:deploy-via :clojars}
   :dependencies [[org.clojure/clojure "1.8.0"]
